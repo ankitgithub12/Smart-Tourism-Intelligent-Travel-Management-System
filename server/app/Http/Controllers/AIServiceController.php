@@ -2,53 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AIService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class AIServiceController extends Controller
 {
-    private $ai_service_url = 'http://127.0.0.1:8001';
+    protected $aiService;
+
+    public function __construct(AIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
 
     public function chat(Request $request)
     {
         $request->validate(['message' => 'required|string']);
-        return $this->proxyRequest('/chat', ['message' => $request->message]);
+        $result = $this->aiService.chat($request->message);
+        return response()->json($result ?: ['reply' => 'AI Service is currently unavailable.']);
     }
 
     public function recommend(Request $request)
     {
         $request->validate(['preferences' => 'required|string']);
-        return $this->proxyRequest('/recommend', ['preferences' => $request->preferences]);
+        $result = $this->aiService.recommend($request->preferences);
+        return response()->json($result ?: ['recommendation' => []]);
     }
 
     public function crowdPredict(Request $request)
     {
         $request->validate(['location_data' => 'required|string']);
-        return $this->proxyRequest('/crowd-predict', ['location_data' => $request->location_data]);
+        $result = $this->aiService.predictCrowd($request->location_data);
+        return response()->json($result ?: ['prediction' => null]);
     }
 
     public function sentiment(Request $request)
     {
         $request->validate(['text' => 'required|string']);
-        return $this->proxyRequest('/sentiment', ['text' => $request->text]);
-    }
-
-    private function proxyRequest($endpoint, $data)
-    {
-        try {
-            $response = Http::post($this->ai_service_url . $endpoint, $data);
-            if ($response->successful()) {
-                return response()->json($response->json());
-            }
-            return response()->json([
-                'error' => 'AI Service error',
-                'details' => $response->body()
-            ], $response->status());
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Could not connect to AI Service',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        $result = $this->aiService.analyzeSentiment($request->text);
+        return response()->json($result ?: ['sentiment' => null]);
     }
 }

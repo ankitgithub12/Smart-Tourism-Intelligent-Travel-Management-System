@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class ReviewController extends Controller
 {
+    protected $aiService;
+
+    public function __construct(AIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -16,24 +23,13 @@ class ReviewController extends Controller
             'comment' => 'required|string',
         ]);
 
-        // Optional: Call AI Service for Sentiment Analysis
         $sentiment_score = null;
         $sentiment_label = null;
 
-        try {
-            $ai_response = Http::post(env('AI_SERVICE_URL', 'http://localhost:8001') . '/sentiment', [
-                'text' => $request->comment
-            ]);
-
-            if ($ai_response->successful()) {
-                $data = $ai_response->json();
-                // Depending on model output format, extract score/label
-                // This is a placeholder for actual extraction logic
-                $sentiment_label = $data['sentiment'][0]['label'] ?? null;
-                $sentiment_score = $data['sentiment'][0]['score'] ?? null;
-            }
-        } catch (\Exception $e) {
-            // Log error but continue
+        $ai_result = $this->aiService->analyzeSentiment($request->comment);
+        if ($ai_result && isset($ai_result['sentiment'][0])) {
+            $sentiment_label = $ai_result['sentiment'][0]['label'];
+            $sentiment_score = $ai_result['sentiment'][0]['score'];
         }
 
         $id = DB::table('reviews')->insertGetId([
