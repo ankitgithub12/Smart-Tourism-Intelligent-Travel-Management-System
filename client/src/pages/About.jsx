@@ -23,7 +23,7 @@ const values = [
   { icon: Target, title: 'Mission-Driven', desc: 'Reducing overcrowding and improving tourist experiences through data intelligence.' },
   { icon: Lightbulb, title: 'Innovation First', desc: 'Cutting-edge AI models integrated with real-world city infrastructure.' },
   { icon: Shield, title: 'Privacy & Security', desc: 'JWT-secured APIs, role-based access control, and encrypted user data.' },
-  { icon: Globe, title: 'Smart City Vision', desc: 'Building the foundations for tomorrow's intelligent tourism ecosystems.' },
+  { icon: Globe, title: 'Smart City Vision', desc: "Building the foundations for tomorrow's intelligent tourism ecosystems." },
 ];
 
 const About = () => {
