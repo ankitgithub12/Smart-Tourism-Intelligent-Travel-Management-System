@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { loginUser, registerUser, logoutUser, clearError } from '../redux/authSlice';
+import { loginUser, registerUser, logoutUser, clearError, forgotPassword, resetPassword } from '../redux/authSlice';
 
 const useAuth = () => {
   const dispatch = useDispatch();
@@ -29,6 +29,14 @@ const useAuth = () => {
     navigate('/login');
   };
 
+  const sendForgotPasswordLink = async (email) => {
+    return await dispatch(forgotPassword(email));
+  };
+
+  const resetUserPassword = async (data) => {
+    return await dispatch(resetPassword(data));
+  };
+
   const dismissError = () => dispatch(clearError());
 
   return {
@@ -40,6 +48,8 @@ const useAuth = () => {
     login,
     register,
     logout,
+    sendForgotPasswordLink,
+    resetUserPassword,
     dismissError,
     role: user?.role || null,
     isAdmin: user?.role === 'admin' || user?.role === 'authority',

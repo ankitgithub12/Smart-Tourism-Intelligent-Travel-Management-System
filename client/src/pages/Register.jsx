@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Compass, User, UserCog, AlertCircle, CheckCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import useAuth from '../hooks/useAuth';
 
 const roles = [
@@ -11,18 +12,33 @@ const roles = [
 ];
 
 const Register = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'tourist' });
   const [showPassword, setShowPassword] = useState(false);
-  const { register, loading, error, dismissError } = useAuth();
+  const { register: registerUser, loading, error, dismissError } = useAuth();
 
-  const handleChange = (e) => {
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: { role: 'tourist' }
+  });
+
+  const password = watch('password', '');
+
+  const passwordStrength = useMemo(() => {
+    if (!password) return { score: 0, label: '', color: 'bg-gray-200', text: 'text-gray-400' };
+    
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500', text: 'text-red-500' };
+    if (score <= 4) return { score, label: 'Medium', color: 'bg-yellow-500', text: 'text-yellow-500' };
+    return { score, label: 'Strong', color: 'bg-green-500', text: 'text-green-500' };
+  }, [password]);
+
+  const onSubmit = async (data) => {
     dismissError();
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await register(formData);
+    await registerUser(data);
   };
 
   return (
@@ -49,39 +65,91 @@ const Register = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
               <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input id="reg-name" type="text" name="name" value={formData.name}
-                  onChange={handleChange} required placeholder="Your full name"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input 
+                  id="reg-name" 
+                  type="text" 
+                  {...register('name', { required: 'Full name is required', minLength: { value: 3, message: 'Name must be at least 3 characters' } })}
+                  placeholder="Your full name"
+                  className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all ${
+                    errors.name ? 'border-red-500' : 'border-gray-200'
+                  }`} 
+                />
               </div>
+              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
             <div>
               <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input id="reg-email" type="email" name="email" value={formData.email}
-                  onChange={handleChange} required placeholder="you@example.com"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input 
+                  id="reg-email" 
+                  type="email" 
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  placeholder="you@example.com"
+                  className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all ${
+                    errors.email ? 'border-red-500' : 'border-gray-200'
+                  }`} 
+                />
               </div>
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
 
             <div>
               <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input id="reg-password" type={showPassword ? 'text' : 'password'} name="password"
-                  value={formData.password} onChange={handleChange} required minLength={8} placeholder="Min. 8 characters"
-                  className="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input 
+                  id="reg-password" 
+                  type={showPassword ? 'text' : 'password'} 
+                  {...register('password', { 
+                    required: 'Password is required',
+                    minLength: { value: 8, message: 'Password must be at least 8 characters' },
+                    validate: {
+                      hasUpper: v => /[A-Z]/.test(v) || 'Must contain at least one uppercase letter',
+                      hasLower: v => /[a-z]/.test(v) || 'Must contain at least one lowercase letter',
+                      hasNumber: v => /[0-9]/.test(v) || 'Must contain at least one number',
+                    }
+                  })}
+                  placeholder="Min. 8 characters"
+                  className={`w-full pl-11 pr-12 py-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all ${
+                    errors.password ? 'border-red-500' : 'border-gray-200'
+                  }`} 
+                />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              
+              {/* Password Strength Indicator */}
+              {password && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Strength</span>
+                    <span className={`text-[10px] font-bold uppercase ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                      className={`h-full ${passwordStrength.color}`}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -90,16 +158,16 @@ const Register = () => {
                 {roles.map((role) => (
                   <label key={role.value}
                     className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.role === role.value
+                      watch('role') === role.value
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}>
-                    <input type="radio" name="role" value={role.value}
-                      checked={formData.role === role.value} onChange={handleChange} className="sr-only" />
+                    <input type="radio" value={role.value}
+                      {...register('role', { required: 'Please select a role' })} className="sr-only" />
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      formData.role === role.value ? 'border-blue-500' : 'border-gray-300'
+                      watch('role') === role.value ? 'border-blue-500' : 'border-gray-300'
                     }`}>
-                      {formData.role === role.value && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                      {watch('role') === role.value && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
                     </div>
                     <div>
                       <span className="text-sm font-semibold text-gray-900">{role.label}</span>
@@ -108,6 +176,7 @@ const Register = () => {
                   </label>
                 ))}
               </div>
+              {errors.role && <p className="mt-1 text-xs text-red-500">{errors.role.message}</p>}
             </div>
 
             <button type="submit" disabled={loading} id="register-submit"

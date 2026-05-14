@@ -11,6 +11,8 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Destinations from './pages/Destinations';
 import MyTrips from './pages/MyTrips';
@@ -37,6 +39,8 @@ function App() {
       {/* Auth Routes - No MainLayout (Full-screen) */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected Routes - Wrapped in MainLayout */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>

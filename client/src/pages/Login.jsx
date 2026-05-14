@@ -2,21 +2,18 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Compass, LogIn, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import useAuth from '../hooks/useAuth';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const { login, loading, error, dismissError } = useAuth();
 
-  const handleChange = (e) => {
-    dismissError();
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await login(formData);
+  const onSubmit = async (data) => {
+    dismissError();
+    await login(data);
   };
 
   return (
@@ -63,31 +60,51 @@ const Login = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
               <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input id="login-email" type="email" name="email" value={formData.email}
-                  onChange={handleChange} required placeholder="you@example.com"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input 
+                  id="login-email" 
+                  type="email" 
+                  {...register('email', { 
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  placeholder="you@example.com"
+                  className={`w-full pl-11 pr-4 py-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all ${
+                    errors.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-200'
+                  }`} 
+                />
               </div>
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div>
               <div className="flex justify-between mb-2">
                 <label htmlFor="login-password" className="text-sm font-medium text-gray-700">Password</label>
-                <Link to="#" className="text-sm text-blue-600 hover:underline">Forgot password?</Link>
+                <Link to="/forgot-password" name="forgot-password" className="text-sm text-blue-600 hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input id="login-password" type={showPassword ? 'text' : 'password'} name="password"
-                  value={formData.password} onChange={handleChange} required placeholder="••••••••"
-                  className="w-full pl-11 pr-12 py-3.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input 
+                  id="login-password" 
+                  type={showPassword ? 'text' : 'password'} 
+                  {...register('password', { required: 'Password is required' })}
+                  placeholder="••••••••"
+                  className={`w-full pl-11 pr-12 py-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all ${
+                    errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200'
+                  }`}
+                />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
             <button type="submit" disabled={loading} id="login-submit"
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-md disabled:opacity-60">
