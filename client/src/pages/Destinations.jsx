@@ -1,46 +1,40 @@
-import React, { useState } from 'react';
-import { Search, Filter, Star, MapPin, Users, Info, Heart, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Star, MapPin, Users, Info, Heart, Calendar, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { crowdColor, truncateText } from '../utils/helpers';
+import { placesAPI } from '../services/api';
 
 const categories = ['All', 'Heritage', 'Fort', 'Landmark', 'Observatory', 'Nature'];
 
 const Destinations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
+  const [places, setPlaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const places = [
-    {
-      id: 1,
-      name: 'City Palace, Jaipur',
-      description: 'A complex of courtyards, gardens and buildings, the impressive City Palace is right in the centre of the Old City.',
-      location: 'Jaipur, Rajasthan',
-      category: 'Heritage',
-      crowdLevel: 'High',
-      rating: 4.8,
-      image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?q=80&w=1000&auto=format&fit=crop',
-    },
-    {
-      id: 2,
-      name: 'Amber Fort',
-      description: 'Amer Fort is a fort located in Amer, Rajasthan, India. Amer is a town with an area of 4 square kilometres.',
-      location: 'Amer, Rajasthan',
-      category: 'Fort',
-      crowdLevel: 'Medium',
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1590050752117-23a97b62b423?q=80&w=1000&auto=format&fit=crop',
-    },
-    {
-      id: 3,
-      name: 'Hawa Mahal',
-      description: 'The Hawa Mahal is a palace in the city of Jaipur, India. Built from red and pink sandstone.',
-      location: 'Jaipur, Rajasthan',
-      category: 'Landmark',
-      crowdLevel: 'Low',
-      rating: 4.7,
-      image: 'https://images.unsplash.com/photo-1603262110263-fb0110e71329?q=80&w=1000&auto=format&fit=crop',
-    },
-  ];
+  useEffect(() => {
+    const fetchPlaces = async () => {
+      try {
+        setLoading(true);
+        const response = await placesAPI.getAll();
+        setPlaces(response.data.data || response.data);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to load destinations. Using fallback data.");
+        // Fallback data
+        setPlaces([
+          { id: 1, name: 'City Palace, Jaipur', description: 'A complex of courtyards, gardens and buildings.', location: 'Jaipur, Rajasthan', category: 'Heritage', crowdLevel: 'High', rating: 4.8, image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?q=80&w=1000&auto=format&fit=crop' },
+          { id: 2, name: 'Amber Fort', description: 'Amer Fort is a fort located in Amer, Rajasthan.', location: 'Amer, Rajasthan', category: 'Fort', crowdLevel: 'Medium', rating: 4.9, image: 'https://images.unsplash.com/photo-1590050752117-23a97b62b423?q=80&w=1000&auto=format&fit=crop' },
+          { id: 3, name: 'Hawa Mahal', description: 'The Hawa Mahal is a palace in the city of Jaipur.', location: 'Jaipur, Rajasthan', category: 'Landmark', crowdLevel: 'Low', rating: 4.7, image: 'https://images.unsplash.com/photo-1603262110263-fb0110e71329?q=80&w=1000&auto=format&fit=crop' },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlaces();
+  }, []);
 
   const filteredPlaces = places.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -94,10 +88,25 @@ const Destinations = () => {
           ))}
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
+            <p className="text-gray-500 font-medium">Fetching amazing places for you...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="mb-8 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-700 text-sm flex items-center gap-3">
+            <Info size={18} /> {error}
+          </div>
+        )}
+
         {/* Places Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="popLayout">
-            {filteredPlaces.map((place, idx) => (
+            {!loading && filteredPlaces.map((place, idx) => (
               <motion.div
                 key={place.id}
                 layout
