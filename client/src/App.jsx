@@ -20,6 +20,7 @@ import Profile from './pages/Profile';
 import AIRecommendations from './pages/AIRecommendations';
 import SavedDestinations from './pages/SavedDestinations';
 import Transport from './pages/Transport';
+import Notifications from './pages/Notifications';
 import AdminDashboard from './pages/AdminDashboard';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -49,6 +50,7 @@ function App() {
         <Route path="/my-trips" element={<MyTrips />} />
         <Route path="/saved" element={<SavedDestinations />} />
         <Route path="/transport" element={<Transport />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
       </Route>
 

@@ -26,12 +26,15 @@ Route::get('/places', [PlaceController::class, 'index']);
 Route::get('/places/{id}', [PlaceController::class, 'show']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/places', [PlaceController::class, 'store']);
+    Route::put('/places/{id}', [PlaceController::class, 'update']);
+    Route::delete('/places/{id}', [PlaceController::class, 'destroy']);
 });
 
 // Booking Routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::post('/bookings', [BookingController::class, 'store']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
 });
 
 // Transport Routes

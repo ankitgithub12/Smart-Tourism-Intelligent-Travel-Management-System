@@ -36,4 +36,15 @@ class BookingController extends Controller
 
         return response()->json(['id' => $id, 'message' => 'Booking created successfully'], 201);
     }
+
+    public function destroy(Request $request, $id)
+    {
+        $booking = DB::table('bookings')->where('id', $id)->where('user_id', $request->user()->id)->first();
+        if (!$booking) {
+            return response()->json(['message' => 'Booking not found or unauthorized'], 404);
+        }
+
+        DB::table('bookings')->where('id', $id)->delete();
+        return response()->json(['message' => 'Booking deleted successfully']);
+    }
 }

@@ -44,4 +44,26 @@ class PlaceController extends Controller
         $id = DB::table('tourist_places')->insertGetId($request->all());
         return response()->json(['id' => $id, 'message' => 'Place created successfully'], 201);
     }
+
+    public function update(Request $request, $id)
+    {
+        $place = DB::table('tourist_places')->where('id', $id)->first();
+        if (!$place) {
+            return response()->json(['message' => 'Place not found'], 404);
+        }
+
+        DB::table('tourist_places')->where('id', $id)->update($request->all());
+        return response()->json(['message' => 'Place updated successfully']);
+    }
+
+    public function destroy($id)
+    {
+        $place = DB::table('tourist_places')->where('id', $id)->first();
+        if (!$place) {
+            return response()->json(['message' => 'Place not found'], 404);
+        }
+
+        DB::table('tourist_places')->where('id', $id)->delete();
+        return response()->json(['message' => 'Place deleted successfully']);
+    }
 }
