@@ -13,15 +13,16 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
+import TouristDashboard from './pages/tourist/TouristDashboard';
 import Destinations from './pages/Destinations';
-import MyTrips from './pages/MyTrips';
+import MyTrips from './pages/tourist/MyTrips';
 import Profile from './pages/Profile';
-import AIRecommendations from './pages/AIRecommendations';
-import SavedDestinations from './pages/SavedDestinations';
+import AIRecommendations from './pages/tourist/AIRecommendations';
+import SavedDestinations from './pages/tourist/SavedDestinations';
 import Transport from './pages/Transport';
 import Notifications from './pages/Notifications';
-import AdminDashboard from './pages/AdminDashboard';
+import AgencyDashboard from './pages/agency/AgencyDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
@@ -45,13 +46,18 @@ function App() {
 
       {/* Protected Routes - Wrapped in MainLayout */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<TouristDashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/my-trips" element={<MyTrips />} />
         <Route path="/saved" element={<SavedDestinations />} />
         <Route path="/transport" element={<Transport />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
+      </Route>
+
+      {/* Agency Protected Routes */}
+      <Route element={<ProtectedRoute requiredRole="agency"><MainLayout /></ProtectedRoute>}>
+        <Route path="/agency/dashboard" element={<AgencyDashboard />} />
       </Route>
 
       {/* Admin Protected Routes */}

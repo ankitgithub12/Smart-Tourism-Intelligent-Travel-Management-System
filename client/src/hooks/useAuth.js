@@ -11,7 +11,13 @@ const useAuth = () => {
     const result = await dispatch(loginUser(credentials));
     if (loginUser.fulfilled.match(result)) {
       const role = result.payload?.user?.role;
-      navigate(role === 'admin' || role === 'authority' ? '/admin' : '/dashboard');
+      if (role === 'admin' || role === 'authority') {
+        navigate('/admin/dashboard');
+      } else if (role === 'agency') {
+        navigate('/agency/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
     return result;
   };
@@ -19,7 +25,14 @@ const useAuth = () => {
   const register = async (userData) => {
     const result = await dispatch(registerUser(userData));
     if (registerUser.fulfilled.match(result)) {
-      navigate('/dashboard');
+      const role = result.payload?.user?.role;
+      if (role === 'admin' || role === 'authority') {
+        navigate('/admin/dashboard');
+      } else if (role === 'agency') {
+        navigate('/agency/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
     return result;
   };
