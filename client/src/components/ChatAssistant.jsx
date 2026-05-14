@@ -52,14 +52,14 @@ const ChatAssistant = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl shadow-2xl w-[350px] md:w-[400px] h-[500px] flex flex-col overflow-hidden border border-gray-100 mb-4"
+            className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-2rem)] sm:w-[350px] md:w-[400px] h-[500px] max-h-[calc(100vh-120px)] flex flex-col overflow-hidden border border-gray-100 mb-4"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex items-center justify-between">
