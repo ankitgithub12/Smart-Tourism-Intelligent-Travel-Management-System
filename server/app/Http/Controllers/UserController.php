@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -30,6 +31,25 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Profile updated successfully',
             'user' => $user
+        ]);
+    }
+
+    public function adminStats(Request $request)
+    {
+        // Simple role check
+        if ($request->user()->role !== 'authority' && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $usersCount = DB::table('users')->count();
+        $bookingsCount = DB::table('bookings')->count();
+        $placesCount = DB::table('tourist_places')->count();
+
+        return response()->json([
+            'users' => $usersCount,
+            'bookings' => $bookingsCount,
+            'places' => $placesCount,
+            'securityScore' => 98
         ]);
     }
 }

@@ -35,7 +35,7 @@ export const authAPI = {
   register: (data) => api.post('/register', data),
   login: (data) => api.post('/login', data),
   logout: () => api.post('/logout'),
-  me: () => api.get('/me'),
+  me: () => api.get('/user'),
   forgotPassword: (email) => api.post('/password/email', { email }),
   resetPassword: (data) => api.post('/password/reset', data),
 };
@@ -58,8 +58,16 @@ export const bookingsAPI = {
 
 // ── Reviews ───────────────────────────────────────────
 export const reviewsAPI = {
+  getAll: () => api.get('/reviews'),
   getByPlace: (placeId) => api.get(`/reviews/${placeId}`),
   create: (data) => api.post('/reviews', data),
+};
+
+// ── Favorites ─────────────────────────────────────────
+export const favoritesAPI = {
+  getAll: () => api.get('/favorites'),
+  add: (placeId) => api.post('/favorites', { tourist_place_id: placeId }),
+  remove: (placeId) => api.delete(`/favorites/${placeId}`),
 };
 
 // ── Transport ─────────────────────────────────────────
@@ -75,10 +83,11 @@ export const aiAPI = {
   sentiment: (text) => api.post('/ai/sentiment', { text }),
 };
 
-// ── User Profile ──────────────────────────────────────
+// ── User Profile & Admin ──────────────────────────────
 export const userAPI = {
-  getProfile: () => api.get('/profile'),
-  updateProfile: (data) => api.put('/profile', data),
+  getProfile: () => api.get('/user'),
+  updateProfile: (data) => api.put('/user', data),
+  getAdminStats: () => api.get('/admin/stats'),
 };
 
 export default api;

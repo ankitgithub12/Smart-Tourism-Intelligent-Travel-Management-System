@@ -15,6 +15,30 @@ class ReviewController extends Controller
         $this->aiService = $aiService;
     }
 
+    public function index($placeId)
+    {
+        $reviews = DB::table('reviews')
+            ->join('users', 'reviews.user_id', '=', 'users.id')
+            ->where('reviews.tourist_place_id', $placeId)
+            ->select('reviews.*', 'users.name as user_name')
+            ->orderBy('reviews.created_at', 'desc')
+            ->get();
+
+        return response()->json($reviews);
+    }
+
+    public function all()
+    {
+        $reviews = DB::table('reviews')
+            ->join('users', 'reviews.user_id', '=', 'users.id')
+            ->select('reviews.*', 'users.name as user_name')
+            ->orderBy('reviews.created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return response()->json($reviews);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

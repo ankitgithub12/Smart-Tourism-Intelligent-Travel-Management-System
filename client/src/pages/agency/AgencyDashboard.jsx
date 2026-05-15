@@ -13,11 +13,12 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { bookingsAPI, placesAPI } from '../../services/api';
+import { bookingsAPI, placesAPI, reviewsAPI } from '../../services/api';
 
 const AgencyDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   const [bookings, setBookings] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +28,9 @@ const AgencyDashboard = () => {
         // In a real app, we would fetch bookings specifically for this agency
         const bookingsRes = await bookingsAPI.getAll();
         setBookings(bookingsRes.data);
+        
+        const reviewsRes = await reviewsAPI.getAll();
+        setReviews(reviewsRes.data);
       } catch (error) {
         console.error('Error fetching agency data:', error);
       } finally {
@@ -196,21 +200,27 @@ const AgencyDashboard = () => {
                 Recent Reviews
               </h2>
               <div className="space-y-5">
-                 {[
-                   { user: 'Alex M.', rating: 5, text: 'Amazing experience! The guide was very knowledgeable.', time: '2h ago' },
-                   { user: 'Julia S.', rating: 4, text: 'Great tour, but would appreciate more water breaks.', time: '1d ago' }
-                 ].map((r, i) => (
+                 {reviews.length > 0 ? reviews.map((r, i) => (
                    <div key={i} className="pb-4 border-b border-gray-50 last:border-0 last:pb-0">
                       <div className="flex justify-between mb-1">
-                        <span className="font-bold text-sm text-gray-900">{r.user}</span>
+                        <span className="font-bold text-sm text-gray-900">{r.user_name || 'Anonymous'}</span>
                         <div className="flex text-orange-400">
-                           {[...Array(r.rating)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
+                           {[...Array(r.rating || 5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2 italic">"{r.text}"</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">{r.time}</p>
+                      <p className="text-xs text-gray-500 line-clamp-2 italic">"{r.comment}"</p>
+                      <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">
+                        {r.sentiment_label && (
+                          <span className={`mr-2 px-2 py-0.5 rounded ${r.sentiment_label === 'POSITIVE' ? 'bg-green-100 text-green-700' : r.sentiment_label === 'NEGATIVE' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                            {r.sentiment_label}
+                          </span>
+                        )}
+                        {new Date(r.created_at).toLocaleDateString()}
+                      </p>
                    </div>
-                 ))}
+                 )) : (
+                   <div className="text-gray-400 text-sm italic">No recent reviews found.</div>
+                 )}
               </div>
             </div>
           </div>

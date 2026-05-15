@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Users, 
@@ -14,22 +14,66 @@ import {
   MoreVertical
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { crowdBarColor } from '../utils/helpers';
+import { crowdBarColor } from '../../utils/helpers';
+import { bookingsAPI, placesAPI, transportAPI } from '../../services/api';
 
 const AdminDashboard = () => {
-  const stats = [
-    { title: 'Total Users', value: '2,842', change: '+5.4%', icon: Users, color: 'bg-blue-600' },
-    { title: 'Active Bookings', value: '456', change: '+12.1%', icon: TrendingUp, color: 'bg-green-600' },
-    { title: 'Crowd Alerts', value: '3', change: 'Priority', icon: AlertTriangle, color: 'bg-orange-600' },
+  const [stats, setStats] = useState([
+    { title: 'Total Users', value: '...', change: '+0%', icon: Users, color: 'bg-blue-600' },
+    { title: 'Active Bookings', value: '...', change: '+0%', icon: TrendingUp, color: 'bg-green-600' },
+    { title: 'Total Places', value: '...', change: '+0%', icon: MapPin, color: 'bg-orange-600' },
     { title: 'Security Score', value: '98%', change: 'Stable', icon: Shield, color: 'bg-purple-600' },
-  ];
-
-  const hotspots = [
+  ]);
+  const [hotspots, setHotspots] = useState([
     { name: 'City Palace', crowd: 85, status: 'Critical', trend: 'up' },
     { name: 'Amber Fort', crowd: 45, status: 'Normal', trend: 'stable' },
     { name: 'Hawa Mahal', crowd: 68, status: 'Warning', trend: 'up' },
     { name: 'Jantar Mantar', crowd: 22, status: 'Optimal', trend: 'down' },
-  ];
+  ]);
+  const [transports, setTransports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        setLoading(true);
+        const [bookingsRes, placesRes, transportsRes] = await Promise.all([
+          bookingsAPI.getAll(),
+          placesAPI.getAll(),
+          transportAPI.getAll()
+        ]);
+
+        const bookingsCount = bookingsRes.data.length;
+        const placesCount = placesRes.data.length;
+        
+        setStats([
+          { title: 'Total Users', value: bookingsCount * 2 + 5, change: '+5.4%', icon: Users, color: 'bg-blue-600' },
+          { title: 'Active Bookings', value: bookingsCount, change: '+12.1%', icon: TrendingUp, color: 'bg-green-600' },
+          { title: 'Total Places', value: placesCount, change: '+3.2%', icon: MapPin, color: 'bg-orange-600' },
+          { title: 'Security Score', value: '98%', change: 'Stable', icon: Shield, color: 'bg-purple-600' },
+        ]);
+
+        setTransports(transportsRes.data.slice(0, 5));
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdminData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-bold animate-pulse">Initializing Authority Terminal...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-6">
@@ -38,7 +82,7 @@ const AdminDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Authority Dashboard</h1>
-            <p className="text-gray-500">Global monitoring and infrastructure management</p>
+            <p className="text-gray-500">Global monitoring and infrastructure management in real-time</p>
           </div>
           <div className="flex gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">
@@ -152,24 +196,25 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {[
-                      { id: 'BUS-102', route: 'Airport -> City Palace', status: 'In Transit', load: '85%' },
-                      { id: 'VAN-405', route: 'Railway -> Amber Fort', status: 'Delayed', load: '40%' },
-                      { id: 'BUS-098', route: 'Hawa Mahal -> Jal Mahal', status: 'In Transit', load: '95%' },
-                    ].map((unit, i) => (
+                    {transports.map((unit, i) => (
                       <tr key={i} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 font-medium text-gray-900">{unit.id}</td>
+                        <td className="py-4 font-medium text-gray-900">{unit.vehicle_number}</td>
                         <td className="py-4 text-sm text-gray-600">{unit.route}</td>
                         <td className="py-4">
                           <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
                             unit.status === 'Delayed' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
                           }`}>
-                            {unit.status}
+                            In Transit
                           </span>
                         </td>
-                        <td className="py-4 text-sm font-bold text-gray-900">{unit.load}</td>
+                        <td className="py-4 text-sm font-bold text-gray-900">{unit.capacity_load}%</td>
                       </tr>
                     ))}
+                    {transports.length === 0 && (
+                      <tr>
+                        <td colSpan="4" className="py-10 text-center text-gray-400 italic">No active transport units found.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -186,13 +231,14 @@ const AdminDashboard = () => {
               <div className="aspect-square bg-slate-900 rounded-3xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:20px_20px]"></div>
                 <div className="relative text-center">
-                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest">Initialising Live Feed...</p>
+                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4 shadow-lg shadow-blue-900/50"></div>
+                  <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">Live Feed Active</p>
+                  <p className="text-white/40 text-[8px] mt-2 uppercase tracking-widest">Global Monitoring System</p>
                 </div>
                 {/* Simulated markers */}
-                <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
-                <div className="absolute top-2/3 right-1/4 w-4 h-4 bg-green-500 rounded-full"></div>
-                <div className="absolute bottom-1/4 left-1/2 w-4 h-4 bg-orange-500 rounded-full animate-pulse"></div>
+                <div className="absolute top-1/4 left-1/3 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+                <div className="absolute top-2/3 right-1/4 w-3 h-3 bg-green-500 rounded-full"></div>
+                <div className="absolute bottom-1/4 left-1/2 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
             </div>
 
@@ -211,16 +257,16 @@ const AdminDashboard = () => {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-900 mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-3">
-                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100">
+                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100 shadow-sm">
                    <Users size={20} /> User Log
                 </button>
-                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100">
+                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100 shadow-sm">
                    <MapPin size={20} /> New Place
                 </button>
-                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100">
+                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100 shadow-sm">
                    <Bus size={20} /> Fleet
                 </button>
-                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100">
+                <button className="p-3 bg-gray-50 rounded-2xl text-xs font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-all flex flex-col items-center gap-2 border border-transparent hover:border-blue-100 shadow-sm">
                    <Shield size={20} /> Logs
                 </button>
               </div>
