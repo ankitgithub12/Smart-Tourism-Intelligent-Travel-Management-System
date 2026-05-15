@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Shield, Save, Camera, MapPin, Calendar, TrendingUp, CheckCircle } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { avatarUrl, getRoleLabel, formatDate } from '../utils/helpers';
+import { userAPI } from '../services/api';
 
 const Profile = () => {
   const { user } = useSelector((state) => state.auth);
@@ -11,10 +12,20 @@ const Profile = () => {
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSave = (e) => {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async (e) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    try {
+      await userAPI.updateProfile(formData);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      alert('Failed to update profile: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const stats = [
@@ -108,9 +119,9 @@ const Profile = () => {
               </div>
 
               <div className="pt-2">
-                <button type="submit" id="save-profile"
-                  className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200">
-                  <Save size={18} /> Save Changes
+                <button type="submit" id="save-profile" disabled={saving}
+                  className="flex items-center gap-2 bg-blue-600 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-200 disabled:opacity-50">
+                  <Save size={18} /> {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

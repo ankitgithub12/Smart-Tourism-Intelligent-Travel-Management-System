@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Bot, User, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { aiAPI } from '../services/api';
 
 const ChatAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,10 +31,8 @@ const ChatAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Assuming Laravel backend is at localhost:8000
-      const response = await axios.post('http://127.0.0.1:8000/api/ai/chat', {
-        message: userMsg.content
-      });
+      // Use the centralized api.js which handles auth tokens
+      const response = await aiAPI.chat(userMsg.content);
 
       const aiReply = { 
         role: 'assistant', 

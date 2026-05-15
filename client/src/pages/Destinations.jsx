@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Star, MapPin, Users, Info, Heart, Calendar, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { crowdColor, truncateText } from '../utils/helpers';
-import { placesAPI } from '../services/api';
+import { crowdColor, truncateText, getCrowdLevelString } from '../utils/helpers';
+import { placesAPI, favoritesAPI, bookingsAPI } from '../services/api';
 
 const categories = ['All', 'Heritage', 'Fort', 'Landmark', 'Observatory', 'Nature'];
 
@@ -10,8 +10,14 @@ const Destinations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [places, setPlaces] = useState([]);
+  const [favorites, setFavorites] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal state
+  const [bookingModal, setBookingModal] = useState({ isOpen: false, place: null });
+  const [bookingData, setBookingData] = useState({ date: '', people: 1 });
+  const [bookingLoading, setBookingLoading] = useState(false);
 
   useEffect(() => {
     const fetchPlaces = async () => {
@@ -19,6 +25,13 @@ const Destinations = () => {
         setLoading(true);
         const response = await placesAPI.getAll();
         setPlaces(response.data.data || response.data);
+        
+        // Also fetch favorites
+        try {
+          const favResp = await favoritesAPI.getAll();
+          const favIds = new Set(favResp.data.map(f => f.tourist_place_id || f.id));
+          setFavorites(favIds);
+        } catch(e) {}
       } catch (err) {
         console.error("Fetch error:", err);
         setError("Failed to load destinations. Using fallback data.");
@@ -42,6 +55,44 @@ const Destinations = () => {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const toggleFavorite = async (placeId) => {
+    try {
+      const newFavs = new Set(favorites);
+      if (newFavs.has(placeId)) {
+        await favoritesAPI.remove(placeId);
+        newFavs.delete(placeId);
+      } else {
+        await favoritesAPI.add(placeId);
+        newFavs.add(placeId);
+      }
+      setFavorites(newFavs);
+    } catch (err) {
+      console.error("Failed to toggle favorite", err);
+    }
+  };
+
+  const handleBookSubmit = async (e) => {
+    e.preventDefault();
+    if (!bookingModal.place) return;
+    
+    setBookingLoading(true);
+    try {
+      await bookingsAPI.create({
+        tourist_place_id: bookingModal.place.id,
+        booking_date: bookingData.date,
+        number_of_people: bookingData.people,
+        total_price: (bookingModal.place.entry_fee || 100) * bookingData.people,
+        time_slot: '09:00:00'
+      });
+      alert('Booking successful!');
+      setBookingModal({ isOpen: false, place: null });
+    } catch (err) {
+      alert('Failed to book. ' + (err.response?.data?.message || err.message));
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen py-12 px-6">
@@ -127,13 +178,16 @@ const Destinations = () => {
                       <Star size={14} fill="currentColor" />
                       {place.rating}
                     </div>
-                    <button className="w-10 h-10 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shadow-sm">
-                      <Heart size={18} />
+                    <button 
+                      onClick={() => toggleFavorite(place.id)}
+                      className={`w-10 h-10 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center transition-colors shadow-sm ${favorites.has(place.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                    >
+                      <Heart size={18} fill={favorites.has(place.id) ? "currentColor" : "none"} />
                     </button>
                   </div>
-                  <div className={`absolute bottom-4 left-4 px-3.5 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-lg backdrop-blur-md ${crowdColor(place.crowdLevel)}`}>
+                  <div className={`absolute bottom-4 left-4 px-3.5 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-lg backdrop-blur-md ${crowdColor(getCrowdLevelString(place.crowd_level || place.crowdLevel))}`}>
                     <Users size={14} />
-                    {place.crowdLevel} Crowd
+                    {getCrowdLevelString(place.crowd_level || place.crowdLevel)} Crowd
                   </div>
                 </div>
                 
@@ -153,7 +207,10 @@ const Destinations = () => {
                     <div className="flex items-center gap-1.5 text-gray-400 text-xs font-bold bg-gray-50 px-3 py-1.5 rounded-xl">
                       <Calendar size={14} /> Available
                     </div>
-                    <button className="flex items-center gap-1.5 bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-md shadow-blue-200">
+                    <button 
+                      onClick={() => setBookingModal({ isOpen: true, place })}
+                      className="flex items-center gap-1.5 bg-blue-600 text-white px-5 py-2.5 rounded-2xl text-xs font-black hover:bg-blue-700 transition-all shadow-md shadow-blue-200"
+                    >
                       Book Now
                       <Info size={14} />
                     </button>
@@ -173,6 +230,72 @@ const Destinations = () => {
             <p className="text-gray-500">Try adjusting your search or filters.</p>
           </div>
         )}
+
+        {/* Booking Modal */}
+        <AnimatePresence>
+          {bookingModal.isOpen && bookingModal.place && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                className="bg-white rounded-[2rem] shadow-2xl max-w-md w-full overflow-hidden"
+              >
+                <div className="p-8">
+                  <h3 className="text-2xl font-black text-gray-900 mb-2">Book {bookingModal.place.name}</h3>
+                  <p className="text-sm text-gray-500 mb-6">Enter details for your visit.</p>
+                  
+                  <form onSubmit={handleBookSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">Date</label>
+                      <input 
+                        type="date" required 
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        value={bookingData.date}
+                        onChange={e => setBookingData({...bookingData, date: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">Number of People</label>
+                      <input 
+                        type="number" min="1" required 
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        value={bookingData.people}
+                        onChange={e => setBookingData({...bookingData, people: Number(e.target.value)})}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-between items-center bg-blue-50 p-4 rounded-xl mt-6">
+                      <span className="text-sm font-bold text-blue-800">Total Price</span>
+                      <span className="text-lg font-black text-blue-600">
+                        ₹{((bookingModal.place.entry_fee || 100) * bookingData.people).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button 
+                        type="button" 
+                        onClick={() => setBookingModal({ isOpen: false, place: null })}
+                        className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        type="submit" 
+                        disabled={bookingLoading}
+                        className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {bookingLoading ? 'Booking...' : 'Confirm Book'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

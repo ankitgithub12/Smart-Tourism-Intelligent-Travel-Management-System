@@ -1,20 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Bus, MapPin, Users, Activity, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { transportAPI } from '../services/api';
 
 const Transport = () => {
-  const [transports, setTransports] = useState([
-    { id: 1, type: 'Electric Bus', plate: 'RJ-14-EB-0021', route: 'Pink City Circuit', location: 'Johari Bazar', load: 85, status: 'Active', capacity: 40 },
-    { id: 2, type: 'Smart Van', plate: 'RJ-14-SV-8842', route: 'Amber Fort Shuttle', location: 'Amer Road', load: 30, status: 'Active', capacity: 12 },
-    { id: 3, type: 'Metro Link', plate: 'ML-04', route: 'Mansarovar - Badi Chaupar', location: 'Sindhi Camp', load: 95, status: 'Crowded', capacity: 200 },
-    { id: 4, type: 'Electric Rickshaw', plate: 'RJ-14-ER-1102', route: 'Hawa Mahal Loop', location: 'Badi Chaupar', load: 10, status: 'Delayed', capacity: 4 },
-  ]);
+  const [transports, setTransports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransports = async () => {
+      try {
+        const response = await transportAPI.getAll();
+        setTransports(response.data);
+      } catch (err) {
+        console.error('Error fetching transports:', err);
+        // Fallback
+        setTransports([
+          { id: 1, vehicle_type: 'Electric Bus', vehicle_number: 'RJ-14-EB-0021', route_name: 'Pink City Circuit', current_location: 'Johari Bazar', current_load: 85, status: 'active', capacity: 40 },
+          { id: 2, vehicle_type: 'Smart Van', vehicle_number: 'RJ-14-SV-8842', route_name: 'Amber Fort Shuttle', current_location: 'Amer Road', current_load: 30, status: 'active', capacity: 12 },
+          { id: 3, vehicle_type: 'Metro Link', vehicle_number: 'ML-04', route_name: 'Mansarovar - Badi Chaupar', current_location: 'Sindhi Camp', current_load: 95, status: 'delayed', capacity: 200 },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTransports();
+  }, []);
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'text-green-600 bg-green-50';
-      case 'Crowded': return 'text-orange-600 bg-orange-50';
-      case 'Delayed': return 'text-red-600 bg-red-50';
+    switch (status?.toLowerCase()) {
+      case 'active': return 'text-green-600 bg-green-50';
+      case 'crowded': return 'text-orange-600 bg-orange-50';
+      case 'delayed': return 'text-red-600 bg-red-50';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
@@ -43,7 +60,11 @@ const Transport = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main List */}
           <div className="lg:col-span-2 space-y-4">
-            {transports.map((unit, idx) => (
+            {loading ? (
+              <div className="text-center py-10">Loading transport data...</div>
+            ) : transports.map((unit, idx) => {
+              const loadPercent = Math.round((unit.current_load / unit.capacity) * 100) || 0;
+              return (
               <motion.div
                 key={unit.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -57,8 +78,8 @@ const Transport = () => {
                 
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                    <h3 className="text-xl font-black text-gray-900">{unit.type}</h3>
-                    <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-2 py-1 rounded-lg uppercase">{unit.plate}</span>
+                    <h3 className="text-xl font-black text-gray-900">{unit.vehicle_type}</h3>
+                    <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-2 py-1 rounded-lg uppercase">{unit.vehicle_number}</span>
                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase ${getStatusColor(unit.status)}`}>
                       {unit.status}
                     </span>
@@ -66,11 +87,11 @@ const Transport = () => {
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm font-bold text-gray-400">
                     <div className="flex items-center gap-2">
                       <MapPin size={16} className="text-blue-500" />
-                      {unit.route}
+                      {unit.route_name}
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock size={16} className="text-blue-500" />
-                      Next Stop: {unit.location}
+                      Next Stop: {unit.current_location}
                     </div>
                   </div>
                 </div>
@@ -78,21 +99,21 @@ const Transport = () => {
                 <div className="w-full md:w-48 pt-4 md:pt-0">
                   <div className="flex justify-between items-end mb-2">
                     <span className="text-xs font-black text-gray-400 uppercase">Live Load</span>
-                    <span className={`text-sm font-black ${unit.load > 80 ? 'text-orange-500' : 'text-blue-600'}`}>
-                      {unit.load}%
+                    <span className={`text-sm font-black ${loadPercent > 80 ? 'text-orange-500' : 'text-blue-600'}`}>
+                      {loadPercent}%
                     </span>
                   </div>
                   <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${unit.load}%` }}
+                      animate={{ width: `${loadPercent}%` }}
                       transition={{ duration: 1, delay: 0.5 }}
-                      className={`h-full rounded-full ${unit.load > 80 ? 'bg-orange-500' : 'bg-blue-600'}`}
+                      className={`h-full rounded-full ${loadPercent > 80 ? 'bg-orange-500' : 'bg-blue-600'}`}
                     />
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )})}
           </div>
 
           {/* Sidebar Insights */}

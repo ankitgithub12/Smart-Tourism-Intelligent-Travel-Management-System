@@ -37,6 +37,22 @@ class BookingController extends Controller
         return response()->json(['id' => $id, 'message' => 'Booking created successfully'], 201);
     }
 
+    public function show(Request $request, $id)
+    {
+        $booking = DB::table('bookings')
+            ->join('tourist_places', 'bookings.tourist_place_id', '=', 'tourist_places.id')
+            ->where('bookings.id', $id)
+            ->where('bookings.user_id', $request->user()->id)
+            ->select('bookings.*', 'tourist_places.name as place_name', 'tourist_places.image as place_image', 'tourist_places.location as place_location')
+            ->first();
+
+        if (!$booking) {
+            return response()->json(['message' => 'Booking not found or unauthorized'], 404);
+        }
+
+        return response()->json($booking);
+    }
+
     public function destroy(Request $request, $id)
     {
         $booking = DB::table('bookings')->where('id', $id)->where('user_id', $request->user()->id)->first();

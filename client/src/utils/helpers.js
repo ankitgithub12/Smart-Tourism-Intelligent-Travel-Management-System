@@ -12,6 +12,18 @@ export const crowdColor = (level) => {
 };
 
 /**
+ * Converts a numeric crowd level to a string
+ */
+export const getCrowdLevelString = (level) => {
+  if (typeof level === 'string') return level;
+  if (level === undefined || level === null) return 'Low';
+  if (level >= 80) return 'Overcrowded';
+  if (level >= 60) return 'High';
+  if (level >= 30) return 'Medium';
+  return 'Low';
+};
+
+/**
  * Returns a Tailwind bar color class based on percentage number
  */
 export const crowdBarColor = (percent) => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Send, MapPin, Star, Users, Clock, Loader2, Sparkles } from 'lucide-react';
-import { aiAPI } from '../services/api';
+import { aiAPI } from '../../services/api';
 
 const sampleRecs = [
   { name: 'Nahargarh Fort', location: 'Jaipur', crowdLevel: 'Low', bestTime: 'Morning', rating: 4.6, reason: 'Less crowded with stunning city views at sunrise.' },
