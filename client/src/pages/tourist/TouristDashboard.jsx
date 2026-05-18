@@ -1,57 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { 
   MapPin, 
-  Users, 
   Calendar,
   Compass,
   Heart,
   Navigation,
   Clock,
-  ChevronRight,
   TrendingUp,
   Map,
   Star as StarIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { bookingsAPI, placesAPI } from '../../services/api';
+import { fetchUserBookings } from '../../redux/bookingsSlice';
+import { fetchPlaces } from '../../redux/placesSlice';
 
 const TouristDashboard = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [savedPlacesCount, setSavedPlacesCount] = useState(0);
+  const { userBookings, loading: bookingsLoading } = useSelector((state) => state.bookings);
+  const { list: places, loading: placesLoading } = useSelector((state) => state.places);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [bookingsRes, placesRes] = await Promise.all([
-          bookingsAPI.getAll(),
-          placesAPI.getAll()
-        ]);
-        
-        setBookings(bookingsRes.data);
-        // Simulate saved places for now if no specific API exists
-        setSavedPlacesCount(Math.floor(Math.random() * 10) + 5);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchUserBookings());
+    dispatch(fetchPlaces({ limit: 5 }));
+  }, [dispatch]);
 
-    fetchDashboardData();
-  }, []);
+  const loading = bookingsLoading || placesLoading;
+  
+  // Safe default to empty array if userBookings is undefined or null
+  const safeBookings = Array.isArray(userBookings) ? userBookings : [];
 
-  const upcomingTrips = bookings
-    .filter(b => new Date(b.booking_date) >= new Date())
+  const upcomingTrips = safeBookings
+    .filter(b => new Date(b.booking_date) >= new Date() && b.status !== 'cancelled')
     .slice(0, 3);
 
-  const completedTrips = bookings
-    .filter(b => new Date(b.booking_date) < new Date())
+  const completedTrips = safeBookings
+    .filter(b => new Date(b.booking_date) < new Date() && b.status === 'completed')
     .length;
+
+  // Use real data where possible, simulate others for now
+  const savedPlacesCount = Math.floor(Math.random() * 10) + 5;
 
   const stats = [
     { title: 'Trips Taken', value: completedTrips, change: '+1 this month', icon: Compass, color: 'bg-blue-600' },
