@@ -308,8 +308,9 @@ class BookingController extends Controller
                 default     => 'Booking Update — Smart Tourism',
             };
 
+            $placeName = $booking->place_name ?? 'a destination';
             Mail::raw(
-                "Hello {$user->name},\n\nYour booking for {$booking->place_name ?? 'a destination'} on {$booking->booking_date} has been {$type}.\n\nThank you for using Smart Tourism!",
+                "Hello {$user->name},\n\nYour booking for {$placeName} on {$booking->booking_date} has been {$type}.\n\nThank you for using Smart Tourism!",
                 
                 fn ($m) => $m->to($user->email)->subject($subject)
             );
