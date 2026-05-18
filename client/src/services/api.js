@@ -51,9 +51,15 @@ export const placesAPI = {
 
 // ── Bookings ──────────────────────────────────────────
 export const bookingsAPI = {
-  getAll: () => api.get('/bookings'),
+  getAll: (params) => api.get('/bookings', { params }),
+  getOne: (id) => api.get(`/bookings/${id}`),
   create: (data) => api.post('/bookings', data),
+  update: (id, data) => api.put(`/bookings/${id}`, data),
   remove: (id) => api.delete(`/bookings/${id}`),
+  confirm: (id) => api.post(`/bookings/${id}/confirm`),
+  cancel: (id) => api.post(`/bookings/${id}/cancel`),
+  getReceipt: (id) => api.get(`/bookings/${id}/receipt`),
+  bookTransport: (data) => api.post('/bookings/transport', data),
 };
 
 // ── Reviews ───────────────────────────────────────────
@@ -61,6 +67,8 @@ export const reviewsAPI = {
   getAll: () => api.get('/reviews'),
   getByPlace: (placeId) => api.get(`/reviews/${placeId}`),
   create: (data) => api.post('/reviews', data),
+  update: (id, data) => api.put(`/reviews/${id}`, data),
+  remove: (id) => api.delete(`/reviews/${id}`),
 };
 
 // ── Favorites ─────────────────────────────────────────
@@ -72,7 +80,12 @@ export const favoritesAPI = {
 
 // ── Transport ─────────────────────────────────────────
 export const transportAPI = {
-  getAll: () => api.get('/transports'),
+  getAll: (params) => api.get('/transports', { params }),
+  getOne: (id) => api.get(`/transports/${id}`),
+  checkAvailability: (id) => api.get(`/transports/${id}/availability`),
+  create: (data) => api.post('/transports', data),
+  update: (id, data) => api.put(`/transports/${id}`, data),
+  updateLoad: (id, load) => api.patch(`/transports/${id}/load`, { current_load: load }),
 };
 
 // ── AI ────────────────────────────────────────────────
@@ -88,6 +101,10 @@ export const userAPI = {
   getProfile: () => api.get('/user'),
   updateProfile: (data) => api.put('/user', data),
   getAdminStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  getUser: (id) => api.get(`/admin/users/${id}`),
+  deactivateUser: (id) => api.post(`/admin/users/${id}/deactivate`),
+  activateUser: (id) => api.post(`/admin/users/${id}/activate`),
 };
 
 export default api;
