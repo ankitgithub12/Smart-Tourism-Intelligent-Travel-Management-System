@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Events\BookingStatusUpdated;
 
 class BookingController extends Controller
 {
@@ -161,7 +162,11 @@ class BookingController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        $booking = DB::table('bookings')->where('id', $id)->first();
+        $booking = DB::table('bookings')
+            ->join('tourist_places', 'bookings.tourist_place_id', '=', 'tourist_places.id')
+            ->where('bookings.id', $id)
+            ->select('bookings.*', 'tourist_places.name as place_name')
+            ->first();
         if (!$booking) {
             return response()->json(['message' => 'Booking not found.'], 404);
         }
@@ -179,6 +184,9 @@ class BookingController extends Controller
         $tourist = DB::table('users')->where('id', $booking->user_id)->first();
         if ($tourist) {
             $this->sendBookingEmail($tourist, $booking, 'confirmed');
+            
+            // Real-time broadcast
+            event(new BookingStatusUpdated($booking, 'confirmed', $booking->user_id));
         }
 
         return response()->json(['message' => 'Booking confirmed successfully.']);
@@ -191,9 +199,13 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $query = DB::table('bookings')->where('id', $id);
+        $query = DB::table('bookings')
+            ->join('tourist_places', 'bookings.tourist_place_id', '=', 'tourist_places.id')
+            ->where('bookings.id', $id)
+            ->select('bookings.*', 'tourist_places.name as place_name');
+            
         if ($user->role !== 'authority') {
-            $query->where('user_id', $user->id);
+            $query->where('bookings.user_id', $user->id);
         }
 
         $booking = $query->first();
@@ -223,6 +235,9 @@ class BookingController extends Controller
         $tourist = DB::table('users')->where('id', $booking->user_id)->first();
         if ($tourist) {
             $this->sendBookingEmail($tourist, $booking, 'cancelled');
+            
+            // Real-time broadcast
+            event(new BookingStatusUpdated($booking, 'cancelled', $booking->user_id));
         }
 
         return response()->json([
@@ -295,6 +310,7 @@ class BookingController extends Controller
 
             Mail::raw(
                 "Hello {$user->name},\n\nYour booking for {$booking->place_name ?? 'a destination'} on {$booking->booking_date} has been {$type}.\n\nThank you for using Smart Tourism!",
+                
                 fn ($m) => $m->to($user->email)->subject($subject)
             );
         } catch (\Exception $e) {
