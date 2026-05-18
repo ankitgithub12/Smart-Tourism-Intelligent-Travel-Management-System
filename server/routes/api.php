@@ -7,58 +7,95 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PlaceController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\TransportController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\AIServiceController;
 
-// Auth Routes
+/* ═══════════════════════════════════════════════════════════════════════════
+   PUBLIC ROUTES (no auth required)
+═══════════════════════════════════════════════════════════════════════════ */
+
+// Auth
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/password/email', [AuthController::class, 'sendResetLinkEmail']);
 Route::post('/password/reset', [AuthController::class, 'resetPassword']);
+
+// Public Places
+Route::get('/places',                          [PlaceController::class, 'index']);
+Route::get('/places/{id}',                     [PlaceController::class, 'show']);
+Route::get('/places/{id}/reviews',             [PlaceController::class, 'reviews']);
+Route::get('/places/{id}/ratings-summary',     [PlaceController::class, 'ratingsSummary']);
+Route::get('/places/{id}/crowd-status',        [PlaceController::class, 'crowdStatus']);
+
+// Public Reviews (home page testimonials)
+Route::get('/reviews',            [ReviewController::class, 'all']);
+Route::get('/reviews/{placeId}',  [ReviewController::class, 'index']);
+
+// Public Transports
+Route::get('/transports',         [TransportController::class, 'index']);
+Route::get('/transports/{id}',    [TransportController::class, 'show']);
+Route::get('/transports/{id}/availability', [TransportController::class, 'availability']);
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AUTHENTICATED ROUTES (any logged-in user)
+═══════════════════════════════════════════════════════════════════════════ */
+
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'me']);
-    Route::put('/user', [\App\Http\Controllers\UserController::class, 'update']);
-    Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store']);
-    
-    // Favorites
-    Route::get('/favorites', [\App\Http\Controllers\FavoriteController::class, 'index']);
-    Route::post('/favorites', [\App\Http\Controllers\FavoriteController::class, 'store']);
-    Route::delete('/favorites/{id}', [\App\Http\Controllers\FavoriteController::class, 'destroy']);
-});
-Route::get('/reviews', [\App\Http\Controllers\ReviewController::class, 'all']);
-Route::get('/reviews/{placeId}', [\App\Http\Controllers\ReviewController::class, 'index']);
+    Route::get('/user',    [AuthController::class, 'me']);
+    Route::put('/user',    [UserController::class, 'update']);
 
-// Admin Stats
-Route::middleware(['auth:sanctum'])->get('/admin/stats', [\App\Http\Controllers\UserController::class, 'adminStats']);
+    // ── Bookings ──────────────────────────────────────────────────────────
+    Route::get('/bookings',                 [BookingController::class, 'index']);
+    Route::post('/bookings',                [BookingController::class, 'store']);
+    Route::get('/bookings/{id}',            [BookingController::class, 'show']);
+    Route::put('/bookings/{id}',            [BookingController::class, 'update']);
+    Route::delete('/bookings/{id}',         [BookingController::class, 'destroy']);
+    Route::get('/bookings/{id}/receipt',    [BookingController::class, 'receipt']);
+    Route::post('/bookings/{id}/confirm',   [BookingController::class, 'confirm']);
+    Route::post('/bookings/{id}/cancel',    [BookingController::class, 'cancel']);
 
-// Tourist Place Routes
-Route::get('/places', [PlaceController::class, 'index']);
-Route::get('/places/{id}', [PlaceController::class, 'show']);
-// In a real app we'd use a role middleware here, but for simplicity we'll check role in controller or just require auth for now since middleware isn't set up
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/places', [PlaceController::class, 'store']);
-    Route::put('/places/{id}', [PlaceController::class, 'update']);
-    Route::delete('/places/{id}', [PlaceController::class, 'destroy']);
-});
+    // ── Transport Booking ─────────────────────────────────────────────────
+    Route::post('/bookings/transport',      [TransportController::class, 'bookTransport']);
 
-// Booking Routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/bookings', [BookingController::class, 'index']);
-    Route::get('/bookings/{id}', [BookingController::class, 'show']);
-    Route::post('/bookings', [BookingController::class, 'store']);
-    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
-});
+    // ── Reviews ───────────────────────────────────────────────────────────
+    Route::post('/reviews',                 [ReviewController::class, 'store']);
+    Route::put('/reviews/{id}',             [ReviewController::class, 'update']);
+    Route::delete('/reviews/{id}',          [ReviewController::class, 'destroy']);
 
-// Transport Routes
-Route::get('/transports', [TransportController::class, 'index']);
-Route::middleware(['auth:sanctum'])->group(function () {
+    // ── Favorites / Saved Places ──────────────────────────────────────────
+    Route::get('/favorites',                [FavoriteController::class, 'index']);
+    Route::post('/favorites',               [FavoriteController::class, 'store']);
+    Route::delete('/favorites/{id}',        [FavoriteController::class, 'destroy']);
+
+    // ── AI Services ───────────────────────────────────────────────────────
+    Route::prefix('ai')->group(function () {
+        Route::post('/chat',            [AIServiceController::class, 'chat']);
+        Route::post('/recommend',       [AIServiceController::class, 'recommend']);
+        Route::post('/crowd-predict',   [AIServiceController::class, 'crowdPredict']);
+        Route::post('/sentiment',       [AIServiceController::class, 'sentiment']);
+    });
+
+    // ── Agency/Admin: Places CRUD ─────────────────────────────────────────
+    Route::post('/places',              [PlaceController::class, 'store']);
+    Route::put('/places/{id}',          [PlaceController::class, 'update']);
+    Route::delete('/places/{id}',       [PlaceController::class, 'destroy']);
+
+    // ── Agency/Admin: Transports CRUD ─────────────────────────────────────
+    Route::post('/transports',          [TransportController::class, 'store']);
+    Route::put('/transports/{id}',      [TransportController::class, 'update']);
     Route::patch('/transports/{id}/load', [TransportController::class, 'updateLoad']);
-});
 
-// AI Service Proxy Routes
-Route::middleware(['auth:sanctum'])->prefix('ai')->group(function () {
-    Route::post('/chat', [AIServiceController::class, 'chat']);
-    Route::post('/recommend', [AIServiceController::class, 'recommend']);
-    Route::post('/crowd-predict', [AIServiceController::class, 'crowdPredict']);
-    Route::post('/sentiment', [AIServiceController::class, 'sentiment']);
+    // ── Admin-only ────────────────────────────────────────────────────────
+    Route::prefix('admin')->group(function () {
+        Route::get('/stats',                        [UserController::class, 'adminStats']);
+        Route::get('/users',                        [UserController::class, 'listUsers']);
+        Route::get('/users/{id}',                   [UserController::class, 'showUser']);
+        Route::post('/users/{id}/deactivate',       [UserController::class, 'deactivateUser']);
+        Route::post('/users/{id}/activate',         [UserController::class, 'activateUser']);
+    });
 });
