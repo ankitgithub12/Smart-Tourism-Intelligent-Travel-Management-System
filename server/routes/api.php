@@ -109,4 +109,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users',                        [UserController::class, 'listUsers']);
         Route::get('/users/{id}',                   [UserController::class, 'showUser']);
         Route::post('/users/{id}/deactivate',       [UserController::class, 'deactivateUser']);
-        Route::
+        Route::post('/users/{id}/activate',         [UserController::class, 'activateUser']);
+    });
+});

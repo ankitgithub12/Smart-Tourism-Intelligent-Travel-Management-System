@@ -62,6 +62,11 @@ export const bookingsAPI = {
   bookTransport: (data) => api.post('/bookings/transport', data),
 };
 
+// ── Payments ──────────────────────────────────────────
+export const paymentAPI = {
+  confirm: (sessionId, tripId) => api.post('/payment/confirm', { session_id: sessionId, trip_id: tripId }),
+};
+
 // ── Reviews ───────────────────────────────────────────
 export const reviewsAPI = {
   getAll: () => api.get('/reviews'),

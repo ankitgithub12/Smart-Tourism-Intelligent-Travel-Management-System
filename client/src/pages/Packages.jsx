@@ -93,7 +93,7 @@ const Packages = () => {
                     <p className="text-2xl font-black text-[hsl(var(--primary))]">₹{pkg.price.toLocaleString()}</p>
                     <p className="text-xs text-[hsl(var(--text-muted))]">per person</p>
                   </div>
-                  <Link to="/planner" className="btn-primary !py-2.5 !px-5 text-sm flex items-center gap-2">
+                  <Link to={`/planner?to=${pkg.dest}`} className="btn-primary !py-2.5 !px-5 text-sm flex items-center gap-2">
                     Book <ArrowRight size={14} />
                   </Link>
                 </div>
