@@ -11,6 +11,8 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AIServiceController;
+use App\Http\Controllers\API\TripController;
+use App\Http\Controllers\API\PaymentController;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PUBLIC ROUTES (no auth required)
@@ -39,6 +41,9 @@ Route::get('/transports',         [TransportController::class, 'index']);
 Route::get('/transports/{id}',    [TransportController::class, 'show']);
 Route::get('/transports/{id}/availability', [TransportController::class, 'availability']);
 
+// Stripe Webhook (must not have auth/CSRF middleware)
+Route::post('/stripe/webhook',    [PaymentController::class, 'webhook']);
+
 /* ═══════════════════════════════════════════════════════════════════════════
    AUTHENTICATED ROUTES (any logged-in user)
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -60,6 +65,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bookings/{id}/receipt',    [BookingController::class, 'receipt']);
     Route::post('/bookings/{id}/confirm',   [BookingController::class, 'confirm']);
     Route::post('/bookings/{id}/cancel',    [BookingController::class, 'cancel']);
+
+    // ── Trips (Smart Planner) ─────────────────────────────────────────────
+    Route::get('/trips',                    [TripController::class, 'index']);
+    Route::post('/trips',                   [TripController::class, 'store']);
+    Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession']);
+    Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment']);
 
     // ── Transport Booking ─────────────────────────────────────────────────
     Route::post('/bookings/transport',      [TransportController::class, 'bookTransport']);
@@ -98,6 +109,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users',                        [UserController::class, 'listUsers']);
         Route::get('/users/{id}',                   [UserController::class, 'showUser']);
         Route::post('/users/{id}/deactivate',       [UserController::class, 'deactivateUser']);
-        Route::post('/users/{id}/activate',         [UserController::class, 'activateUser']);
-    });
-});
+        Route::

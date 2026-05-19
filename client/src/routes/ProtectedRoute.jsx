@@ -15,7 +15,14 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   if (requiredRole && user?.role !== requiredRole) {
-    return <Navigate to="/dashboard" replace />;
+    const dashboardRoutes = {
+      authority: '/admin/dashboard',
+      admin: '/admin/dashboard',
+      agency: '/agency/dashboard',
+      tourist: '/dashboard',
+    };
+    const dest = dashboardRoutes[user?.role] || '/dashboard';
+    return <Navigate to={dest} replace />;
   }
 
   return children;

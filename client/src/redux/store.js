@@ -1,15 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
+import tripReducer from './tripSlice';
 import authReducer from './authSlice';
-import placesReducer from './placesSlice';
-import bookingsReducer from './bookingsSlice';
-import notificationsReducer from './notificationsSlice';
 
 const store = configureStore({
   reducer: {
+    trip: tripReducer,
     auth: authReducer,
-    places: placesReducer,
-    bookings: bookingsReducer,
-    notifications: notificationsReducer,
   },
 });
 

@@ -31,8 +31,16 @@ const ChatAssistant = () => {
     setIsLoading(true);
 
     try {
-      // Use the centralized api.js which handles auth tokens
-      const response = await aiAPI.chat(userMsg.content);
+      // Send full chat history for context awareness
+      const messagesForAI = chatHistory
+        .filter(msg => msg.role !== undefined)
+        .concat(userMsg)
+        .map(msg => ({
+          role: msg.role === 'assistant' ? 'assistant' : 'user',
+          content: msg.content
+        }));
+
+      const response = await aiAPI.chatWithHistory(messagesForAI);
 
       const aiReply = { 
         role: 'assistant', 

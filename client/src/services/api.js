@@ -91,6 +91,7 @@ export const transportAPI = {
 // ── AI ────────────────────────────────────────────────
 export const aiAPI = {
   chat: (message) => api.post('/ai/chat', { message }),
+  chatWithHistory: (messages) => api.post('/ai/chat', { messages }),
   recommend: (preferences) => api.post('/ai/recommend', { preferences }),
   crowdPredict: (location_data) => api.post('/ai/crowd-predict', { location_data }),
   sentiment: (text) => api.post('/ai/sentiment', { text }),
@@ -106,5 +107,9 @@ export const userAPI = {
   deactivateUser: (id) => api.post(`/admin/users/${id}/deactivate`),
   activateUser: (id) => api.post(`/admin/users/${id}/activate`),
 };
-
+// ── Third-party API Keys ──────────────────────────
+export const externalAPIs = {
+  googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  openWeatherApiKey: import.meta.env.VITE_OPENWEATHER_API_KEY || '',
+};
 export default api;

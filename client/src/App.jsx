@@ -7,25 +7,39 @@ import MainLayout from './layouts/MainLayout';
 // Components
 import ProtectedRoute from './routes/ProtectedRoute';
 
-// Pages
+// Public Pages
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import TouristDashboard from './pages/tourist/TouristDashboard';
 import Destinations from './pages/Destinations';
-import MyTrips from './pages/tourist/MyTrips';
-import Profile from './pages/Profile';
-import AIRecommendations from './pages/tourist/AIRecommendations';
-import SavedDestinations from './pages/tourist/SavedDestinations';
-import Transport from './pages/Transport';
-import Notifications from './pages/Notifications';
-import AgencyDashboard from './pages/agency/AgencyDashboard';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import Packages from './pages/Packages';
+import Hotels from './pages/Hotels';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
+
+// Protected Pages (shared)
+import Profile from './pages/Profile';
+import Transport from './pages/Transport';
+import Notifications from './pages/Notifications';
+import TripPlanner from './pages/TripPlanner';
+import Settings from './pages/Settings';
+
+// Tourist Pages
+import TouristDashboard from './pages/tourist/TouristDashboard';
+import MyTrips from './pages/tourist/MyTrips';
+import SavedDestinations from './pages/tourist/SavedDestinations';
+import AIRecommendations from './pages/tourist/AIRecommendations';
+
+// Agency Pages
+import AgencyDashboard from './pages/agency/AgencyDashboard';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 function App() {
   return (
@@ -36,6 +50,8 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/destinations" element={<Destinations />} />
+        <Route path="/packages" element={<Packages />} />
+        <Route path="/hotels" element={<Hotels />} />
       </Route>
 
       {/* Auth Routes - No MainLayout (Full-screen) */}
@@ -44,14 +60,22 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
-      {/* Protected Routes - Wrapped in MainLayout */}
+      {/* General Protected Routes - Shared by all authenticated users */}
       <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<TouristDashboard />} />
         <Route path="/profile" element={<Profile />} />
-        <Route path="/my-trips" element={<MyTrips />} />
-        <Route path="/saved" element={<SavedDestinations />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/transport" element={<Transport />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/planner" element={<TripPlanner />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
+      </Route>
+
+      {/* Tourist Protected Routes */}
+      <Route element={<ProtectedRoute requiredRole="tourist"><MainLayout /></ProtectedRoute>}>
+        <Route path="/dashboard" element={<TouristDashboard />} />
+        <Route path="/my-trips" element={<MyTrips />} />
+        <Route path="/saved" element={<SavedDestinations />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
       </Route>
 

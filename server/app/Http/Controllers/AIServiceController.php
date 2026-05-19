@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\AIService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AIServiceController extends Controller
 {
@@ -16,9 +17,28 @@ class AIServiceController extends Controller
 
     public function chat(Request $request)
     {
-        $request->validate(['message' => 'required|string']);
-        $result = $this->aiService->chat($request->message);
-        return response()->json($result ?: ['reply' => 'AI Service is currently unavailable.']);
+        // Support both single message and full message history
+        if ($request->has('messages')) {
+            // New format: full message history for context awareness
+            $request->validate(['messages' => 'required|array']);
+            $messages = $request->messages;
+        } else {
+            // Legacy format: single message
+            $request->validate(['message' => 'required|string']);
+            $messages = [
+                ['role' => 'user', 'content' => $request->message]
+            ];
+        }
+        
+        try {
+            $result = $this->aiService->chat($messages);
+            return response()->json($result ?: ['reply' => 'AI Service is currently unavailable.']);
+        } catch (\Exception $e) {
+            Log::error('Chat Error: ' . $e->getMessage());
+            return response()->json([
+                'reply' => 'I apologize, but I\'m having trouble responding right now. Please try again in a moment.'
+            ]);
+        }
     }
 
     public function recommend(Request $request)

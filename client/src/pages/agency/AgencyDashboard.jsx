@@ -1,228 +1,108 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, 
-  Users, 
-  Package, 
-  TrendingUp, 
-  Star, 
-  Briefcase, 
-  Plus,
-  MessageSquare,
-  ArrowUpRight,
-  MoreHorizontal
-} from 'lucide-react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
-import { bookingsAPI, placesAPI, reviewsAPI } from '../../services/api';
+import { Building2, Users, DollarSign, TrendingUp, Hotel, Car, Star, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const AgencyDashboard = () => {
-  const { user } = useSelector((state) => state.auth);
-  const [bookings, setBookings] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAgencyData = async () => {
-      try {
-        setLoading(true);
-        // In a real app, we would fetch bookings specifically for this agency
-        const bookingsRes = await bookingsAPI.getAll();
-        setBookings(bookingsRes.data);
-        
-        const reviewsRes = await reviewsAPI.getAll();
-        setReviews(reviewsRes.data);
-      } catch (error) {
-        console.error('Error fetching agency data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAgencyData();
-  }, []);
-
   const stats = [
-    { title: 'Total Packages', value: '12', change: '+2', icon: Package, color: 'bg-blue-600' },
-    { title: 'Active Bookings', value: bookings.length, change: '+12%', icon: Users, color: 'bg-emerald-600' },
-    { title: 'Total Revenue', value: `$${(bookings.length * 250).toLocaleString()}`, change: '+18%', icon: TrendingUp, color: 'bg-indigo-600' },
-    { title: 'Avg. Rating', value: '4.8', change: 'Top 5%', icon: Star, color: 'bg-orange-600' },
+    { label: 'Active Bookings', value: 45, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Revenue (Month)', value: '₹2.4L', icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Listed Properties', value: 12, icon: Building2, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+    { label: 'Average Rating', value: '4.8', icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ];
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-bold animate-pulse">Loading agency dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-6">
+    <div className="min-h-screen py-10 px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div className="flex justify-between items-end mb-10">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Agency Dashboard</h1>
-            <p className="text-gray-500 font-medium">Manage your travel packages and track your performance in real-time.</p>
+            <h1 className="text-3xl font-black mb-2">Agency Portal</h1>
+            <p className="text-[hsl(var(--text-muted))]">Manage your listings, bookings, and revenue.</p>
           </div>
-          <div className="flex gap-3">
-            <button className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm flex items-center gap-2">
-              <MessageSquare size={18} /> Inquiries
-            </button>
-            <button className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-200 flex items-center gap-2">
-              <Plus size={18} /> New Package
-            </button>
-          </div>
+          <button className="btn-primary flex items-center gap-2">
+            Add Listing
+          </button>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {stats.map((stat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className={`${stat.color} p-3 rounded-2xl text-white shadow-lg shadow-blue-900/10`}>
-                  <stat.icon size={22} />
-                </div>
-                <div className="flex items-center gap-1 text-xs font-bold px-2 py-1 bg-green-50 text-green-600 rounded-lg">
-                  <ArrowUpRight size={14} />
-                  {stat.change}
-                </div>
+          {stats.map((stat, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+              className="glass-surface rounded-3xl p-6 flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg}`}>
+                <stat.icon size={24} className={stat.color} />
               </div>
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">{stat.title}</p>
-              <h3 className="text-2xl font-black text-gray-900">{stat.value}</h3>
+              <div>
+                <p className="text-sm font-semibold text-[hsl(var(--text-muted))]">{stat.label}</p>
+                <p className="text-2xl font-black">{stat.value}</p>
+              </div>
             </motion.div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Bookings Table */}
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Briefcase className="text-blue-600" size={24} />
-                  Recent Package Bookings
-                </h2>
-                <button className="text-sm font-bold text-blue-600 hover:underline">View All</button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Area */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Recent Bookings */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-surface rounded-3xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-bold text-lg flex items-center gap-2"><TrendingUp size={20} className="text-[hsl(var(--primary))]" /> Recent Bookings</h2>
+                <Link to="#" className="text-sm text-[hsl(var(--primary))] font-semibold hover:underline">View All</Link>
               </div>
               
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-50">
-                      <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Customer</th>
-                      <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Package</th>
-                      <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
-                      <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
-                      <th className="pb-4 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Action</th>
+                    <tr className="border-b border-[hsl(var(--primary)/0.1)]">
+                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Customer</th>
+                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Listing</th>
+                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Dates</th>
+                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Amount</th>
+                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {bookings.slice(0, 5).map((booking, i) => (
-                      <tr key={i} className="group hover:bg-gray-50/50 transition-colors">
+                  <tbody>
+                    {[
+                      { name: 'Rahul Sharma', listing: 'Ocean Pearl Resort', dates: '12 Jun - 16 Jun', amount: '₹34,000', status: 'Confirmed', color: 'text-emerald-500 bg-emerald-500/10' },
+                      { name: 'Priya Patel', listing: 'Private Cab Service', dates: '14 Jun', amount: '₹1,500', status: 'Pending', color: 'text-amber-500 bg-amber-500/10' },
+                      { name: 'Amit Kumar', listing: 'Goa Heritage Tour', dates: '20 Jun', amount: '₹4,000', status: 'Confirmed', color: 'text-emerald-500 bg-emerald-500/10' },
+                    ].map((row, i) => (
+                      <tr key={i} className="border-b border-[hsl(var(--primary)/0.05)] last:border-0 hover:bg-[hsl(var(--primary)/0.02)] transition-colors">
+                        <td className="py-4 font-semibold">{row.name}</td>
+                        <td className="py-4 text-sm">{row.listing}</td>
+                        <td className="py-4 text-sm text-[hsl(var(--text-muted))]">{row.dates}</td>
+                        <td className="py-4 font-bold">{" "}{row.amount}</td>
                         <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 font-bold text-xs uppercase tracking-tighter shadow-inner">
-                              {booking.user?.name?.charAt(0) || 'U'}
-                            </div>
-                            <span className="font-bold text-gray-900 text-sm">{booking.user?.name || 'Anonymous'}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 text-sm text-gray-600 font-medium">{booking.place?.name || 'Custom Package'}</td>
-                        <td className="py-4 text-sm text-gray-500">{new Date(booking.booking_date).toLocaleDateString()}</td>
-                        <td className="py-4">
-                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                            'Confirmed' === 'Confirmed' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
-                          }`}>
-                            Confirmed
-                          </span>
-                        </td>
-                        <td className="py-4 text-right">
-                          <button className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-all">
-                            <MoreHorizontal size={18} />
-                          </button>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${row.color}`}>{row.status}</span>
                         </td>
                       </tr>
                     ))}
-                    {bookings.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="py-10 text-center text-gray-400 italic">No recent bookings found.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            {/* Performance Chart Placeholder */}
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <BarChart3 className="text-indigo-600" size={24} />
-                Revenue Performance
-              </h2>
-              <div className="h-48 flex items-center justify-center border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/30">
-                 <div className="text-center">
-                    <p className="text-gray-400 text-sm font-medium italic">Real-time revenue stream visualization...</p>
-                    <div className="flex gap-1 justify-center mt-3">
-                       {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.2}s` }} />)}
-                    </div>
-                 </div>
-              </div>
-            </div>
+            </motion.div>
           </div>
 
-          {/* Side Panel: Insights & Top Packages */}
-          <div className="space-y-8">
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-3xl shadow-xl text-white relative overflow-hidden group">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700"></div>
-              <h2 className="text-xl font-bold mb-4">Market Insight</h2>
-              <p className="text-blue-100 text-sm mb-6 leading-relaxed">
-                Demand for <strong>Cultural Walking Tours</strong> is up by 40% this week based on AI sentiment analysis.
-              </p>
-              <button className="w-full bg-white text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
-                Analyze Market
-                <ArrowUpRight size={18} />
-              </button>
-            </div>
-
-            <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-               <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Star className="text-orange-500" size={24} />
-                Recent Reviews
-              </h2>
-              <div className="space-y-5">
-                 {reviews.length > 0 ? reviews.map((r, i) => (
-                   <div key={i} className="pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-                      <div className="flex justify-between mb-1">
-                        <span className="font-bold text-sm text-gray-900">{r.user_name || 'Anonymous'}</span>
-                        <div className="flex text-orange-400">
-                           {[...Array(r.rating || 5)].map((_, i) => <Star key={i} size={12} fill="currentColor" />)}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-500 line-clamp-2 italic">"{r.comment}"</p>
-                      <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest">
-                        {r.sentiment_label && (
-                          <span className={`mr-2 px-2 py-0.5 rounded ${r.sentiment_label === 'POSITIVE' ? 'bg-green-100 text-green-700' : r.sentiment_label === 'NEGATIVE' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
-                            {r.sentiment_label}
-                          </span>
-                        )}
-                        {new Date(r.created_at).toLocaleDateString()}
-                      </p>
-                   </div>
-                 )) : (
-                   <div className="text-gray-400 text-sm italic">No recent reviews found.</div>
-                 )}
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="glass-surface rounded-3xl p-6">
+              <h2 className="font-bold text-lg mb-4">Manage Listings</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
+                  <Hotel size={24} className="text-[hsl(var(--primary))]" /> Hotels
+                </button>
+                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
+                  <Car size={24} className="text-[hsl(var(--primary))]" /> Cabs
+                </button>
+                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
+                  <MapPin size={24} className="text-[hsl(var(--primary))]" /> Packages
+                </button>
+                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
+                  <Users size={24} className="text-[hsl(var(--primary))]" /> Guides
+                </button>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>

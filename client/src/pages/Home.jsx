@@ -1,123 +1,169 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Calendar, Users, Star, ArrowRight, Brain, TrendingUp, Bus, Shield, ChevronRight, Quote, Zap, BarChart3, Globe } from 'lucide-react';
+import { Search, MapPin, Calendar, Users, Star, ArrowRight, Brain, TrendingUp, Shield, ChevronRight, Quote, Zap, Globe, Hotel, UtensilsCrossed, Car, Leaf, DollarSign } from 'lucide-react';
+import { FaUmbrellaBeach, FaRoute, FaMountain, FaWater } from 'react-icons/fa';
 
 const destinations = [
-  { id: 1, name: 'City Palace', location: 'Jaipur, Rajasthan', rating: 4.8, crowdLevel: 'High', image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?q=80&w=800&auto=format&fit=crop' },
-  { id: 2, name: 'Amber Fort', location: 'Amer, Rajasthan', rating: 4.9, crowdLevel: 'Medium', image: 'https://images.unsplash.com/photo-1590050752117-23a97b62b423?q=80&w=800&auto=format&fit=crop' },
-  { id: 3, name: 'Hawa Mahal', location: 'Jaipur, Rajasthan', rating: 4.7, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1603262110263-fb0110e71329?q=80&w=800&auto=format&fit=crop' },
-  { id: 4, name: 'Jantar Mantar', location: 'Jaipur, Rajasthan', rating: 4.5, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=800&auto=format&fit=crop' },
+  { id: 1, name: 'Goa Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop' },
+  { id: 2, name: 'Jaipur Heritage', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?w=800&auto=format&fit=crop' },
+  { id: 3, name: 'Kerala Backwaters', location: 'Kerala, India', rating: 4.9, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&auto=format&fit=crop' },
+  { id: 4, name: 'Manali Valley', location: 'Himachal Pradesh', rating: 4.7, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop' },
 ];
 
 const features = [
-  { icon: Brain, title: 'AI Recommendations', desc: 'Personalised suggestions using Hugging Face sentence-transformers.', color: 'from-blue-500 to-blue-600' },
-  { icon: TrendingUp, title: 'Crowd Prediction', desc: 'Real-time and predictive crowd analytics for every hotspot.', color: 'from-purple-500 to-purple-600' },
-  { icon: Bus, title: 'Smart Transport', desc: 'Live route optimisation and transport availability in real time.', color: 'from-green-500 to-green-600' },
-  { icon: Shield, title: 'Secure & Reliable', desc: 'JWT & Sanctum auth with encrypted endpoints and role-based access.', color: 'from-orange-500 to-orange-600' },
-  { icon: BarChart3, title: 'City Analytics', desc: 'Authorities get live dashboards showing tourist flows and resources.', color: 'from-red-500 to-red-600' },
-  { icon: Globe, title: 'Multilingual Ready', desc: 'Built for global tourists with future multilingual AI support.', color: 'from-teal-500 to-teal-600' },
+  { icon: Brain, title: 'AI Smart Planner', desc: 'Plan complete trips with AI-powered recommendations and budget optimization.', color: 'from-[hsl(var(--primary))] to-[hsl(var(--primary-dark))]' },
+  { icon: Hotel, title: 'Hotel Booking', desc: 'Find and book the best hotels with real ratings, reviews and live pricing.', color: 'from-[hsl(var(--accent))] to-[hsl(var(--accent-light))]' },
+  { icon: UtensilsCrossed, title: 'Food Planning', desc: 'Customized meal plans — Veg, Non-Veg, Vegan — for your entire trip.', color: 'from-[hsl(var(--secondary))] to-orange-400' },
+  { icon: Car, title: 'Cab & Vehicle Rental', desc: 'Book pickups, drops, and rental vehicles from bikes to luxury SUVs.', color: 'from-purple-500 to-purple-600' },
+  { icon: Leaf, title: 'Eco Tourism', desc: 'Carbon footprint tracking, eco scores, and green travel suggestions.', color: 'from-emerald-500 to-emerald-600' },
+  { icon: Shield, title: 'Emergency System', desc: 'SOS button, nearby hospitals, police stations, and live location sharing.', color: 'from-red-500 to-red-600' },
+];
+
+const stats = [
+  { value: '50K+', label: 'Happy Tourists' },
+  { value: '500+', label: 'Destinations' },
+  { value: '200+', label: 'Hotels' },
+  { value: '24/7', label: 'AI Support' },
 ];
 
 const testimonials = [
-  { name: 'Priya Sharma', role: 'Solo Traveller', text: 'SmartTourism transformed my Jaipur trip. The crowd alerts helped me visit City Palace at the perfect time!', rating: 5 },
-  { name: 'Rahul Mehta', role: 'Travel Agency Manager', text: 'The admin dashboard gives us visibility into tourist flow. A game-changer for tour planning.', rating: 5 },
-  { name: 'Anjali Singh', role: 'City Tourism Officer', text: 'We saw a 30% drop in traffic bottlenecks during peak season after deploying this platform.', rating: 5 },
+  { name: 'Priya Sharma', role: 'Solo Traveller', text: 'The Smart Planner saved me hours! I booked hotel, food, and cab all in one place. Absolutely magical experience.', rating: 5 },
+  { name: 'Rahul Mehta', role: 'Travel Agency Manager', text: 'The agency dashboard gives real-time insights into bookings and revenue. A game-changer for our business.', rating: 5 },
+  { name: 'Anjali Singh', role: 'Adventure Enthusiast', text: 'Crowd predictions helped me visit places at the perfect time. The AI assistant was like having a local guide!', rating: 5 },
 ];
 
-const crowdColors = { Low: 'bg-green-500', Medium: 'bg-orange-500', High: 'bg-red-500' };
-const stats = [
-  { value: '50K+', label: 'Happy Tourists' }, { value: '200+', label: 'Destinations' },
-  { value: '95%', label: 'Accuracy Rate' }, { value: '24/7', label: 'AI Support' },
-];
+const crowdColors = { Low: 'bg-emerald-500', Medium: 'bg-amber-500', High: 'bg-red-500' };
 
 const Home = () => {
-  const [searchWhere, setSearchWhere] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
 
   return (
-    <div className="bg-white">
-      {/* Hero */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-white">
-        <div className="absolute top-[-5%] left-[-10%] w-[45%] h-[45%] bg-blue-200/40 rounded-full blur-3xl animate-blob" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-green-200/30 rounded-full blur-3xl animate-blob" style={{ animationDelay: '3s' }} />
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+    <div>
+      {/* ═══════ HERO ═══════ */}
+      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-[var(--hero-gradient)] opacity-90" />
+
+        {/* Animated blobs */}
+        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-white/10 rounded-full blur-3xl animate-blob" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] bg-white/10 rounded-full blur-3xl animate-blob" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-white/5 rounded-full blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
+
+        {/* Wave bottom */}
+        <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120" preserveAspectRatio="none">
+          <path d="M0,80 C360,120 720,40 1080,80 C1260,100 1380,60 1440,80 L1440,120 L0,120 Z" fill="hsl(var(--bg-start))" opacity="0.6" />
+          <path d="M0,90 C320,50 640,110 960,80 C1200,60 1360,100 1440,90 L1440,120 L0,120 Z" fill="hsl(var(--bg-start))" />
+        </svg>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold px-4 py-2 rounded-full mb-6">
-            <Zap size={12} /> AI-Powered Smart Tourism Platform
+            className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-5 py-2.5 rounded-full mb-8">
+            <Zap size={14} /> AI-Powered Smart Tourism Platform
           </motion.div>
+
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}
-            className="text-5xl md:text-7xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">
-            Explore the World<br /><span className="gradient-text">Smarter & Safer</span>
+            className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[1.1] tracking-tight">
+            Explore. Experience.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-200 to-orange-200">
+              Enjoy The World 🌍
+            </span>
           </motion.h1>
+
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            className="text-lg text-gray-500 mb-12 max-w-2xl mx-auto">
-            AI-powered crowd predictions, real-time transport optimisation, and personalised destination recommendations.
+            className="text-lg md:text-xl text-white/70 mb-12 max-w-2xl mx-auto font-medium">
+            Smart trip planning with AI — book hotels, food, cabs, guides & vehicles all in one place.
           </motion.p>
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}
-            className="bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-100 p-2 flex flex-col md:flex-row gap-1 max-w-3xl mx-auto">
-            <div className="flex-1 flex items-center px-4 py-3 border-b md:border-b-0 md:border-r border-gray-100">
-              <MapPin className="text-blue-500 mr-3 shrink-0" size={18} />
-              <input type="text" placeholder="Where to go?" value={searchWhere} onChange={e => setSearchWhere(e.target.value)} className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none" />
+
+          {/* Smart Booking Bar */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-3 max-w-4xl mx-auto shadow-2xl">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
+                <MapPin className="text-white/60 mr-3 shrink-0" size={18} />
+                <input type="text" placeholder="From — Your City" value={from} onChange={e => setFrom(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+              </div>
+              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
+                <MapPin className="text-white/60 mr-3 shrink-0" size={18} />
+                <input type="text" placeholder="To — Destination" value={to} onChange={e => setTo(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+              </div>
+              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
+                <Calendar className="text-white/60 mr-3 shrink-0" size={18} />
+                <input type="date" className="w-full bg-transparent text-sm text-white/80 outline-none" />
+              </div>
+              <div className="flex items-center bg-white/10 rounded-2xl px-4 py-3">
+                <Users className="text-white/60 mr-3 shrink-0" size={18} />
+                <input type="number" placeholder="Guests" min="1" max="20" defaultValue="2"
+                  className="w-20 bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+              </div>
+              <Link to={`/planner?from=${from}&to=${to}`}
+                className="flex items-center justify-center gap-2 bg-white text-[hsl(var(--primary-dark))] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:bg-white/90 transition-all shadow-lg">
+                <Search size={18} /> MAKE TRIP
+              </Link>
             </div>
-            <div className="flex-1 flex items-center px-4 py-3 border-b md:border-b-0 md:border-r border-gray-100">
-              <Calendar className="text-blue-500 mr-3 shrink-0" size={18} />
-              <input type="text" placeholder="When?" className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none" />
-            </div>
-            <div className="flex-1 flex items-center px-4 py-3">
-              <Users className="text-blue-500 mr-3 shrink-0" size={18} />
-              <input type="text" placeholder="Travellers?" className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none" />
-            </div>
-            <Link to={`/destinations?q=${searchWhere}`} className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3.5 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all">
-              <Search size={18} /> Search
-            </Link>
           </motion.div>
-          <div className="mt-10 flex flex-wrap justify-center gap-6 text-xs font-semibold text-gray-400 uppercase tracking-widest">
-            {['Live Crowd Status', 'AI Recommendations', 'Smart Routing', 'Real-time Analytics'].map((label, i) => (
-              <span key={i} className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />{label}</span>
+
+          {/* Floating Tags */}
+          <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs font-bold text-white/50 uppercase tracking-widest">
+            {['Smart Planning', 'Hotel Booking', 'AI Assistant', 'Eco Travel'].map((label, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />{label}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-14 bg-gradient-to-r from-blue-600 to-blue-700">
+      {/* ═══════ STATS ═══════ */}
+      <section className="py-16 bg-gradient-to-r from-[hsl(var(--primary-dark))] to-[hsl(var(--primary))]">
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((s, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
-              <div className="text-4xl font-extrabold text-white mb-1">{s.value}</div>
-              <div className="text-blue-200 text-sm font-medium">{s.label}</div>
+              <div className="text-4xl md:text-5xl font-black text-white mb-1">{s.value}</div>
+              <div className="text-white/60 text-sm font-semibold">{s.label}</div>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Popular Destinations */}
-      <section className="py-20 px-6 bg-gray-50">
+      {/* ═══════ POPULAR DESTINATIONS ═══════ */}
+      <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider mb-2">Popular Destinations</p>
-              <h2 className="text-4xl font-bold text-gray-900">Top Places to Visit</h2>
+              <p className="text-[hsl(var(--primary))] font-bold text-sm uppercase tracking-wider mb-2">Popular Destinations</p>
+              <h2 className="text-4xl font-black">Trending Places</h2>
             </div>
-            <Link to="/destinations" className="hidden md:flex items-center gap-2 text-blue-600 font-semibold hover:gap-3 transition-all">View All <ArrowRight size={18} /></Link>
+            <Link to="/destinations" className="hidden md:flex items-center gap-2 text-[hsl(var(--primary))] font-bold hover:gap-3 transition-all">
+              View All <ArrowRight size={18} />
+            </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {destinations.map((place, idx) => (
               <motion.div key={place.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
-                className="bg-white rounded-3xl overflow-hidden shadow-sm card-hover border border-gray-100 group">
+                className="glass-surface rounded-3xl overflow-hidden card-hover group">
                 <div className="relative h-52 overflow-hidden">
-                  <img src={place.image} alt={place.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <img src={place.image} alt={place.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold text-amber-500 flex items-center gap-1">
                     <Star size={12} fill="currentColor" /> {place.rating}
                   </div>
-                  <div className={`absolute bottom-3 left-3 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 ${crowdColors[place.crowdLevel]}`}>
+                  <div className={`absolute bottom-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${crowdColors[place.crowdLevel]}`}>
                     <Users size={11} /> {place.crowdLevel}
                   </div>
                 </div>
                 <div className="p-5">
-                  <p className="text-blue-600 text-xs font-semibold flex items-center gap-1 mb-1"><MapPin size={11} /> {place.location}</p>
-                  <h3 className="text-gray-900 font-bold mb-3 group-hover:text-blue-600 transition-colors">{place.name}</h3>
-                  <Link to="/destinations" className="text-sm text-blue-600 font-semibold flex items-center gap-1 hover:gap-2 transition-all">Explore <ChevronRight size={14} /></Link>
+                  <p className="text-[hsl(var(--primary))] text-xs font-bold flex items-center gap-1 mb-1">
+                    <MapPin size={11} /> {place.location}
+                  </p>
+                  <h3 className="font-bold text-lg mb-3 group-hover:text-[hsl(var(--primary))] transition-colors">{place.name}</h3>
+                  <Link to="/destinations" className="text-sm text-[hsl(var(--primary))] font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                    Explore <ChevronRight size={14} />
+                  </Link>
                 </div>
               </motion.div>
             ))}
@@ -125,46 +171,49 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 px-6 bg-white">
+      {/* ═══════ FEATURES ═══════ */}
+      <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider mb-2">Smart City Technology</p>
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything for Smarter Travel</h2>
+            <p className="text-[hsl(var(--primary))] font-bold text-sm uppercase tracking-wider mb-2">Smart Features</p>
+            <h2 className="text-4xl font-black mb-4">Everything for Smarter Travel</h2>
+            <p className="text-[hsl(var(--text-muted))] max-w-xl mx-auto">One platform for complete trip planning — powered by AI, designed for travelers.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feat, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.08 }}
-                className="p-7 rounded-3xl border border-gray-100 bg-gray-50 hover:bg-white hover:shadow-xl transition-all group">
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.color} flex items-center justify-center text-white mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
-                  <feat.icon size={22} />
+                className="glass-surface p-7 rounded-3xl card-hover group">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feat.color} flex items-center justify-center text-white mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
+                  <feat.icon size={24} />
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">{feat.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{feat.desc}</p>
+                <h3 className="font-bold text-lg mb-2">{feat.title}</h3>
+                <p className="text-[hsl(var(--text-muted))] text-sm leading-relaxed">{feat.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-6 bg-gradient-to-br from-slate-900 to-blue-950">
+      {/* ═══════ TESTIMONIALS ═══════ */}
+      <section className="py-20 px-6 bg-gradient-to-br from-[hsl(var(--bg-dark-start))] to-[hsl(var(--bg-dark-end))]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-blue-400 font-semibold text-sm uppercase tracking-wider mb-2">Testimonials</p>
-            <h2 className="text-4xl font-bold text-white mb-4">What People Are Saying</h2>
+            <p className="text-[hsl(var(--primary-light))] font-bold text-sm uppercase tracking-wider mb-2">Testimonials</p>
+            <h2 className="text-4xl font-black text-white mb-4">What Travelers Say</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonials.map((t, idx) => (
               <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-7">
-                <Quote size={24} className="text-blue-400 mb-4" />
-                <p className="text-gray-300 text-sm leading-relaxed mb-6">"{t.text}"</p>
+                className="glass-card rounded-3xl p-7">
+                <Quote size={24} className="text-[hsl(var(--primary-light))] mb-4" />
+                <p className="text-white/70 text-sm leading-relaxed mb-6">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">{t.name.charAt(0)}</div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center text-white font-bold text-sm">
+                    {t.name.charAt(0)}
+                  </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">{t.name}</p>
-                    <p className="text-gray-400 text-xs">{t.role}</p>
+                    <p className="text-white font-bold text-sm">{t.name}</p>
+                    <p className="text-white/40 text-xs">{t.role}</p>
                   </div>
                   <div className="ml-auto flex gap-0.5">
                     {Array.from({ length: t.rating }).map((_, i) => <Star key={i} size={12} className="text-amber-400 fill-amber-400" />)}
@@ -176,17 +225,24 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 px-6 bg-white">
+      {/* ═══════ CTA ═══════ */}
+      <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-14 relative overflow-hidden shadow-2xl shadow-blue-200">
+            <div className="bg-[var(--hero-gradient)] rounded-3xl p-14 relative overflow-hidden shadow-2xl">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-              <h2 className="text-4xl font-extrabold text-white mb-4 relative z-10">Start Your Smart Journey Today</h2>
-              <p className="text-blue-100 mb-8 max-w-lg mx-auto relative z-10">Join thousands of travellers who use AI insights to explore smarter, avoid crowds, and make the most of every trip.</p>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3" />
+              <h2 className="text-4xl font-black text-white mb-4 relative z-10">Start Your Smart Journey Today</h2>
+              <p className="text-white/70 mb-8 max-w-lg mx-auto relative z-10">
+                Plan trips, book hotels, hire guides — all powered by AI. Join thousands of happy travelers.
+              </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-                <Link to="/register" className="bg-white text-blue-600 font-bold px-8 py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-lg">Get Started Free</Link>
-                <Link to="/destinations" className="border-2 border-white/40 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all">Explore Destinations</Link>
+                <Link to="/planner" className="bg-white text-[hsl(var(--primary-dark))] font-extrabold px-8 py-4 rounded-2xl hover:bg-white/90 transition-all shadow-lg">
+                  Plan Your Trip
+                </Link>
+                <Link to="/destinations" className="border-2 border-white/30 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all">
+                  Explore Destinations
+                </Link>
               </div>
             </div>
           </motion.div>

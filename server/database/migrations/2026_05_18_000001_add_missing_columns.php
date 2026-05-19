@@ -41,16 +41,14 @@ return new class extends Migration
         // Add missing columns to transports
         Schema::table('transports', function (Blueprint $table) {
             if (!Schema::hasColumn('transports', 'from_location')) {
-                $table->string('from_location')->nullable()->after('route');
+                $table->string('from_location')->nullable()->after('route_name');
             }
             if (!Schema::hasColumn('transports', 'to_location')) {
                 $table->string('to_location')->nullable()->after('from_location');
             }
-            if (!Schema::hasColumn('transports', 'vehicle_type')) {
-                $table->enum('vehicle_type', ['bus', 'train', 'taxi', 'auto', 'boat'])->default('bus')->after('vehicle_name');
-            }
+            // vehicle_type already exists in transports table
             if (!Schema::hasColumn('transports', 'price_per_seat')) {
-                $table->decimal('price_per_seat', 10, 2)->default(0)->after('total_seats');
+                $table->decimal('price_per_seat', 10, 2)->default(0)->after('capacity');
             }
             if (!Schema::hasColumn('transports', 'departure_time')) {
                 $table->dateTime('departure_time')->nullable()->after('price_per_seat');
