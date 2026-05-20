@@ -25,17 +25,6 @@ const Settings = () => {
               <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${darkMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
-
-          <p className="text-sm font-semibold mb-3">Theme</p>
-          <div className="grid grid-cols-3 gap-3">
-            {themes.map(t => (
-              <button key={t.id} onClick={() => setTheme(t.id)}
-                className={`p-3 rounded-xl text-left transition-all ${theme === t.id ? 'bg-[hsl(var(--primary)/0.1)] border-2 border-[hsl(var(--primary))]' : 'bg-[hsl(var(--primary)/0.03)] border-2 border-transparent hover:border-[hsl(var(--primary)/0.2)]'}`}>
-                <span className="text-xl">{t.emoji}</span>
-                <p className="text-xs font-bold mt-1">{t.name}</p>
-              </button>
-            ))}
-          </div>
         </motion.div>
 
         {/* Notifications */}

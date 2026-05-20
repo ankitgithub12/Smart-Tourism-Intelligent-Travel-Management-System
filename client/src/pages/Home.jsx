@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Calendar, Users, Star, ArrowRight, Brain, TrendingUp, Shield, ChevronRight, Quote, Zap, Globe, Hotel, UtensilsCrossed, Car, Leaf, DollarSign } from 'lucide-react';
 import { FaUmbrellaBeach, FaRoute, FaMountain, FaWater } from 'react-icons/fa';
+import { toast } from 'react-hot-toast';
 
 const destinations = [
   { id: 1, name: 'Goa Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop' },
@@ -38,13 +39,46 @@ const crowdColors = { Low: 'bg-emerald-500', Medium: 'bg-amber-500', High: 'bg-r
 const Home = () => {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [date, setDate] = useState('');
+  const [guests, setGuests] = useState('2');
+  const navigate = useNavigate();
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const handleMakeTrip = (e) => {
+    e.preventDefault();
+    if (!from.trim()) {
+      toast.error('Please enter a starting city!');
+      return;
+    }
+    if (!to.trim()) {
+      toast.error('Please enter a destination city!');
+      return;
+    }
+    if (!date) {
+      toast.error('Please choose a departure date!');
+      return;
+    }
+    if (new Date(date) < new Date(today)) {
+      toast.error('Departure date cannot be in the past!');
+      return;
+    }
+    if (!guests || parseInt(guests) < 1) {
+      toast.error('Please enter at least 1 guest!');
+      return;
+    }
+    navigate(`/planner?from=${encodeURIComponent(from.trim())}&to=${encodeURIComponent(to.trim())}&date=${date}&guests=${guests}`);
+  };
 
   return (
     <div>
       {/* ═══════ HERO ═══════ */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Background gradient */}
-        <div className="absolute inset-0 bg-[var(--hero-gradient)] opacity-90" />
+        <div 
+          style={{ background: 'linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 100%)' }} 
+          className="absolute inset-0 opacity-95" 
+        />
         <div className="absolute inset-0 bg-black/20" />
 
         {/* Animated blobs */}
@@ -74,38 +108,79 @@ const Home = () => {
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            className="text-lg md:text-xl text-white/70 mb-12 max-w-2xl mx-auto font-medium">
+            className="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto font-medium">
             Smart trip planning with AI — book hotels, food, cabs, guides & vehicles all in one place.
           </motion.p>
 
           {/* Smart Booking Bar */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-3 max-w-4xl mx-auto shadow-2xl">
-            <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
-                <MapPin className="text-white/60 mr-3 shrink-0" size={18} />
-                <input type="text" placeholder="From — Your City" value={from} onChange={e => setFrom(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+            className="max-w-5xl mx-auto">
+            <form onSubmit={handleMakeTrip} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-white/10 backdrop-blur-2xl rounded-[2rem] border border-white/20 shadow-2xl">
+              {/* FROM */}
+              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <MapPin size={10} className="text-yellow-200" /> From
+                </span>
+                <input 
+                  type="text" 
+                  placeholder="Your City" 
+                  value={from} 
+                  onChange={e => setFrom(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white placeholder-white/35 outline-none font-bold" 
+                />
               </div>
-              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
-                <MapPin className="text-white/60 mr-3 shrink-0" size={18} />
-                <input type="text" placeholder="To — Destination" value={to} onChange={e => setTo(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+
+              {/* TO */}
+              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <MapPin size={10} className="text-emerald-300" /> To
+                </span>
+                <input 
+                  type="text" 
+                  placeholder="Destination" 
+                  value={to} 
+                  onChange={e => setTo(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white placeholder-white/35 outline-none font-bold" 
+                />
               </div>
-              <div className="flex-1 flex items-center bg-white/10 rounded-2xl px-4 py-3">
-                <Calendar className="text-white/60 mr-3 shrink-0" size={18} />
-                <input type="date" className="w-full bg-transparent text-sm text-white/80 outline-none" />
+
+              {/* DATE */}
+              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <Calendar size={10} className="text-blue-300" /> Departure
+                </span>
+                <input 
+                  type="date" 
+                  min={today}
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white outline-none font-bold [color-scheme:dark]" 
+                />
               </div>
-              <div className="flex items-center bg-white/10 rounded-2xl px-4 py-3">
-                <Users className="text-white/60 mr-3 shrink-0" size={18} />
-                <input type="number" placeholder="Guests" min="1" max="20" defaultValue="2"
-                  className="w-20 bg-transparent text-sm text-white placeholder-white/40 outline-none" />
+
+              {/* GUESTS */}
+              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
+                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
+                  <Users size={10} className="text-purple-300" /> Guests
+                </span>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="20" 
+                  value={guests}
+                  onChange={e => setGuests(e.target.value)}
+                  className="w-full bg-transparent text-sm text-white outline-none font-bold" 
+                />
               </div>
-              <Link to={`/planner?from=${from}&to=${to}`}
-                className="flex items-center justify-center gap-2 bg-white text-[hsl(var(--primary-dark))] px-8 py-3.5 rounded-2xl font-extrabold text-sm hover:bg-white/90 transition-all shadow-lg">
+
+              {/* SUBMIT BUTTON */}
+              <button 
+                type="submit"
+                className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 px-6 py-4 rounded-2xl font-black text-sm hover:from-yellow-300 hover:to-amber-400 active:scale-95 transition-all shadow-xl shadow-amber-500/10 cursor-pointer"
+              >
                 <Search size={18} /> MAKE TRIP
-              </Link>
-            </div>
+              </button>
+            </form>
           </motion.div>
 
           {/* Floating Tags */}
@@ -230,18 +305,21 @@ const Home = () => {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-            <div className="bg-[var(--hero-gradient)] rounded-3xl p-14 relative overflow-hidden shadow-2xl">
+            <div 
+              style={{ background: 'linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 100%)' }}
+              className="rounded-3xl p-14 relative overflow-hidden shadow-2xl border border-white/10"
+            >
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3" />
               <h2 className="text-4xl font-black text-white mb-4 relative z-10">Start Your Smart Journey Today</h2>
-              <p className="text-white/70 mb-8 max-w-lg mx-auto relative z-10">
+              <p className="text-blue-100 mb-8 max-w-lg mx-auto relative z-10 text-base font-medium">
                 Plan trips, book hotels, hire guides — all powered by AI. Join thousands of happy travelers.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-                <Link to="/planner" className="bg-white text-[hsl(var(--primary-dark))] font-extrabold px-8 py-4 rounded-2xl hover:bg-white/90 transition-all shadow-lg">
+                <Link to="/planner" className="bg-white text-blue-600 hover:text-blue-700 font-extrabold px-8 py-4 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-blue-900/20">
                   Plan Your Trip
                 </Link>
-                <Link to="/destinations" className="border-2 border-white/30 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-all">
+                <Link to="/destinations" className="border-2 border-white/40 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 hover:scale-105 transition-all">
                   Explore Destinations
                 </Link>
               </div>
