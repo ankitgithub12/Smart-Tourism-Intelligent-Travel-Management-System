@@ -100,6 +100,8 @@ class PlaceController extends Controller
             'crowd_level'  => 'nullable|integer|min:0|max:100',
             'opening_hours'=> 'nullable|array',
             'image'        => 'nullable|image|max:5120', // 5 MB
+            'latitude'     => 'nullable|numeric',
+            'longitude'    => 'nullable|numeric',
         ]);
 
         $imageUrl = null;
@@ -136,6 +138,8 @@ class PlaceController extends Controller
             'crowd_level'   => 'nullable|integer|min:0|max:100',
             'opening_hours' => 'nullable|array',
             'image'         => 'nullable|image|max:5120',
+            'latitude'      => 'nullable|numeric',
+            'longitude'     => 'nullable|numeric',
         ]);
 
         if ($request->hasFile('image')) {

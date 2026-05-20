@@ -22,9 +22,22 @@ const useEcho = () => {
         }));
       });
 
+      // Listen for our custom NotificationSent event
+      const userChannel = echo.private(`user.${user.id}`);
+      userChannel.listen('.notification.sent', (data) => {
+        dispatch(addNotification({
+          id: Date.now().toString(),
+          type: data.type || 'info',
+          title: 'System Notification',
+          message: data.message,
+        }));
+      });
+
       return () => {
         channel.stopListening('.BookingStatusUpdated');
         echo.leave(`App.Models.User.${user.id}`);
+        userChannel.stopListening('.notification.sent');
+        echo.leave(`user.${user.id}`);
       };
     }
   }, [isAuthenticated, user, dispatch]);

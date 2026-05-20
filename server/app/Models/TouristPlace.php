@@ -21,6 +21,8 @@ class TouristPlace extends Model
         'rating',
         'opening_hours',
         'entry_fee',
+        'latitude',
+        'longitude',
         'deleted_at',
     ];
 
@@ -29,6 +31,8 @@ class TouristPlace extends Model
         'entry_fee'     => 'decimal:2',
         'rating'        => 'decimal:2',
         'crowd_level'   => 'integer',
+        'latitude'      => 'decimal:7',
+        'longitude'     => 'decimal:7',
         'deleted_at'    => 'datetime',
     ];
 

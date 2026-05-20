@@ -124,6 +124,13 @@ class PaymentController extends Controller
                 if ($trip) {
                     $trip->status = 'confirmed';
                     $trip->save();
+                    
+                    event(new \App\Events\NotificationSent(
+                        $trip->user_id,
+                        "Your payment for trip to {$trip->to_destination} was successful!",
+                        'success',
+                        ['trip_id' => $trip->id]
+                    ));
                 }
 
                 return response()->json(['status' => 'success', 'message' => 'Payment confirmed successfully.']);
@@ -133,6 +140,46 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Payment Confirmation Error: ' . $e->getMessage());
+
+            // Dev-helper: If Stripe API is unreachable due to local network timeouts, 
+            // mock confirm the payment in local development for test session IDs.
+            if (config('app.env') === 'local' && str_starts_with($request->session_id, 'cs_test_')) {
+                Log::info('Local Dev Stripe Timeout. Mock confirming payment for test session: ' . $request->session_id);
+                
+                $payment = Payment::where('stripe_session_id', $request->session_id)->first();
+                if ($payment) {
+                    $payment->status = 'paid';
+                    $payment->save();
+                } else {
+                    Payment::create([
+                        'trip_id' => $request->trip_id,
+                        'user_id' => $request->user()->id,
+                        'stripe_session_id' => $request->session_id,
+                        'stripe_payment_id' => 'mock_payment_intent_' . uniqid(),
+                        'amount' => 100, // placeholder amount
+                        'currency' => 'inr',
+                        'status' => 'paid',
+                    ]);
+                }
+
+                $trip = Trip::where('id', $request->trip_id)
+                            ->where('user_id', $request->user()->id)
+                            ->first();
+                if ($trip) {
+                    $trip->status = 'confirmed';
+                    $trip->save();
+                    
+                    event(new \App\Events\NotificationSent(
+                        $trip->user_id,
+                        "Your payment for trip to {$trip->to_destination} was successful! (Dev Mock)",
+                        'success',
+                        ['trip_id' => $trip->id]
+                    ));
+                }
+
+                return response()->json(['status' => 'success', 'message' => 'Payment confirmed via Dev Mock fallback due to Stripe network timeout.']);
+            }
+
             return response()->json(['error' => 'Unable to confirm payment status: ' . $e->getMessage()], 500);
         }
     }

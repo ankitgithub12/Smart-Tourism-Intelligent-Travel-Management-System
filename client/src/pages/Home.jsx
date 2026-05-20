@@ -6,7 +6,7 @@ import { FaUmbrellaBeach, FaRoute, FaMountain, FaWater } from 'react-icons/fa';
 
 const destinations = [
   { id: 1, name: 'Goa Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop' },
-  { id: 2, name: 'Jaipur Heritage', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?w=800&auto=format&fit=crop' },
+  { id: 2, name: 'Jaipur Heritage', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', image: 'https://images.unsplash.com/photo-1600100397608-f010f418c5e4?w=800&auto=format&fit=crop' },
   { id: 3, name: 'Kerala Backwaters', location: 'Kerala, India', rating: 4.9, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&auto=format&fit=crop' },
   { id: 4, name: 'Manali Valley', location: 'Himachal Pradesh', rating: 4.7, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop' },
 ];
@@ -45,6 +45,7 @@ const Home = () => {
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-[var(--hero-gradient)] opacity-90" />
+        <div className="absolute inset-0 bg-black/20" />
 
         {/* Animated blobs */}
         <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-white/10 rounded-full blur-3xl animate-blob" />

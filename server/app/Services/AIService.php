@@ -9,18 +9,20 @@ use App\Helpers\TourismContextAnalyzer;
 
 class AIService
 {
+    protected string $geminiApiKey;
     protected string $openRouterToken;
     protected string $apiBase = 'https://openrouter.ai/api/v1/chat/completions';
     
     // Default model to use via OpenRouter
-    protected string $chatModel = 'google/gemini-2.5-flash'; // High-speed, high-quality, or 'openai/gpt-3.5-turbo'
+    protected string $chatModel = 'google/gemini-2.5-flash:free';
 
     public function __construct()
     {
+        $this->geminiApiKey = env('GEMINI_API_KEY', '');
         $this->openRouterToken = env('OPENROUTER_API_KEY', '');
     }
 
-    /* ─── Public Methods ─────────────────────────────────────────────────── */
+    /* ─── Public Methods ────────────────────────────────────────────────── */
 
     /**
      * Chat assistant — answers tourism-related questions with context awareness.
@@ -39,29 +41,21 @@ Current known context:
 {$contextInfo}
 ";
 
-        // Format messages for OpenRouter (OpenAI compatible)
-        $formattedMessages = [
-            ['role' => 'system', 'content' => $systemPrompt]
-        ];
-
-        // Add last 6 messages
+        // Format user history messages (excluding system)
+        $formattedMessages = [];
         foreach (array_slice($messages, -6) as $msg) {
             $formattedMessages[] = [
-                'role' => $msg['role'] === 'user' ? 'user' : 'assistant',
+                'role' => $msg['role'] === 'user' ? 'user' : 'model',
                 'content' => $msg['content']
             ];
         }
 
-        $result = $this->callOpenRouter($this->chatModel, $formattedMessages);
+        $reply = $this->callAI($formattedMessages, $systemPrompt);
 
-        if ($result && isset($result['choices'][0]['message']['content'])) {
-            $reply = trim($result['choices'][0]['message']['content']);
-            if (!empty($reply)) {
-                return ['reply' => $reply, 'context' => $context];
-            }
+        if (!empty($reply)) {
+            return ['reply' => trim($reply), 'context' => $context];
         }
 
-        // Generic fallback if API fails
         return [
             'reply' => "Hello! I'm here to help you plan an amazing trip. Where would you like to go?",
             'context' => $context
@@ -79,13 +73,10 @@ Current known context:
             $prompt = "Based on these preferences: '{$preferences}', recommend 3 travel categories from this list: beaches, mountains, heritage, wildlife, spiritual, luxury, urban, rural.
 Return EXACTLY a JSON array of objects with keys 'category', 'confidence' (number 0-100), and 'reason'. Do not include markdown code blocks, just raw JSON.";
 
-            $result = $this->callOpenRouter($this->chatModel, [
-                ['role' => 'user', 'content' => $prompt]
-            ]);
+            $reply = $this->callAI([['role' => 'user', 'content' => $prompt]]);
 
-            if ($result && isset($result['choices'][0]['message']['content'])) {
-                $content = trim($result['choices'][0]['message']['content']);
-                // Clean markdown code blocks if any
+            if (!empty($reply)) {
+                $content = trim($reply);
                 $content = preg_replace('/```json\s*/', '', $content);
                 $content = preg_replace('/```/', '', $content);
                 
@@ -110,12 +101,10 @@ Return EXACTLY a JSON array of objects with keys 'category', 'confidence' (numbe
             $prompt = "Estimate the current crowd level for '{$locationData}'. 
 Return EXACTLY a JSON object with keys: 'level' (one of: low, medium, high, critical), 'label' (capitalized level), 'confidence' (number 0-100), and 'advice' (short sentence). Do not include markdown code blocks, just raw JSON.";
 
-            $result = $this->callOpenRouter($this->chatModel, [
-                ['role' => 'user', 'content' => $prompt]
-            ]);
+            $reply = $this->callAI([['role' => 'user', 'content' => $prompt]]);
 
-            if ($result && isset($result['choices'][0]['message']['content'])) {
-                $content = trim($result['choices'][0]['message']['content']);
+            if (!empty($reply)) {
+                $content = trim($reply);
                 $content = preg_replace('/```json\s*/', '', $content);
                 $content = preg_replace('/```/', '', $content);
                 
@@ -140,12 +129,10 @@ Return EXACTLY a JSON object with keys: 'level' (one of: low, medium, high, crit
             $prompt = "Analyze the sentiment of this text: '{$text}'.
 Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL) and 'score' (number 0-100 indicating confidence). Do not include markdown code blocks, just raw JSON.";
 
-            $result = $this->callOpenRouter($this->chatModel, [
-                ['role' => 'user', 'content' => $prompt]
-            ]);
+            $reply = $this->callAI([['role' => 'user', 'content' => $prompt]]);
 
-            if ($result && isset($result['choices'][0]['message']['content'])) {
-                $content = trim($result['choices'][0]['message']['content']);
+            if (!empty($reply)) {
+                $content = trim($reply);
                 $content = preg_replace('/```json\s*/', '', $content);
                 $content = preg_replace('/```/', '', $content);
                 
@@ -166,35 +153,134 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
     /* ─── Private Helpers ────────────────────────────────────────────────── */
 
     /**
-     * Make a POST request to OpenRouter API.
+     * Universal router for AI backend requests (native Gemini vs OpenRouter)
      */
-    protected function callOpenRouter(string $model, array $messages, int $maxTokens = 300): ?array
+    protected function callAI(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
+    {
+        if (!empty($this->geminiApiKey)) {
+            return $this->callGeminiDirect($messages, $systemPrompt, $maxTokens);
+        }
+
+        // Convert messages to role formatting suitable for OpenRouter System/User standard
+        $formattedMessages = [];
+        if (!empty($systemPrompt)) {
+            $formattedMessages[] = ['role' => 'system', 'content' => $systemPrompt];
+        }
+        foreach ($messages as $msg) {
+            $role = $msg['role'] === 'model' ? 'assistant' : 'user';
+            $formattedMessages[] = ['role' => $role, 'content' => $msg['content']];
+        }
+
+        $result = $this->callOpenRouter($this->chatModel, $formattedMessages, $maxTokens);
+        return $result['choices'][0]['message']['content'] ?? null;
+    }
+
+    /**
+     * Make direct request to Google AI Studio Gemini API with model fallbacks
+     */
+    protected function callGeminiDirect(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
+    {
+        $models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+
+        foreach ($models as $model) {
+            try {
+                $contents = [];
+                foreach ($messages as $msg) {
+                    $role = $msg['role'] === 'model' ? 'model' : 'user';
+                    $contents[] = [
+                        'role' => $role,
+                        'parts' => [
+                            ['text' => $msg['content']]
+                        ]
+                    ];
+                }
+
+                $payload = [
+                    'contents' => $contents,
+                    'generationConfig' => [
+                        'maxOutputTokens' => $maxTokens,
+                    ]
+                ];
+
+                if (!empty($systemPrompt)) {
+                    $payload['systemInstruction'] = [
+                        'parts' => [
+                            ['text' => $systemPrompt]
+                        ]
+                    ];
+                }
+
+                $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $this->geminiApiKey;
+
+                $response = Http::timeout(20)->post($endpoint, $payload);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? null;
+                    if (!empty($text)) {
+                        return $text;
+                    }
+                }
+
+                Log::warning("Gemini Direct Model {$model} failed: " . $response->status() . " " . $response->body());
+            } catch (\Exception $e) {
+                Log::error("Gemini Direct Model {$model} Exception: " . $e->getMessage());
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Make a POST request to OpenRouter API with free-tier model fallbacks.
+     */
+    protected function callOpenRouter(string $defaultModel, array $messages, int $maxTokens = 800): ?array
     {
         if (empty($this->openRouterToken)) {
             Log::warning('OPENROUTER_API_KEY is not set. Returning null for AI request.');
             return null;
         }
 
-        try {
-            $response = Http::withToken($this->openRouterToken)
-                ->withHeaders([
-                    'HTTP-Referer' => config('app.url'),
-                    'X-Title' => 'Smart Tourism AI'
-                ])
-                ->timeout(30)
-                ->post($this->apiBase, [
-                    'model' => $model,
-                    'messages' => $messages,
-                    'max_tokens' => $maxTokens,
-                ]);
+        $models = [
+            'meta-llama/llama-3-8b-instruct:free',
+            'qwen/qwen-2-7b-instruct:free',
+            'mistralai/mistral-7b-instruct:free',
+            'google/gemini-flash-1.5:free'
+        ];
 
-            if ($response->successful()) {
-                return $response->json();
+        // Insert the default request model at the start of the try-list
+        if (!in_array($defaultModel, $models)) {
+            array_unshift($models, $defaultModel);
+        }
+
+        foreach ($models as $model) {
+            // Clean suffix if OpenRouter issues 404 for gemini-2.5-flash:free
+            $modelClean = ($model === 'google/gemini-2.5-flash:free') ? 'google/gemini-2.5-flash' : $model;
+
+            try {
+                $response = Http::withToken($this->openRouterToken)
+                    ->withHeaders([
+                        'HTTP-Referer' => config('app.url'),
+                        'X-Title' => 'Smart Tourism AI'
+                    ])
+                    ->timeout(20)
+                    ->post($this->apiBase, [
+                        'model' => $modelClean,
+                        'messages' => $messages,
+                        'max_tokens' => $maxTokens,
+                    ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    if (isset($json['choices'][0]['message']['content'])) {
+                        return $json;
+                    }
+                }
+
+                Log::warning("OpenRouter Model {$modelClean} failed: " . $response->status() . " " . $response->body());
+            } catch (\Exception $e) {
+                Log::error("OpenRouter Model {$modelClean} Exception: " . $e->getMessage());
             }
-
-            Log::error("OpenRouter API Error: " . $response->status() . " " . $response->body());
-        } catch (\Exception $e) {
-            Log::error("OpenRouter API Exception: " . $e->getMessage());
         }
 
         return null;
