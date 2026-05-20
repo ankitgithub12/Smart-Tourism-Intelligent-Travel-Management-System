@@ -158,7 +158,11 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
     protected function callAI(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
     {
         if (!empty($this->geminiApiKey)) {
-            return $this->callGeminiDirect($messages, $systemPrompt, $maxTokens);
+            $reply = $this->callGeminiDirect($messages, $systemPrompt, $maxTokens);
+            if (!empty($reply)) {
+                return $reply;
+            }
+            Log::warning("Gemini Direct failed or rate-limited. Falling back to OpenRouter.");
         }
 
         // Convert messages to role formatting suitable for OpenRouter System/User standard
@@ -167,7 +171,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
             $formattedMessages[] = ['role' => 'system', 'content' => $systemPrompt];
         }
         foreach ($messages as $msg) {
-            $role = $msg['role'] === 'model' ? 'assistant' : 'user';
+            $role = ($msg['role'] === 'model' || $msg['role'] === 'assistant') ? 'assistant' : 'user';
             $formattedMessages[] = ['role' => $role, 'content' => $msg['content']];
         }
 
@@ -180,7 +184,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
      */
     protected function callGeminiDirect(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
     {
-        $models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+        $models = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
 
         foreach ($models as $model) {
             try {
