@@ -155,7 +155,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
     /**
      * Universal router for AI backend requests (native Gemini vs OpenRouter)
      */
-    protected function callAI(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
+    protected function callAI(array $messages, string $systemPrompt = '', int $maxTokens = 2500): ?string
     {
         if (!empty($this->geminiApiKey)) {
             $reply = $this->callGeminiDirect($messages, $systemPrompt, $maxTokens);
@@ -182,7 +182,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
     /**
      * Make direct request to Google AI Studio Gemini API with model fallbacks
      */
-    protected function callGeminiDirect(array $messages, string $systemPrompt = '', int $maxTokens = 800): ?string
+    protected function callGeminiDirect(array $messages, string $systemPrompt = '', int $maxTokens = 2500): ?string
     {
         $models = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
 
@@ -238,7 +238,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
     /**
      * Make a POST request to OpenRouter API with free-tier model fallbacks.
      */
-    protected function callOpenRouter(string $defaultModel, array $messages, int $maxTokens = 800): ?array
+    protected function callOpenRouter(string $defaultModel, array $messages, int $maxTokens = 2500): ?array
     {
         if (empty($this->openRouterToken)) {
             Log::warning('OPENROUTER_API_KEY is not set. Returning null for AI request.');
