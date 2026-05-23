@@ -1,113 +1,116 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Building2, Users, DollarSign, TrendingUp, Hotel, Car, Star, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import {
+  LayoutDashboard, Package, Calendar, Car, UserCheck, BookOpen,
+  BarChart3, DollarSign, Lightbulb
+} from 'lucide-react';
+import DashboardLayout from '../../layouts/DashboardLayout';
+import useRealtimeSimulator from '../../hooks/useRealtimeSimulator';
 
-const AgencyDashboard = () => {
-  const stats = [
-    { label: 'Active Bookings', value: 45, icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Revenue (Month)', value: '₹2.4L', icon: DollarSign, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Listed Properties', value: 12, icon: Building2, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { label: 'Average Rating', value: '4.8', icon: Star, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  ];
+// Subpage components
+import AgencyOverview from './AgencyOverview';
+import PackageManager from './PackageManager';
+import TourScheduler from './TourScheduler';
+import VehicleAllocation from './VehicleAllocation';
+import GuideManagement from './GuideManagement';
+import BookingManager from './BookingManager';
+import TouristAnalytics from './TouristAnalytics';
+import RevenueDashboard from './RevenueDashboard';
+import SmartRecommendations from './SmartRecommendations';
 
+const navItems = [
+  { label: 'Overview', path: 'overview', icon: LayoutDashboard },
+  { label: 'Packages', path: 'packages', icon: Package },
+  { label: 'Schedules', path: 'tours', icon: Calendar },
+  { label: 'Vehicles', path: 'vehicles', icon: Car },
+  { label: 'Guides', path: 'guides', icon: UserCheck },
+  { label: 'Bookings', path: 'bookings', icon: BookOpen },
+  { label: 'Analytics', path: 'analytics', icon: BarChart3 },
+  { label: 'Revenue', path: 'revenue', icon: DollarSign },
+  { label: 'AI Smart Tips', path: 'recommendations', icon: Lightbulb }
+];
+
+export function AgencyDashboard() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [data, setData] = useRealtimeSimulator('agency', 3000);
+
+  // Helper to map tab IDs to render functions
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'packages':
+        return <PackageManager data={data} setData={setData} />;
+      case 'tours':
+        return <TourScheduler data={data} setData={setData} />;
+      case 'vehicles':
+        return <VehicleAllocation data={data} setData={setData} />;
+      case 'guides':
+        return <GuideManagement data={data} setData={setData} />;
+      case 'bookings':
+        return <BookingManager data={data} setData={setData} />;
+      case 'analytics':
+        return <TouristAnalytics data={data} setData={setData} />;
+      case 'revenue':
+        return <RevenueDashboard data={data} setData={setData} />;
+      case 'recommendations':
+        return <SmartRecommendations data={data} setData={setData} />;
+      case 'overview':
+      default:
+        return <AgencyOverview data={data} setTab={setActiveTab} />;
+    }
+  };
+
+  // Build simulated URL paths for visual highlighted items
+  const customNavItems = navItems.map(item => ({
+    ...item,
+    path: item.path, // We mock this check internally
+  }));
+
+  // Mock location check for DashboardLayout integration
+  const dashboardNavItems = navItems.map(item => ({
+    ...item,
+    // Provide action button hook inside the route link
+    path: `#${item.path}`
+  }));
+
+  // Custom Sidebar renderer link handler override using state tabs
   return (
-    <div className="min-h-screen py-10 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-10">
-          <div>
-            <h1 className="text-3xl font-black mb-2">Agency Portal</h1>
-            <p className="text-[hsl(var(--text-muted))]">Manage your listings, bookings, and revenue.</p>
-          </div>
-          <button className="btn-primary flex items-center gap-2">
-            Add Listing
-          </button>
+    <DashboardLayout
+      role="agency"
+      title="Travel Agency Portal"
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      navItems={navItems}
+    >
+      {/* Tab Switcher override container */}
+      <div className="flex flex-col min-h-screen">
+        {/* Sub Navigation Tabs */}
+        <div className="flex gap-1.5 pb-4 mb-6 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.path;
+            return (
+              <button
+                key={item.path}
+                onClick={() => setActiveTab(item.path)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-[hsl(var(--primary))] text-white shadow-md'
+                    : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <Icon size={14} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {stats.map((stat, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-              className="glass-surface rounded-3xl p-6 flex items-center gap-4">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg}`}>
-                <stat.icon size={24} className={stat.color} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[hsl(var(--text-muted))]">{stat.label}</p>
-                <p className="text-2xl font-black">{stat.value}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Recent Bookings */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="glass-surface rounded-3xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-bold text-lg flex items-center gap-2"><TrendingUp size={20} className="text-[hsl(var(--primary))]" /> Recent Bookings</h2>
-                <Link to="#" className="text-sm text-[hsl(var(--primary))] font-semibold hover:underline">View All</Link>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-[hsl(var(--primary)/0.1)]">
-                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Customer</th>
-                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Listing</th>
-                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Dates</th>
-                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Amount</th>
-                      <th className="pb-3 text-sm font-semibold text-[hsl(var(--text-muted))]">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { name: 'Rahul Sharma', listing: 'Ocean Pearl Resort', dates: '12 Jun - 16 Jun', amount: '₹34,000', status: 'Confirmed', color: 'text-emerald-500 bg-emerald-500/10' },
-                      { name: 'Priya Patel', listing: 'Private Cab Service', dates: '14 Jun', amount: '₹1,500', status: 'Pending', color: 'text-amber-500 bg-amber-500/10' },
-                      { name: 'Amit Kumar', listing: 'Goa Heritage Tour', dates: '20 Jun', amount: '₹4,000', status: 'Confirmed', color: 'text-emerald-500 bg-emerald-500/10' },
-                    ].map((row, i) => (
-                      <tr key={i} className="border-b border-[hsl(var(--primary)/0.05)] last:border-0 hover:bg-[hsl(var(--primary)/0.02)] transition-colors">
-                        <td className="py-4 font-semibold">{row.name}</td>
-                        <td className="py-4 text-sm">{row.listing}</td>
-                        <td className="py-4 text-sm text-[hsl(var(--text-muted))]">{row.dates}</td>
-                        <td className="py-4 font-bold">{" "}{row.amount}</td>
-                        <td className="py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${row.color}`}>{row.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="glass-surface rounded-3xl p-6">
-              <h2 className="font-bold text-lg mb-4">Manage Listings</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
-                  <Hotel size={24} className="text-[hsl(var(--primary))]" /> Hotels
-                </button>
-                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
-                  <Car size={24} className="text-[hsl(var(--primary))]" /> Cabs
-                </button>
-                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
-                  <MapPin size={24} className="text-[hsl(var(--primary))]" /> Packages
-                </button>
-                <button className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.05)] hover:bg-[hsl(var(--primary)/0.1)] transition-colors flex flex-col items-center justify-center gap-2 text-sm font-semibold">
-                  <Users size={24} className="text-[hsl(var(--primary))]" /> Guides
-                </button>
-              </div>
-            </motion.div>
-          </div>
+        {/* Dynamic Inner Tab Component */}
+        <div className="flex-1">
+          {renderContent()}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
-};
+}
 
 export default AgencyDashboard;
