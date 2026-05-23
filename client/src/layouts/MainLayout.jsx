@@ -5,7 +5,7 @@ import Footer from '../components/Footer';
 import ChatAssistant from '../components/ChatAssistant';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 
-const DASHBOARD_PATHS = ['/admin/dashboard', '/agency/dashboard'];
+const DASHBOARD_PATHS = ['/admin/dashboard', '/agency/dashboard', '/dashboard'];
 
 const MainLayout = () => {
   const location = useLocation();

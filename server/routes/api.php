@@ -13,6 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AIServiceController;
 use App\Http\Controllers\API\TripController;
 use App\Http\Controllers\API\PaymentController;
+use App\Http\Controllers\API\LocationServiceController;
 use App\Http\Controllers\TelemetryController;
 use App\Http\Controllers\AgencyDashboardController;
 
@@ -87,6 +88,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/favorites',                [FavoriteController::class, 'index']);
     Route::post('/favorites',               [FavoriteController::class, 'store']);
     Route::delete('/favorites/{id}',        [FavoriteController::class, 'destroy']);
+
+    // ── Location Services (Routes, Traffic, Nearby Services) ──────────────
+    Route::prefix('location')->group(function () {
+        Route::post('/route-optimization',  [LocationServiceController::class, 'getRouteOptimization']);
+        Route::post('/nearby-services',     [LocationServiceController::class, 'getNearbyServices']);
+        Route::post('/traffic-info',        [LocationServiceController::class, 'getTrafficInfo']);
+    });
 
     // ── AI Services ───────────────────────────────────────────────────────
     Route::prefix('ai')->group(function () {

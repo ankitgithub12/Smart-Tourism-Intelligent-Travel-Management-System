@@ -138,4 +138,11 @@ export const agencyAPI = {
   createGuide: (data)               => api.post('/agency/guides', data),
 };
 
+// ── Location Services (Routes, Traffic, Nearby Services) ─────────────
+export const locationAPI = {
+  getRouteOptimization: (destination) => api.post('/location/route-optimization', { destination }),
+  getNearbyServices: (destination, serviceType) => api.post('/location/nearby-services', { destination, service_type: serviceType }),
+  getTrafficInfo: (destination) => api.post('/location/traffic-info', { destination }),
+};
+
 export default api;
