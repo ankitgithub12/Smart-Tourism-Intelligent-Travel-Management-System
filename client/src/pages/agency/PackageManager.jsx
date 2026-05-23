@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit3, Image as ImageIcon, MapPin, Calendar, CreditCard } from 'lucide-react';
+import { agencyAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function PackageManager({ data, setData }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -17,36 +19,41 @@ export function PackageManager({ data, setData }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.destination || !formData.price) return;
 
-    const newPackage = {
-      id: data.packages.length + 1,
-      name: formData.name,
-      destination: formData.destination,
-      duration: formData.duration || '3 Days, 2 Nights',
-      price: parseFloat(formData.price),
-      status: 'Active',
-      bookings: 0,
-      image: formData.image || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=60'
-    };
-
-    setData(prev => ({
-      ...prev,
-      packages: [...prev.packages, newPackage]
-    }));
-
-    setFormData({ name: '', destination: '', duration: '', price: '', image: '' });
-    setShowAddForm(false);
+    const toastId = toast.loading('Creating package...');
+    try {
+      const res = await agencyAPI.createPackage({
+        name: formData.name,
+        destination: formData.destination,
+        duration: formData.duration || '3 Days, 2 Nights',
+        price: parseFloat(formData.price),
+        image: formData.image
+      });
+      setData(res.data.agency);
+      setFormData({ name: '', destination: '', duration: '', price: '', image: '' });
+      setShowAddForm(false);
+      toast.success('Package created successfully!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to create package.', { id: toastId });
+    }
   };
 
-  const handleDelete = (id) => {
-    setData(prev => ({
-      ...prev,
-      packages: prev.packages.filter(p => p.id !== id)
-    }));
+  const handleDelete = async (id) => {
+    const toastId = toast.loading('Deleting package...');
+    try {
+      const res = await agencyAPI.deletePackage(id);
+      setData(res.data.agency);
+      toast.success('Package deleted successfully!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete package.', { id: toastId });
+    }
   };
+
 
   return (
     <div className="space-y-6">

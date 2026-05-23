@@ -13,6 +13,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AIServiceController;
 use App\Http\Controllers\API\TripController;
 use App\Http\Controllers\API\PaymentController;
+use App\Http\Controllers\TelemetryController;
+use App\Http\Controllers\AgencyDashboardController;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PUBLIC ROUTES (no auth required)
@@ -69,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Trips (Smart Planner) ─────────────────────────────────────────────
     Route::get('/trips',                    [TripController::class, 'index']);
     Route::post('/trips',                   [TripController::class, 'store']);
+    Route::get('/trips/{tripId}',           [TripController::class, 'show']);
     Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession']);
     Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment']);
 
@@ -110,5 +113,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}',                   [UserController::class, 'showUser']);
         Route::post('/users/{id}/deactivate',       [UserController::class, 'deactivateUser']);
         Route::post('/users/{id}/activate',         [UserController::class, 'activateUser']);
+        
+        // Live Telemetry Command Dashboard routes
+        Route::get('/telemetry',                     [TelemetryController::class, 'getTelemetry']);
+        Route::post('/telemetry/tick',               [TelemetryController::class, 'tickTelemetry']);
+        Route::post('/emergencies/{id}/update-status', [TelemetryController::class, 'updateEmergencyStatus']);
+        Route::post('/agencies/{id}/update-status',  [TelemetryController::class, 'updateAgencyApproval']);
+    });
+
+    // ── Agency Dashboard routes ───────────────────────────────────────────
+    Route::prefix('agency')->group(function () {
+        Route::get('/dashboard',                     [AgencyDashboardController::class, 'getDashboard']);
+        Route::post('/packages',                     [AgencyDashboardController::class, 'createPackage']);
+        Route::delete('/packages/{id}',              [AgencyDashboardController::class, 'deletePackage']);
+        Route::post('/tours',                        [AgencyDashboardController::class, 'createTour']);
+        Route::post('/vehicles',                     [AgencyDashboardController::class, 'createVehicle']);
+        Route::post('/guides',                       [AgencyDashboardController::class, 'createGuide']);
     });
 });

@@ -18,4 +18,12 @@ class TripRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->get();
     }
+
+    public function getTrip($tripId, $userId)
+    {
+        return $this->model->where('id', $tripId)
+            ->where('user_id', $userId)
+            ->with(['hotel', 'cabService', 'foodPackage', 'guide', 'rentalVehicle', 'payment'])
+            ->first();
+    }
 }

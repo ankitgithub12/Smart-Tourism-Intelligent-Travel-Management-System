@@ -7,6 +7,7 @@ import api, { favoritesAPI, aiAPI } from '../../services/api';
 import { markAllAsRead } from '../../redux/notificationsSlice';
 import toast from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
+import { parseAIJsonArray } from '../../utils/parseAIResponse';
 
 const TouristDashboard = () => {
   const navigate = useNavigate();
@@ -113,15 +114,7 @@ const TouristDashboard = () => {
       const response = await aiAPI.chat(prompt);
       let replyText = response.data?.reply || response.data || '';
       
-      replyText = replyText.replace(/\\\`\\\`\\\`json/g, '').replace(/\\\`\\\`\\\`/g, '').replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-
-      const startIdx = replyText.indexOf('[');
-      const endIdx = replyText.lastIndexOf(']');
-      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-        replyText = replyText.substring(startIdx, endIdx + 1);
-      }
-      
-      const parsed = JSON.parse(replyText);
+      const parsed = parseAIJsonArray(replyText);
       if (Array.isArray(parsed) && parsed.length > 0) {
         setAiRecs(parsed);
       } else {

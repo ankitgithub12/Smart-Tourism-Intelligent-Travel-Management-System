@@ -40,4 +40,9 @@ class TripService
     {
         return $this->tripRepository->getUserTrips($userId);
     }
+
+    public function getTrip($tripId, $userId)
+    {
+        return $this->tripRepository->getTrip($tripId, $userId);
+    }
 }

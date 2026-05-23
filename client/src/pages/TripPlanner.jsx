@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import api, { aiAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
+import { parseAIJsonObject } from '../utils/parseAIResponse';
 
 const steps = ['Hotel', 'Food', 'Cab', 'Guide', 'Vehicle', 'Summary'];
 
@@ -133,10 +134,9 @@ Return ONLY a valid JSON object matching the following schema:
 Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       const res = await aiAPI.chat(prompt);
-      let replyText = res.data?.reply || res.data || '';
-      replyText = replyText.replace(/\\\`\\\`\\\`json/g, '').replace(/\\\`\\\`\\\`/g, '').replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+      const replyText = res.data?.reply || res.data || '';
       
-      const parsed = JSON.parse(replyText);
+      const parsed = parseAIJsonObject(replyText);
 
       // Pre-fill
       if (parsed.hotel_id) {
@@ -184,7 +184,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
       setStep(5); // Go straight to review
       toast.success('✨ Gemini AI has customized your plan!', { id: toastId });
     } catch (err) {
-      console.error(err);
+      console.error('AI parsing error:', err);
       toast.error('AI planning failed. Proceeding manually.', { id: toastId });
     } finally {
       setAiLoading(false);

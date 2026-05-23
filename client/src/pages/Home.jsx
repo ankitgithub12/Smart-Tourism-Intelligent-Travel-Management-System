@@ -1,46 +1,47 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Search, MapPin, Calendar, Users, Star, ArrowRight, Brain, TrendingUp, Shield, ChevronRight, Quote, Zap, Globe, Hotel, UtensilsCrossed, Car, Leaf, DollarSign } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Search, MapPin, Calendar, Users, Star, ArrowRight, Brain, 
+  TrendingUp, Shield, ChevronRight, Quote, Zap, Globe, Hotel, 
+  UtensilsCrossed, Car, Leaf, DollarSign, Activity, Compass, 
+  Sparkles, CheckCircle2, ChevronDown
+} from 'lucide-react';
 import { FaUmbrellaBeach, FaRoute, FaMountain, FaWater } from 'react-icons/fa';
 import { toast } from 'react-hot-toast';
 
 const destinations = [
-  { id: 1, name: 'Goa Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop' },
-  { id: 2, name: 'Jaipur Heritage', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', image: 'https://images.unsplash.com/photo-1600100397608-f010f418c5e4?w=800&auto=format&fit=crop' },
-  { id: 3, name: 'Kerala Backwaters', location: 'Kerala, India', rating: 4.9, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&auto=format&fit=crop' },
-  { id: 4, name: 'Manali Valley', location: 'Himachal Pradesh', rating: 4.7, crowdLevel: 'Low', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop' },
+  { id: 1, name: 'Goa Golden Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', type: 'Coastal', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop', tags: ['Sunsets', 'Water Sports'] },
+  { id: 2, name: 'Jaipur Heritage Palace', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', type: 'Heritage', image: 'https://images.unsplash.com/photo-1600100397608-f010f418c5e4?w=800&auto=format&fit=crop', tags: ['Culture', 'Bazaars'] },
+  { id: 3, name: 'Kerala Backwaters', location: 'Kerala, India', rating: 4.9, crowdLevel: 'Low', type: 'Nature', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&auto=format&fit=crop', tags: ['Houseboats', 'Ayurveda'] },
+  { id: 4, name: 'Manali Snowy Valley', location: 'Himachal Pradesh', rating: 4.7, crowdLevel: 'Low', type: 'Adventure', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop', tags: ['Trekking', 'Skiing'] },
 ];
 
 const features = [
-  { icon: Brain, title: 'AI Smart Planner', desc: 'Plan complete trips with AI-powered recommendations and budget optimization.', color: 'from-[hsl(var(--primary))] to-[hsl(var(--primary-dark))]' },
-  { icon: Hotel, title: 'Hotel Booking', desc: 'Find and book the best hotels with real ratings, reviews and live pricing.', color: 'from-[hsl(var(--accent))] to-[hsl(var(--accent-light))]' },
-  { icon: UtensilsCrossed, title: 'Food Planning', desc: 'Customized meal plans — Veg, Non-Veg, Vegan — for your entire trip.', color: 'from-[hsl(var(--secondary))] to-orange-400' },
-  { icon: Car, title: 'Cab & Vehicle Rental', desc: 'Book pickups, drops, and rental vehicles from bikes to luxury SUVs.', color: 'from-purple-500 to-purple-600' },
-  { icon: Leaf, title: 'Eco Tourism', desc: 'Carbon footprint tracking, eco scores, and green travel suggestions.', color: 'from-emerald-500 to-emerald-600' },
-  { icon: Shield, title: 'Emergency System', desc: 'SOS button, nearby hospitals, police stations, and live location sharing.', color: 'from-red-500 to-red-600' },
+  { icon: Brain, title: 'AI Smart Planner', desc: 'Instant multi-modal itineraries tailored to your unique style, timeline, and optimized budget limits.', color: 'from-blue-500 to-indigo-600', shadow: 'rgba(59, 130, 246, 0.3)' },
+  { icon: Hotel, title: 'Hotel Ecosystem', desc: 'Secure the most beautiful stays with transparent real-time availability, ratings, and eco-friendly choices.', color: 'from-cyan-500 to-teal-500', shadow: 'rgba(6, 182, 212, 0.3)' },
+  { icon: UtensilsCrossed, title: 'Intelligent Dining', desc: 'Dietary-customized meal packages curated for your entire journey — Veg, Vegan, or local culinary adventures.', color: 'from-amber-500 to-orange-600', shadow: 'rgba(245, 158, 11, 0.3)' },
+  { icon: Car, title: 'Autonomous Fleet & Transit', desc: 'Seamlessly schedule smart cab transfers or self-driven electric vehicles at the tap of a button.', color: 'from-indigo-500 to-purple-600', shadow: 'rgba(99, 102, 241, 0.3)' },
+  { icon: Leaf, title: 'Eco Carbon Tracking', desc: 'Earn points and reward offsets as you monitor your trip footprint with live, actionable sustainability stats.', color: 'from-emerald-500 to-green-600', shadow: 'rgba(16, 185, 129, 0.3)' },
+  { icon: Shield, title: 'Integrated Command SOS', desc: 'Explore with absolute peace of mind supported by instant security, nearby emergency nodes, and live support.', color: 'from-rose-500 to-red-600', shadow: 'rgba(244, 63, 94, 0.3)' },
 ];
 
-const stats = [
-  { value: '50K+', label: 'Happy Tourists' },
-  { value: '500+', label: 'Destinations' },
-  { value: '200+', label: 'Hotels' },
-  { value: '24/7', label: 'AI Support' },
-];
+const mockTelemetry = {
+  activeTourists: 14205,
+  ecoScore: 88,
+  carbonSaved: '124.5 tons',
+  transitStatus: 'Optimal Flow',
+  smartAlert: 'Green Zone compliance active across coastal regions.'
+};
 
-const testimonials = [
-  { name: 'Priya Sharma', role: 'Solo Traveller', text: 'The Smart Planner saved me hours! I booked hotel, food, and cab all in one place. Absolutely magical experience.', rating: 5 },
-  { name: 'Rahul Mehta', role: 'Travel Agency Manager', text: 'The agency dashboard gives real-time insights into bookings and revenue. A game-changer for our business.', rating: 5 },
-  { name: 'Anjali Singh', role: 'Adventure Enthusiast', text: 'Crowd predictions helped me visit places at the perfect time. The AI assistant was like having a local guide!', rating: 5 },
-];
-
-const crowdColors = { Low: 'bg-emerald-500', Medium: 'bg-amber-500', High: 'bg-red-500' };
+const crowdColors = { Low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', Medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30', High: 'bg-rose-500/20 text-rose-400 border-rose-500/30' };
 
 const Home = () => {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [date, setDate] = useState('');
   const [guests, setGuests] = useState('2');
+  const [activeCategory, setActiveCategory] = useState('all');
   const navigate = useNavigate();
 
   const today = new Date().toISOString().split('T')[0];
@@ -71,83 +72,93 @@ const Home = () => {
   };
 
   return (
-    <div>
-      {/* ═══════ HERO ═══════ */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Background gradient */}
-        <div 
-          style={{ background: 'linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 100%)' }} 
-          className="absolute inset-0 opacity-95" 
-        />
-        <div className="absolute inset-0 bg-black/20" />
+    <div className="overflow-hidden bg-[#070b19] text-white">
+      {/* ═══════ HERO SECTION ═══════ */}
+      <section className="relative min-h-[96vh] flex items-center justify-center pt-20 pb-16 overflow-hidden">
+        {/* Futuristic Background Mesh Grid */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.22),rgba(255,255,255,0))]" />
+        
+        {/* Glow Spheres */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute bottom-[10%] right-[-10%] w-[45%] h-[45%] bg-indigo-500/10 rounded-full blur-[140px]" style={{ animationDelay: '3s' }} />
+        
+        {/* Animated Cyber Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
 
-        {/* Animated blobs */}
-        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-white/10 rounded-full blur-3xl animate-blob" />
-        <div className="absolute bottom-[-10%] right-[-5%] w-[35%] h-[35%] bg-white/10 rounded-full blur-3xl animate-blob" style={{ animationDelay: '4s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] bg-white/5 rounded-full blur-3xl animate-blob" style={{ animationDelay: '2s' }} />
-
-        {/* Wave bottom */}
-        <svg className="absolute bottom-0 w-full" viewBox="0 0 1440 120" preserveAspectRatio="none">
-          <path d="M0,80 C360,120 720,40 1080,80 C1260,100 1380,60 1440,80 L1440,120 L0,120 Z" fill="hsl(var(--bg-start))" opacity="0.6" />
-          <path d="M0,90 C320,50 640,110 960,80 C1200,60 1360,100 1440,90 L1440,120 L0,120 Z" fill="hsl(var(--bg-start))" />
-        </svg>
-
-        {/* Content */}
-        <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-bold px-5 py-2.5 rounded-full mb-8">
-            <Zap size={14} /> AI-Powered Smart Tourism Platform
+        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] backdrop-blur-2xl text-blue-400 text-xs font-black tracking-wider uppercase mb-8 shadow-inner"
+          >
+            <Sparkles size={14} className="text-yellow-400" /> Web3 Live Smart Travel Platform
           </motion.div>
 
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-[1.1] tracking-tight">
-            Explore. Experience.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-200 to-orange-200">
-              Enjoy The World 🌍
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="text-5xl md:text-8xl font-black mb-8 leading-[1.05] tracking-tight text-white font-sans"
+          >
+            The Future of <br className="hidden md:inline" />
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 drop-shadow-lg">
+              Intelligent Tourism
             </span>
           </motion.h1>
 
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            className="text-lg md:text-xl text-white/90 mb-12 max-w-2xl mx-auto font-medium">
-            Smart trip planning with AI — book hotels, food, cabs, guides & vehicles all in one place.
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="text-slate-400 text-base md:text-lg mb-14 max-w-2xl mx-auto font-medium leading-relaxed"
+          >
+            Powered by next-gen Gemini AI context engine. Custom design your hotels, electric vehicles, and local guides in real time with unified tracking.
           </motion.p>
 
-          {/* Smart Booking Bar */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-            className="max-w-5xl mx-auto">
-            <form onSubmit={handleMakeTrip} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-white/10 backdrop-blur-2xl rounded-[2rem] border border-white/20 shadow-2xl">
+          {/* Premium Glassmorphic Booking Form */}
+          <motion.div 
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.8, type: 'spring', stiffness: 50 }}
+            className="max-w-5xl mx-auto"
+          >
+            <form 
+              onSubmit={handleMakeTrip} 
+              className="grid grid-cols-1 md:grid-cols-12 gap-3.5 p-4 bg-white/[0.02] border border-white/[0.07] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl shadow-black/60"
+            >
               {/* FROM */}
-              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
-                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <MapPin size={10} className="text-yellow-200" /> From
+              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-900/40 rounded-2xl px-4 py-3 border border-white/[0.04] hover:border-blue-500/30 focus-within:border-blue-500/50 transition-all text-left">
+                <span className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <MapPin size={11} className="text-blue-400" /> Departure point
                 </span>
                 <input 
                   type="text" 
-                  placeholder="Your City" 
+                  placeholder="e.g. New Delhi" 
                   value={from} 
                   onChange={e => setFrom(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-white/35 outline-none font-bold" 
+                  className="w-full bg-transparent text-sm text-white placeholder-white/20 outline-none font-bold" 
                 />
               </div>
 
               {/* TO */}
-              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
-                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <MapPin size={10} className="text-emerald-300" /> To
+              <div className="col-span-1 md:col-span-3 flex flex-col items-start bg-slate-900/40 rounded-2xl px-4 py-3 border border-white/[0.04] hover:border-blue-500/30 focus-within:border-blue-500/50 transition-all text-left">
+                <span className="text-[10px] font-extrabold text-emerald-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <MapPin size={11} className="text-emerald-400" /> Destination
                 </span>
                 <input 
                   type="text" 
-                  placeholder="Destination" 
+                  placeholder="e.g. South Goa" 
                   value={to} 
                   onChange={e => setTo(e.target.value)}
-                  className="w-full bg-transparent text-sm text-white placeholder-white/35 outline-none font-bold" 
+                  className="w-full bg-transparent text-sm text-white placeholder-white/20 outline-none font-bold" 
                 />
               </div>
 
               {/* DATE */}
-              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
-                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <Calendar size={10} className="text-blue-300" /> Departure
+              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-900/40 rounded-2xl px-4 py-3 border border-white/[0.04] hover:border-blue-500/30 focus-within:border-blue-500/50 transition-all text-left">
+                <span className="text-[10px] font-extrabold text-indigo-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <Calendar size={11} className="text-indigo-400" /> Departure Date
                 </span>
                 <input 
                   type="date" 
@@ -159,9 +170,9 @@ const Home = () => {
               </div>
 
               {/* GUESTS */}
-              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-950/25 backdrop-blur-md rounded-2xl px-4 py-2.5 border border-white/10 hover:border-white/30 focus-within:border-white/50 focus-within:bg-slate-950/40 transition-all text-left">
-                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 flex items-center gap-1">
-                  <Users size={10} className="text-purple-300" /> Guests
+              <div className="col-span-1 md:col-span-2 flex flex-col items-start bg-slate-900/40 rounded-2xl px-4 py-3 border border-white/[0.04] hover:border-blue-500/30 focus-within:border-blue-500/50 transition-all text-left">
+                <span className="text-[10px] font-extrabold text-violet-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <Users size={11} className="text-violet-400" /> Guests
                 </span>
                 <input 
                   type="number" 
@@ -173,72 +184,198 @@ const Home = () => {
                 />
               </div>
 
-              {/* SUBMIT BUTTON */}
+              {/* ACTION BUTTON */}
               <button 
                 type="submit"
-                className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 px-6 py-4 rounded-2xl font-black text-sm hover:from-yellow-300 hover:to-amber-400 active:scale-95 transition-all shadow-xl shadow-amber-500/10 cursor-pointer"
+                className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-5 py-4 rounded-2xl font-black text-sm hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-blue-500/20 cursor-pointer"
               >
-                <Search size={18} /> MAKE TRIP
+                <Search size={18} /> GENERATE
               </button>
             </form>
           </motion.div>
 
-          {/* Floating Tags */}
-          <div className="mt-8 flex flex-wrap justify-center gap-4 text-xs font-bold text-white/50 uppercase tracking-widest">
-            {['Smart Planning', 'Hotel Booking', 'AI Assistant', 'Eco Travel'].map((label, i) => (
-              <span key={i} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />{label}
-              </span>
+          {/* Floating Neon Indicators */}
+          <div className="mt-10 flex flex-wrap justify-center gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.01] border border-white/[0.03]">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping" /> Real-time DB Active
+            </span>
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.01] border border-white/[0.03]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> API Gateway Configured
+            </span>
+            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.01] border border-white/[0.03]">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> Echo Sync Listening
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ LIVE ECO-CITY TELEMETRY OVERLAY ═══════ */}
+      <section className="relative z-20 py-8 px-6 -mt-10 max-w-7xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="p-6 rounded-[2rem] bg-slate-900/60 border border-white/[0.07] backdrop-blur-2xl shadow-xl flex flex-col lg:flex-row justify-between items-center gap-6 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl" />
+          
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+              <Activity size={24} className="animate-pulse" />
+            </div>
+            <div className="text-left">
+              <h4 className="font-extrabold text-sm flex items-center gap-1.5">
+                Live City Command Telemetry <span className="text-[9px] font-black uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">Active feed</span>
+              </h4>
+              <p className="text-xs text-slate-400">Environmental & tourist load analytics for green travels.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-12 w-full lg:w-auto">
+            <div className="text-left md:border-l md:border-white/[0.05] md:pl-6">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-1">Live Tourists</p>
+              <p className="text-lg font-black text-blue-400">{mockTelemetry.activeTourists.toLocaleString()}</p>
+            </div>
+            <div className="text-left border-l border-white/[0.05] pl-6">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-1">Eco Score</p>
+              <p className="text-lg font-black text-emerald-400">{mockTelemetry.ecoScore}/100</p>
+            </div>
+            <div className="text-left border-l border-white/[0.05] pl-6">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-1">Carbon Saved</p>
+              <p className="text-lg font-black text-indigo-400">{mockTelemetry.carbonSaved}</p>
+            </div>
+            <div className="text-left border-l border-white/[0.05] pl-6">
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-1">Traffic status</p>
+              <p className="text-lg font-black text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-ping" /> {mockTelemetry.transitStatus}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ═══════ DEEP FEATURE ARCHITECTURE ═══════ */}
+      <section className="py-24 px-6 relative">
+        <div className="absolute -top-32 left-1/3 w-96 h-96 bg-indigo-500/5 rounded-full blur-[120px]" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <p className="text-blue-400 font-extrabold text-xs uppercase tracking-widest mb-3">Modular Engine</p>
+            <h2 className="text-3xl md:text-5xl font-black text-white">Hyper-personalized Features</h2>
+            <p className="text-slate-400 text-sm max-w-xl mx-auto mt-4 leading-relaxed">
+              Every detail is powered by our REST APIs & live databases to deliver structured real-time analytics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feat, idx) => (
+              <motion.div 
+                key={idx} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.05 }}
+                className="p-7 rounded-[2rem] bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.1] backdrop-blur-xl relative overflow-hidden group transition-all duration-300 hover:-translate-y-1.5"
+              >
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle 120px at var(--x, 50%) var(--y, 50%), ${feat.shadow}, transparent 80%)`
+                  }}
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    e.currentTarget.style.setProperty('--x', `${x}px`);
+                    e.currentTarget.style.setProperty('--y', `${y}px`);
+                  }}
+                />
+
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feat.color} flex items-center justify-center text-white mb-6 shadow-lg group-hover:scale-105 transition-transform`}>
+                  <feat.icon size={22} />
+                </div>
+                <h3 className="font-extrabold text-lg mb-2 text-white group-hover:text-blue-400 transition-colors">{feat.title}</h3>
+                <p className="text-slate-400 text-xs leading-relaxed font-medium">{feat.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════ STATS ═══════ */}
-      <section className="py-16 bg-gradient-to-r from-[hsl(var(--primary-dark))] to-[hsl(var(--primary))]">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((s, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
-              <div className="text-4xl md:text-5xl font-black text-white mb-1">{s.value}</div>
-              <div className="text-white/60 text-sm font-semibold">{s.label}</div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══════ POPULAR DESTINATIONS ═══════ */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-12">
+      {/* ═══════ LIVE CROWD MONITOR & TRENDING PLACES ═══════ */}
+      <section className="py-20 px-6 relative bg-gradient-to-b from-[#070b19] via-[#090e25] to-[#070b19]">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-4">
             <div>
-              <p className="text-[hsl(var(--primary))] font-bold text-sm uppercase tracking-wider mb-2">Popular Destinations</p>
-              <h2 className="text-4xl font-black">Trending Places</h2>
+              <p className="text-blue-400 font-extrabold text-xs uppercase tracking-widest mb-3">Live Crowds & Status</p>
+              <h2 className="text-3xl md:text-5xl font-black text-white">Trending Destinations</h2>
             </div>
-            <Link to="/destinations" className="hidden md:flex items-center gap-2 text-[hsl(var(--primary))] font-bold hover:gap-3 transition-all">
-              View All <ArrowRight size={18} />
+            <Link 
+              to="/destinations" 
+              className="flex items-center gap-2 text-blue-400 font-extrabold text-sm hover:gap-3 transition-all"
+            >
+              Explore all locations <ArrowRight size={18} />
             </Link>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {destinations.map((place, idx) => (
-              <motion.div key={place.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
-                className="glass-surface rounded-3xl overflow-hidden card-hover group">
-                <div className="relative h-52 overflow-hidden">
-                  <img src={place.image} alt={place.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold text-amber-500 flex items-center gap-1">
-                    <Star size={12} fill="currentColor" /> {place.rating}
+              <motion.div 
+                key={place.id} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08 }}
+                className="p-3 rounded-[2.2rem] bg-white/[0.015] border border-white/[0.04] hover:border-white/[0.09] transition-all duration-300 group flex flex-col h-full justify-between"
+              >
+                <div>
+                  <div className="relative h-56 rounded-[1.8rem] overflow-hidden">
+                    <img 
+                      src={place.image} 
+                      alt={place.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    
+                    {/* Badge type */}
+                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-[9px] font-black uppercase bg-black/40 backdrop-blur-md text-white/95 border border-white/10 tracking-widest">
+                      {place.type}
+                    </span>
+
+                    {/* Stars */}
+                    <div className="absolute top-3 right-3 bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-black text-amber-400 flex items-center gap-1">
+                      <Star size={11} fill="currentColor" /> {place.rating}
+                    </div>
+
+                    {/* Live Crowd Badge */}
+                    <div className={`absolute bottom-3 left-3 text-[9px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1 border ${crowdColors[place.crowdLevel]}`}>
+                      <Users size={10} /> Crowd: {place.crowdLevel}
+                    </div>
                   </div>
-                  <div className={`absolute bottom-3 left-3 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${crowdColors[place.crowdLevel]}`}>
-                    <Users size={11} /> {place.crowdLevel}
+
+                  <div className="p-4 text-left">
+                    <p className="text-blue-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mb-1.5">
+                      <MapPin size={11} /> {place.location}
+                    </p>
+                    <h3 className="font-extrabold text-base mb-3 leading-snug group-hover:text-blue-400 transition-colors">{place.name}</h3>
+                    
+                    {/* Inner Tags */}
+                    <div className="flex gap-1.5 flex-wrap">
+                      {place.tags.map((t, i) => (
+                        <span key={i} className="text-[8px] font-bold text-slate-500 uppercase tracking-widest bg-white/[0.02] border border-white/[0.04] px-2 py-0.5 rounded-md">
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <div className="p-5">
-                  <p className="text-[hsl(var(--primary))] text-xs font-bold flex items-center gap-1 mb-1">
-                    <MapPin size={11} /> {place.location}
-                  </p>
-                  <h3 className="font-bold text-lg mb-3 group-hover:text-[hsl(var(--primary))] transition-colors">{place.name}</h3>
-                  <Link to="/destinations" className="text-sm text-[hsl(var(--primary))] font-bold flex items-center gap-1 hover:gap-2 transition-all">
-                    Explore <ChevronRight size={14} />
+
+                <div className="p-4 pt-0 text-left">
+                  <Link 
+                    to="/destinations" 
+                    className="text-xs text-blue-400 font-extrabold flex items-center gap-1 hover:gap-2 transition-all"
+                  >
+                    Select Destination <ChevronRight size={14} />
                   </Link>
                 </div>
               </motion.div>
@@ -247,84 +384,106 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══════ FEATURES ═══════ */}
-      <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[hsl(var(--primary))] font-bold text-sm uppercase tracking-wider mb-2">Smart Features</p>
-            <h2 className="text-4xl font-black mb-4">Everything for Smarter Travel</h2>
-            <p className="text-[hsl(var(--text-muted))] max-w-xl mx-auto">One platform for complete trip planning — powered by AI, designed for travelers.</p>
+      {/* ═══════ REAL-TIME TELEMETRY SYSTEM BRAND TESTIMONIAL ═══════ */}
+      <section className="py-24 px-6 relative overflow-hidden bg-slate-950/40">
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[140px]" />
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <p className="text-blue-400 font-extrabold text-xs uppercase tracking-widest mb-3">Platform Feedback</p>
+            <h2 className="text-3xl md:text-5xl font-black text-white">Trust from our Ecosystem</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feat, idx) => (
-              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.08 }}
-                className="glass-surface p-7 rounded-3xl card-hover group">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feat.color} flex items-center justify-center text-white mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
-                  <feat.icon size={24} />
-                </div>
-                <h3 className="font-bold text-lg mb-2">{feat.title}</h3>
-                <p className="text-[hsl(var(--text-muted))] text-sm leading-relaxed">{feat.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ═══════ TESTIMONIALS ═══════ */}
-      <section className="py-20 px-6 bg-gradient-to-br from-[hsl(var(--bg-dark-start))] to-[hsl(var(--bg-dark-end))]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[hsl(var(--primary-light))] font-bold text-sm uppercase tracking-wider mb-2">Testimonials</p>
-            <h2 className="text-4xl font-black text-white mb-4">What Travelers Say</h2>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, idx) => (
-              <motion.div key={idx} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: idx * 0.1 }}
-                className="glass-card rounded-3xl p-7">
-                <Quote size={24} className="text-[hsl(var(--primary-light))] mb-4" />
-                <p className="text-white/70 text-sm leading-relaxed mb-6">"{t.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--accent))] flex items-center justify-center text-white font-bold text-sm">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm">{t.name}</p>
-                    <p className="text-white/40 text-xs">{t.role}</p>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {Array.from({ length: t.rating }).map((_, i) => <Star key={i} size={12} className="text-amber-400 fill-amber-400" />)}
-                  </div>
+            <div className="p-8 rounded-[2rem] bg-white/[0.015] border border-white/[0.04] text-left flex flex-col justify-between h-full">
+              <div>
+                <Quote size={32} className="text-blue-400 opacity-20 mb-6" />
+                <p className="text-slate-400 text-sm leading-relaxed mb-8 font-medium">
+                  "The AI custom auto-fill on the Trip Planner saved me hours of manually filtering hotels and guides. The exact cost was precisely calculated!"
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center font-bold text-sm text-white">
+                  P
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ CTA ═══════ */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
-            <div 
-              style={{ background: 'linear-gradient(135deg, hsl(var(--primary-dark)) 0%, hsl(var(--primary)) 100%)' }}
-              className="rounded-3xl p-14 relative overflow-hidden shadow-2xl border border-white/10"
-            >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3" />
-              <h2 className="text-4xl font-black text-white mb-4 relative z-10">Start Your Smart Journey Today</h2>
-              <p className="text-blue-100 mb-8 max-w-lg mx-auto relative z-10 text-base font-medium">
-                Plan trips, book hotels, hire guides — all powered by AI. Join thousands of happy travelers.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-                <Link to="/planner" className="bg-white text-blue-600 hover:text-blue-700 font-extrabold px-8 py-4 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-blue-900/20">
-                  Plan Your Trip
-                </Link>
-                <Link to="/destinations" className="border-2 border-white/40 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 hover:scale-105 transition-all">
-                  Explore Destinations
-                </Link>
+                <div>
+                  <p className="text-white font-extrabold text-sm">Priya Sharma</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Solo Traveler</p>
+                </div>
               </div>
             </div>
-          </motion.div>
+
+            <div className="p-8 rounded-[2rem] bg-white/[0.015] border border-white/[0.04] text-left flex flex-col justify-between h-full">
+              <div>
+                <Quote size={32} className="text-blue-400 opacity-20 mb-6" />
+                <p className="text-slate-400 text-sm leading-relaxed mb-8 font-medium">
+                  "Connecting the agency portal to the dynamic database migrations made tracking our scheduled tours and vehicles 100% real-time. Absolutely professional."
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center font-bold text-sm text-white">
+                  R
+                </div>
+                <div>
+                  <p className="text-white font-extrabold text-sm">Rahul Mehta</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Rajasthan Tours Manager</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8 rounded-[2rem] bg-white/[0.015] border border-white/[0.04] text-left flex flex-col justify-between h-full">
+              <div>
+                <Quote size={32} className="text-blue-400 opacity-20 mb-6" />
+                <p className="text-slate-400 text-sm leading-relaxed mb-8 font-medium">
+                  "Integrating the live telemetry emergency dispatcher ensures that security warnings across Old Town and Boardwalk are recorded instantly."
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center font-bold text-sm text-white">
+                  A
+                </div>
+                <div>
+                  <p className="text-white font-extrabold text-sm">Anjali Singh</p>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">City Authority Analyst</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ HIGH-END FUTURISTIC CTA ═══════ */}
+      <section className="py-24 px-6 relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-blue-500/5 rounded-full blur-[140px] pointer-events-none" />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="p-12 md:p-16 rounded-[3rem] bg-gradient-to-b from-white/[0.03] to-transparent border border-white/[0.07] backdrop-blur-2xl shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
+            
+            <h2 className="text-3xl md:text-5xl font-black text-white mb-4 relative z-10 leading-tight">
+              Begin Your Intelligent <br />
+              Journey Today
+            </h2>
+            <p className="text-slate-400 text-sm mb-10 max-w-lg mx-auto relative z-10 font-medium">
+              Join thousands of eco-travelers accessing the unified smart travel command dashboard.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10 max-w-md mx-auto">
+              <Link 
+                to="/planner" 
+                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-extrabold px-8 py-4 rounded-2xl hover:opacity-95 active:scale-95 transition-all shadow-xl shadow-blue-500/10"
+              >
+                Plan AI Trip
+              </Link>
+              <Link 
+                to="/destinations" 
+                className="flex-1 border border-white/20 text-white font-bold px-8 py-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] active:scale-95 transition-all"
+              >
+                Explore Places
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -332,3 +491,4 @@ const Home = () => {
 };
 
 export default Home;
+

@@ -3,10 +3,11 @@ import {
   LayoutDashboard, Users, MapPin, Compass, Activity, ShieldAlert,
   Truck, Brain, Calendar, CheckCircle, Leaf
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useRealtimeSimulator from '../../hooks/useRealtimeSimulator';
+import { telemetryAPI } from '../../services/api';
 
-// Subpage components
 import AdminOverview from './AdminOverview';
 import CrowdMonitor from './CrowdMonitor';
 import HeatmapView from './HeatmapView';
@@ -20,86 +21,93 @@ import AgencyApprovals from './AgencyApprovals';
 import SustainabilityDashboard from './SustainabilityDashboard';
 
 const navItems = [
-  { label: 'Overview', path: 'overview', icon: LayoutDashboard },
-  { label: 'Crowd Monitor', path: 'crowd', icon: Users },
-  { label: 'Heatmap View', path: 'heatmap', icon: MapPin },
-  { label: 'Traffic Dashboard', path: 'traffic', icon: Compass },
-  { label: 'Public Transit', path: 'transport', icon: Activity },
-  { label: 'Emergency Center', path: 'emergency', icon: ShieldAlert },
-  { label: 'Resource Monitor', path: 'resources', icon: Truck },
-  { label: 'AI Prediction', path: 'predictions', icon: Brain },
-  { label: 'Event Manager', path: 'events', icon: Calendar },
-  { label: 'Agency Approvals', path: 'agencies', icon: CheckCircle },
-  { label: 'Sustainability', path: 'sustainability', icon: Leaf }
+  { label: 'Overview',        path: 'overview',      icon: LayoutDashboard },
+  { label: 'Crowd Monitor',   path: 'crowd',         icon: Users },
+  { label: 'Heatmap View',    path: 'heatmap',       icon: MapPin },
+  { label: 'Traffic',         path: 'traffic',       icon: Compass },
+  { label: 'Public Transit',  path: 'transport',     icon: Activity },
+  { label: 'Emergency Center',path: 'emergency',     icon: ShieldAlert },
+  { label: 'Resources',       path: 'resources',     icon: Truck },
+  { label: 'AI Prediction',   path: 'predictions',   icon: Brain },
+  { label: 'Event Manager',   path: 'events',        icon: Calendar },
+  { label: 'Agency Approvals',path: 'agencies',      icon: CheckCircle },
+  { label: 'Sustainability',  path: 'sustainability', icon: Leaf },
 ];
 
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useRealtimeSimulator('admin', 3000);
+  const [data, setData, { loading, connected, refetch, triggerTick }] =
+    useRealtimeSimulator('admin', 6000);
+
+  const handleRefresh = async () => {
+    await refetch();
+  };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'crowd':
-        return <CrowdMonitor data={data} setData={setData} />;
-      case 'heatmap':
-        return <HeatmapView data={data} setData={setData} />;
-      case 'traffic':
-        return <TrafficDashboard data={data} setData={setData} />;
-      case 'transport':
-        return <TransportTracker data={data} setData={setData} />;
-      case 'emergency':
-        return <EmergencyCenter data={data} setData={setData} />;
-      case 'resources':
-        return <ResourceMonitor data={data} setData={setData} />;
-      case 'predictions':
-        return <FlowPrediction data={data} setData={setData} />;
-      case 'events':
-        return <EventManager data={data} setData={setData} />;
-      case 'agencies':
-        return <AgencyApprovals data={data} setData={setData} />;
-      case 'sustainability':
-        return <SustainabilityDashboard data={data} setData={setData} />;
-      case 'overview':
-      default:
-        return <AdminOverview data={data} setTab={setActiveTab} />;
+      case 'crowd':        return <CrowdMonitor data={data} setData={setData} />;
+      case 'heatmap':      return <HeatmapView data={data} setData={setData} />;
+      case 'traffic':      return <TrafficDashboard data={data} setData={setData} />;
+      case 'transport':    return <TransportTracker data={data} setData={setData} />;
+      case 'emergency':    return <EmergencyCenter data={data} setData={setData} />;
+      case 'resources':    return <ResourceMonitor data={data} setData={setData} />;
+      case 'predictions':  return <FlowPrediction data={data} setData={setData} />;
+      case 'events':       return <EventManager data={data} setData={setData} />;
+      case 'agencies':     return <AgencyApprovals data={data} setData={setData} />;
+      case 'sustainability': return <SustainabilityDashboard data={data} setData={setData} />;
+      default:             return <AdminOverview data={data} setTab={setActiveTab} loading={loading} />;
     }
   };
 
   return (
     <DashboardLayout
       role="authority"
-      title="City Command Dashboard"
+      title="City Command Center"
       activeTab={activeTab}
       onTabChange={setActiveTab}
       navItems={navItems}
+      connected={connected}
+      loading={loading}
+      onRefresh={handleRefresh}
     >
-      <div className="flex flex-col min-h-screen">
-        {/* Sub Navigation Tabs */}
-        <div className="flex gap-1.5 pb-4 mb-6 border-b border-slate-200/50 dark:border-slate-800/50 overflow-x-auto">
+      <div className="space-y-6">
+        {/* Tab pills */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.path;
             return (
-              <button
+              <motion.button
                 key={item.path}
                 onClick={() => setActiveTab(item.path)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-[hsl(var(--primary))] text-white shadow-md'
-                    : 'bg-white/80 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
-                }`}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold
+                  transition-all whitespace-nowrap border shrink-0
+                  ${isActive
+                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-lg shadow-violet-500/20'
+                    : 'bg-white/50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:border-violet-400/40 hover:text-violet-500'
+                  }`}
               >
-                <Icon size={14} />
-                <span>{item.label}</span>
-              </button>
+                <Icon size={12} />
+                {item.label}
+              </motion.button>
             );
           })}
         </div>
 
-        {/* Dynamic Inner Tab Component */}
-        <div className="flex-1">
-          {renderContent()}
-        </div>
+        {/* Page content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </DashboardLayout>
   );

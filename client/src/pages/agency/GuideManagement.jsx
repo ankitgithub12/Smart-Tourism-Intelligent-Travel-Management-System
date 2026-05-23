@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Plus, Star, Phone, Check, Eye } from 'lucide-react';
+import { agencyAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function GuideManagement({ data, setData }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -16,28 +18,27 @@ export function GuideManagement({ data, setData }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.specialty) return;
 
-    const newGuide = {
-      id: `G-${200 + data.guides.length + 1}`,
-      name: formData.name,
-      specialty: formData.specialty,
-      rating: parseFloat(formData.rating) || 5.0,
-      status: 'Available',
-      activeTours: 0,
-      contact: formData.contact || '+91 99999 88888'
-    };
-
-    setData(prev => ({
-      ...prev,
-      guides: [...prev.guides, newGuide]
-    }));
-
-    setFormData({ name: '', specialty: '', rating: 5.0, contact: '' });
-    setShowAddForm(false);
+    const toastId = toast.loading('Registering travel guide...');
+    try {
+      const res = await agencyAPI.createGuide({
+        name: formData.name,
+        specialty: formData.specialty,
+        contact: formData.contact || '+91 99999 88888'
+      });
+      setData(res.data.agency);
+      setFormData({ name: '', specialty: '', rating: 5.0, contact: '' });
+      setShowAddForm(false);
+      toast.success('Guide registered successfully!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to register guide.', { id: toastId });
+    }
   };
+
 
   const toggleAvailability = (id) => {
     setData(prev => ({

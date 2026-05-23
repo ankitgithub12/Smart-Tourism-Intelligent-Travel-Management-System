@@ -1,13 +1,21 @@
 import React from 'react';
 import { ShieldCheck, Check, X, FileText } from 'lucide-react';
+import { telemetryAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function AgencyApprovals({ data, setData }) {
-  const updateAgencyStatus = (id, newStatus) => {
-    setData(prev => ({
-      ...prev,
-      agencies: prev.agencies.map(a => a.id === id ? { ...a, status: newStatus } : a)
-    }));
+  const updateAgencyStatus = async (id, newStatus) => {
+    const toastId = toast.loading(`${newStatus === 'Approved' ? 'Approving' : 'Rejecting'} agency...`);
+    try {
+      const res = await telemetryAPI.updateAgency(id, newStatus);
+      setData(res.data.telemetry);
+      toast.success(`Agency status updated to ${newStatus}!`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update agency status.', { id: toastId });
+    }
   };
+
 
   return (
     <div className="space-y-6">

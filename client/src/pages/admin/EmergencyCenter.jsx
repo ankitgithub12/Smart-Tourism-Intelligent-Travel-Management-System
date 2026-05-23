@@ -1,30 +1,33 @@
 import React from 'react';
 import { ShieldAlert, AlertTriangle, CheckCircle, Send, Check } from 'lucide-react';
+import { telemetryAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function EmergencyCenter({ data, setData }) {
-  const handleResolveIncident = (id) => {
-    setData(prev => ({
-      ...prev,
-      emergencies: prev.emergencies.map(e => {
-        if (e.id === id) {
-          return { ...e, status: 'Resolved' };
-        }
-        return e;
-      })
-    }));
+  const handleResolveIncident = async (id) => {
+    const toastId = toast.loading('Resolving incident...');
+    try {
+      const res = await telemetryAPI.updateEmergency(id, 'Resolved');
+      setData(res.data.telemetry);
+      toast.success('Incident resolved!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to resolve incident.', { id: toastId });
+    }
   };
 
-  const handleDispatchIncident = (id) => {
-    setData(prev => ({
-      ...prev,
-      emergencies: prev.emergencies.map(e => {
-        if (e.id === id) {
-          return { ...e, status: 'Dispatched' };
-        }
-        return e;
-      })
-    }));
+  const handleDispatchIncident = async (id) => {
+    const toastId = toast.loading('Dispatching responders...');
+    try {
+      const res = await telemetryAPI.updateEmergency(id, 'Dispatched');
+      setData(res.data.telemetry);
+      toast.success('Responders dispatched!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to dispatch responders.', { id: toastId });
+    }
   };
+
 
   return (
     <div className="space-y-6">

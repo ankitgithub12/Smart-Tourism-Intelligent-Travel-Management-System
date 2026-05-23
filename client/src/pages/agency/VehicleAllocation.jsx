@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Car, Fuel, Users, Compass, AlertTriangle, Play, Settings } from 'lucide-react';
+import { agencyAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function VehicleAllocation({ data, setData }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -17,29 +19,28 @@ export function VehicleAllocation({ data, setData }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.model || !formData.driver) return;
 
-    const newVehicle = {
-      id: `V-00${data.vehicles.length + 1}`,
-      model: formData.model,
-      type: formData.type,
-      driver: formData.driver,
-      currentLoad: 0,
-      status: 'Idle',
-      fuel: parseInt(formData.fuel) || 100,
-      location: formData.location
-    };
-
-    setData(prev => ({
-      ...prev,
-      vehicles: [...prev.vehicles, newVehicle]
-    }));
-
-    setFormData({ model: '', type: 'Cab', driver: '', fuel: 100, location: 'Main Depot' });
-    setShowAddForm(false);
+    const toastId = toast.loading('Adding fleet vehicle...');
+    try {
+      const res = await agencyAPI.createVehicle({
+        model: formData.model,
+        type: formData.type,
+        driver: formData.driver,
+        location: formData.location || 'Main Depot'
+      });
+      setData(res.data.agency);
+      setFormData({ model: '', type: 'Cab', driver: '', fuel: 100, location: 'Main Depot' });
+      setShowAddForm(false);
+      toast.success('Vehicle added successfully!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to add vehicle.', { id: toastId });
+    }
   };
+
 
   const toggleStatus = (id) => {
     setData(prev => ({

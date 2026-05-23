@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, DollarSign, Hotel, Car, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const MyTrips = () => {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, upcoming, past, cancelled
@@ -52,6 +54,10 @@ const MyTrips = () => {
     if (filter === 'past') return t.status === 'completed';
     return t.status === filter;
   });
+
+  const handleViewItinerary = (tripId) => {
+    navigate(`/trip-itinerary/${tripId}`);
+  };
 
   return (
     <div className="min-h-screen py-10 px-6">
@@ -113,7 +119,7 @@ const MyTrips = () => {
                   <p className="text-xs text-[hsl(var(--text-muted))] mb-1">Total Amount</p>
                   <p className="text-2xl font-black text-[hsl(var(--primary))] mb-4">₹{trip.total_price.toLocaleString()}</p>
                   <div className="flex gap-2 justify-start md:justify-end">
-                    <button className="btn-secondary !py-2 !px-4 text-xs">View Itinerary</button>
+                    <button onClick={() => handleViewItinerary(trip.id)} className="btn-secondary !py-2 !px-4 text-xs">View Itinerary</button>
                     {trip.status === 'pending' && <button className="btn-primary !py-2 !px-4 text-xs">Pay Now</button>}
                   </div>
                 </div>

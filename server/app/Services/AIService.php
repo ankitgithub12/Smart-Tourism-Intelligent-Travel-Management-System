@@ -34,12 +34,22 @@ class AIService
         $contextInfo = "Destinations: " . implode(', ', $context['destinations']) . "\n";
         $contextInfo .= "Trip type: {$context['trip_type']}\n";
         
-        $systemPrompt = "
+        // Detect if the user prompt is a structured JSON request (e.g. from TripPlanner)
+        $lastMessage = end($messages);
+        $lastContent = $lastMessage['content'] ?? '';
+        $isJsonRequest = (str_contains($lastContent, 'JSON') || str_contains($lastContent, 'schema') || str_contains($lastContent, 'hotel_id'));
+
+        if ($isJsonRequest) {
+            $systemPrompt = "You are a structured travel planning assistant. Return ONLY a valid JSON object matching the requested schema. Do not include markdown code fences, backticks, or any conversational text before or after the JSON. Keep it purely as standard parsable JSON.";
+        } else {
+            $systemPrompt = "
 You are Smart Tourism AI, an expert travel assistant that helps tourists plan trips naturally and intelligently.
 Keep responses concise (2-3 sentences max), friendly, and human-like. Always provide VALUE: attractions, activities, food, best time, travel tips.
 Current known context:
 {$contextInfo}
 ";
+        }
+
 
         // Format user history messages (excluding system)
         $formattedMessages = [];

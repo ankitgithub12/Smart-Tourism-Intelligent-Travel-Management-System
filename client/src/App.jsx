@@ -32,6 +32,7 @@ import Settings from './pages/Settings';
 // Tourist Pages
 import TouristDashboard from './pages/tourist/TouristDashboard';
 import MyTrips from './pages/tourist/MyTrips';
+import TripItinerary from './pages/tourist/TripItinerary';
 import SavedDestinations from './pages/tourist/SavedDestinations';
 import AIRecommendations from './pages/tourist/AIRecommendations';
 
@@ -75,6 +76,7 @@ function App() {
       <Route element={<ProtectedRoute requiredRole="tourist"><MainLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<TouristDashboard />} />
         <Route path="/my-trips" element={<MyTrips />} />
+        <Route path="/trip-itinerary/:tripId" element={<TripItinerary />} />
         <Route path="/saved" element={<SavedDestinations />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
       </Route>

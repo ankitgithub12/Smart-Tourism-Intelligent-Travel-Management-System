@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             TouristPlacesSeeder::class,
             TransportSeeder::class,
             SmartPlannerSeeder::class,
+            TelemetrySeeder::class,
         ]);
     }
 }

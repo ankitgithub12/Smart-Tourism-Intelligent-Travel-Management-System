@@ -21,6 +21,17 @@ class TripController extends Controller
         return response()->json(['data' => $trips]);
     }
 
+    public function show(Request $request, $tripId)
+    {
+        $trip = $this->tripService->getTrip($tripId, $request->user()->id);
+        
+        if (!$trip) {
+            return response()->json(['message' => 'Trip not found'], 404);
+        }
+        
+        return response()->json(['data' => $trip]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

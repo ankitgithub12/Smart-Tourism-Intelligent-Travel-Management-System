@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { placesAPI, aiAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import { parseAIJsonArray } from '../utils/parseAIResponse';
 
 const Destinations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,20 +86,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
       const res = await aiAPI.chat(prompt);
       let replyText = res.data?.reply || res.data || '';
       
-      // Clean markdown code blocks if any
-      replyText = replyText.replace(/\\\`\\\`\\\`json/g, '').replace(/\\\`\\\`\\\`/g, '').replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-
-      // Resilient bounds extraction
-      const startIdx = replyText.indexOf('[');
-      const endIdx = replyText.lastIndexOf(']');
-      if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-        replyText = replyText.substring(startIdx, endIdx + 1);
-      }
-
-      // Replace newlines inside raw JSON strings to prevent parsing failure
-      replyText = replyText.replace(/\r?\n|\r/g, ' ');
-
-      const newPlaces = JSON.parse(replyText);
+      const newPlaces = parseAIJsonArray(replyText);
       if (Array.isArray(newPlaces) && newPlaces.length > 0) {
         const formattedNewPlaces = newPlaces.map((p, idx) => ({
           ...p,

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Plus, Clock, Users, User, ChevronRight, Check } from 'lucide-react';
+import { agencyAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function TourScheduler({ data, setData }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -17,32 +19,32 @@ export function TourScheduler({ data, setData }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.packageId || !formData.date || !formData.guideId) return;
 
     const selectedPkg = data.packages.find(p => p.id === parseInt(formData.packageId));
     const selectedGuide = data.guides.find(g => g.id === formData.guideId);
 
-    const newTour = {
-      id: `T-${100 + data.tours.length + 1}`,
-      package: selectedPkg ? selectedPkg.name : 'Unknown Tour',
-      date: formData.date,
-      time: formData.time,
-      guide: selectedGuide ? selectedGuide.name : 'Unassigned',
-      status: 'Upcoming',
-      capacity: parseInt(formData.capacity),
-      filled: 0
-    };
-
-    setData(prev => ({
-      ...prev,
-      tours: [...prev.tours, newTour]
-    }));
-
-    setFormData({ packageId: '', date: '', time: '09:00 AM', guideId: '', capacity: 20 });
-    setShowAddForm(false);
+    const toastId = toast.loading('Scheduling tour...');
+    try {
+      const res = await agencyAPI.createTour({
+        package_name: selectedPkg ? selectedPkg.name : 'Unknown Tour',
+        date: formData.date,
+        time: formData.time,
+        guide_name: selectedGuide ? selectedGuide.name : 'Unassigned',
+        capacity: parseInt(formData.capacity)
+      });
+      setData(res.data.agency);
+      setFormData({ packageId: '', date: '', time: '09:00 AM', guideId: '', capacity: 20 });
+      setShowAddForm(false);
+      toast.success('Tour scheduled successfully!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to schedule tour.', { id: toastId });
+    }
   };
+
 
   return (
     <div className="space-y-6">

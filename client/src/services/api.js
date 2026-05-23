@@ -117,4 +117,25 @@ export const externalAPIs = {
   googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
   openWeatherApiKey: import.meta.env.VITE_OPENWEATHER_API_KEY || '',
 };
+
+// ── Telemetry / City Authority Dashboard ──────────
+export const telemetryAPI = {
+  get: ()              => api.get('/admin/telemetry'),
+  tick: ()             => api.post('/admin/telemetry/tick'),
+  updateEmergency: (id, status) =>
+    api.post(`/admin/emergencies/${id}/update-status`, { status }),
+  updateAgency: (id, status) =>
+    api.post(`/admin/agencies/${id}/update-status`, { status }),
+};
+
+// ── Agency Dashboard ──────────────────────────────
+export const agencyAPI = {
+  getDashboard: ()                  => api.get('/agency/dashboard'),
+  createPackage: (data)             => api.post('/agency/packages', data),
+  deletePackage: (id)               => api.delete(`/agency/packages/${id}`),
+  createTour: (data)                => api.post('/agency/tours', data),
+  createVehicle: (data)             => api.post('/agency/vehicles', data),
+  createGuide: (data)               => api.post('/agency/guides', data),
+};
+
 export default api;
