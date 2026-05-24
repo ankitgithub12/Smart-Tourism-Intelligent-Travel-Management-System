@@ -217,10 +217,10 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(markersGroup.current);
 
       const predictionHtml = aiPredictions[place.id]
-        ? `<div style="margin-top: 8px; font-size: 10px; background-color: #6366f112; border: 1px solid #6366f125; border-radius: 6px; padding: 6px; color: #4f46e5; line-height: 1.3;">
+        ? `<div style="margin-top: 8px; font-size: 10px; background-color: #2563eb12; border: 1px solid #2563eb25; border-radius: 6px; padding: 6px; color: #1d4ed8; line-height: 1.3;">
              <strong>✨ AI Insight:</strong> <em>${aiPredictions[place.id]}</em>
            </div>`
-        : `<button id="popup-btn-${place.id}" style="width: 100%; border: none; background-color: #6366f1; color: white; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 10px; cursor: pointer; margin-top: 8px; box-shadow: 0 2px 4px rgba(99,102,241,0.3);">
+        : `<button id="popup-btn-${place.id}" style="width: 100%; border: none; background-color: #2563eb; color: white; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 10px; cursor: pointer; margin-top: 8px; box-shadow: 0 2px 4px rgba(99,102,241,0.3);">
              Analyze Crowd Status
            </button>`;
 
@@ -281,7 +281,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
           <p className="text-[hsl(var(--primary))] font-extrabold text-xs uppercase tracking-widest mb-2 flex items-center justify-center gap-1">
             <Sparkles size={14} className="animate-spin" style={{ animationDuration: '4s' }} /> Explore Without Boundaries
           </p>
-          <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600">
+          <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600">
             Interactive Tourism Map
           </h1>
           <p className="text-[hsl(var(--text-muted))] max-w-xl mx-auto text-sm md:text-base">
@@ -310,7 +310,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
             <button 
               onClick={handleSearch}
               disabled={isSearchingAI}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-sm hover:opacity-90 active:scale-95 transition-all shadow-md shadow-indigo-500/20"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-sm hover:opacity-90 active:scale-95 transition-all shadow-md shadow-blue-500/20"
             >
               {isSearchingAI ? 'Exploring...' : 'Search'}
             </button>
@@ -373,7 +373,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
             className="space-y-4 flex flex-col h-[600px]"
           >
             <h2 className="font-bold text-lg px-2 flex items-center gap-2 text-[hsl(var(--text))]">
-              <Activity size={20} className="text-indigo-500" /> AI Insights Center
+              <Activity size={20} className="text-blue-500" /> AI Insights Center
             </h2>
             
             {/* Quick Stat Panel */}
@@ -405,7 +405,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
               <AnimatePresence mode="popLayout">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 opacity-60">
-                    <div className="w-8 h-8 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mb-3"></div>
+                    <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin mb-3"></div>
                     <p className="text-sm">Retrieving destinations...</p>
                   </div>
                 ) : filteredPlaces.length === 0 ? (
@@ -469,7 +469,7 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
                         </p>
                         
                         {prediction ? (
-                          <div className="mt-2 p-2.5 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-[10px] text-indigo-700 dark:text-indigo-300 leading-normal">
+                          <div className="mt-2 p-2.5 rounded-xl bg-blue-500/5 border border-blue-500/10 text-[10px] text-blue-700 dark:text-blue-300 leading-normal">
                             <p className="font-bold mb-0.5 flex items-center gap-1">
                               <span>✨</span> AI Custom Advice:
                             </p>

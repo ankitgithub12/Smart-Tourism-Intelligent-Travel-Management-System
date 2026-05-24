@@ -58,20 +58,6 @@ export function AgencyDashboard() {
     }
   };
 
-  // Build simulated URL paths for visual highlighted items
-  const customNavItems = navItems.map(item => ({
-    ...item,
-    path: item.path, // We mock this check internally
-  }));
-
-  // Mock location check for DashboardLayout integration
-  const dashboardNavItems = navItems.map(item => ({
-    ...item,
-    // Provide action button hook inside the route link
-    path: `#${item.path}`
-  }));
-
-  // Custom Sidebar renderer link handler override using state tabs
   return (
     <DashboardLayout
       role="agency"

@@ -86,7 +86,7 @@ export function EmergencyCenter({ data, setData }) {
                         {item.status === 'Pending Review' && (
                           <button
                             onClick={() => handleDispatchIncident(item.id)}
-                            className="p-1 rounded-lg bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 transition-colors"
+                            className="p-1 rounded-lg bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
                             title="Dispatch Responders"
                           >
                             <Send size={14} />

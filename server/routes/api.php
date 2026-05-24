@@ -15,6 +15,7 @@ use App\Http\Controllers\API\TripController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\TelemetryController;
 use App\Http\Controllers\AgencyDashboardController;
+use App\Http\Controllers\TouristAssistanceController;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PUBLIC ROUTES (no auth required)
@@ -60,33 +61,34 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ── Bookings ──────────────────────────────────────────────────────────
     Route::get('/bookings',                 [BookingController::class, 'index']);
-    Route::post('/bookings',                [BookingController::class, 'store']);
+    Route::post('/bookings',                [BookingController::class, 'store'])->middleware('role:tourist');
     Route::get('/bookings/{id}',            [BookingController::class, 'show']);
-    Route::put('/bookings/{id}',            [BookingController::class, 'update']);
-    Route::delete('/bookings/{id}',         [BookingController::class, 'destroy']);
-    Route::get('/bookings/{id}/receipt',    [BookingController::class, 'receipt']);
+    Route::put('/bookings/{id}',            [BookingController::class, 'update'])->middleware('role:tourist');
+    Route::delete('/bookings/{id}',         [BookingController::class, 'destroy'])->middleware('role:tourist,authority');
+    Route::get('/bookings/{id}/receipt',    [BookingController::class, 'receipt'])->middleware('role:tourist');
     Route::post('/bookings/{id}/confirm',   [BookingController::class, 'confirm']);
-    Route::post('/bookings/{id}/cancel',    [BookingController::class, 'cancel']);
+    Route::post('/bookings/{id}/cancel',    [BookingController::class, 'cancel'])->middleware('role:tourist,authority');
 
     // ── Trips (Smart Planner) ─────────────────────────────────────────────
-    Route::get('/trips',                    [TripController::class, 'index']);
-    Route::post('/trips',                   [TripController::class, 'store']);
-    Route::get('/trips/{tripId}',           [TripController::class, 'show']);
-    Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession']);
-    Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment']);
+    Route::get('/trips',                    [TripController::class, 'index'])->middleware('role:tourist');
+    Route::post('/trips',                   [TripController::class, 'store'])->middleware('role:tourist');
+    Route::get('/trips/{tripId}',           [TripController::class, 'show'])->middleware('role:tourist');
+    Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession'])->middleware('role:tourist');
+    Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment'])->middleware('role:tourist');
 
     // ── Transport Booking ─────────────────────────────────────────────────
-    Route::post('/bookings/transport',      [TransportController::class, 'bookTransport']);
+    Route::post('/bookings/transport',      [TransportController::class, 'bookTransport'])->middleware('role:tourist');
 
     // ── Reviews ───────────────────────────────────────────────────────────
-    Route::post('/reviews',                 [ReviewController::class, 'store']);
-    Route::put('/reviews/{id}',             [ReviewController::class, 'update']);
-    Route::delete('/reviews/{id}',          [ReviewController::class, 'destroy']);
+    Route::post('/reviews',                 [ReviewController::class, 'store'])->middleware('role:tourist');
+    Route::put('/reviews/{id}',             [ReviewController::class, 'update'])->middleware('role:tourist');
+    Route::delete('/reviews/{id}',          [ReviewController::class, 'destroy'])->middleware('role:tourist,authority');
 
     // ── Favorites / Saved Places ──────────────────────────────────────────
-    Route::get('/favorites',                [FavoriteController::class, 'index']);
-    Route::post('/favorites',               [FavoriteController::class, 'store']);
-    Route::delete('/favorites/{id}',        [FavoriteController::class, 'destroy']);
+    Route::get('/favorites',                [FavoriteController::class, 'index'])->middleware('role:tourist');
+    Route::post('/favorites',               [FavoriteController::class, 'store'])->middleware('role:tourist');
+    Route::delete('/favorites/{id}',        [FavoriteController::class, 'destroy'])->middleware('role:tourist');
+    Route::get('/tourist/assistance',        [TouristAssistanceController::class, 'show'])->middleware('role:tourist');
 
     // ── AI Services ───────────────────────────────────────────────────────
     Route::prefix('ai')->group(function () {
@@ -97,14 +99,14 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── Agency/Admin: Places CRUD ─────────────────────────────────────────
-    Route::post('/places',              [PlaceController::class, 'store']);
-    Route::put('/places/{id}',          [PlaceController::class, 'update']);
-    Route::delete('/places/{id}',       [PlaceController::class, 'destroy']);
+    Route::post('/places',              [PlaceController::class, 'store'])->middleware('role:agency,authority');
+    Route::put('/places/{id}',          [PlaceController::class, 'update'])->middleware('role:agency,authority');
+    Route::delete('/places/{id}',       [PlaceController::class, 'destroy'])->middleware('role:agency,authority');
 
     // ── Agency/Admin: Transports CRUD ─────────────────────────────────────
-    Route::post('/transports',          [TransportController::class, 'store']);
-    Route::put('/transports/{id}',      [TransportController::class, 'update']);
-    Route::patch('/transports/{id}/load', [TransportController::class, 'updateLoad']);
+    Route::post('/transports',          [TransportController::class, 'store'])->middleware('role:agency,authority');
+    Route::put('/transports/{id}',      [TransportController::class, 'update'])->middleware('role:agency,authority');
+    Route::patch('/transports/{id}/load', [TransportController::class, 'updateLoad'])->middleware('role:agency,authority');
 
     // ── Admin-only ────────────────────────────────────────────────────────
     Route::prefix('admin')->group(function () {
@@ -128,6 +130,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/packages/{id}',              [AgencyDashboardController::class, 'deletePackage']);
         Route::post('/tours',                        [AgencyDashboardController::class, 'createTour']);
         Route::post('/vehicles',                     [AgencyDashboardController::class, 'createVehicle']);
+        Route::patch('/vehicles/{id}/status',        [AgencyDashboardController::class, 'updateVehicleStatus']);
         Route::post('/guides',                       [AgencyDashboardController::class, 'createGuide']);
+        Route::patch('/guides/{id}/status',          [AgencyDashboardController::class, 'updateGuideStatus']);
+        Route::patch('/bookings/{id}/status',        [AgencyDashboardController::class, 'updateBookingStatus']);
     });
 });

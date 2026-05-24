@@ -21,17 +21,15 @@ export function DashboardLayout({
   const { darkMode, toggleDark } = useTheme();
 
   const isAuthority = role === 'authority';
-  const primaryGrad = isAuthority
-    ? 'from-violet-600 to-indigo-600'
-    : 'from-sky-500 to-teal-500';
-  const accentColor = isAuthority ? 'violet' : 'sky';
+  const primaryGrad = 'from-blue-600 to-blue-800';
+  const sidebarWidth = collapsed ? '72px' : '256px';
 
   return (
     <div className={`min-h-screen flex ${darkMode ? 'dark-mode' : ''}`}
       style={{
         background: darkMode
-          ? 'linear-gradient(135deg, #0a0a1a 0%, #0d1117 50%, #0a0f1e 100%)'
-          : 'linear-gradient(135deg, #f0f4ff 0%, #e8f4fd 50%, #f0fdf4 100%)'
+          ? 'linear-gradient(135deg, #0f172a 0%, #172554 50%, #111827 100%)'
+          : 'linear-gradient(135deg, #ffffff 0%, #eff6ff 50%, #dbeafe 100%)'
       }}
     >
       {/* ── Mobile overlay ── */}
@@ -67,11 +65,11 @@ export function DashboardLayout({
             {!collapsed && (
               <div className="flex flex-col leading-none overflow-hidden">
                 <span className="font-extrabold text-sm tracking-tight truncate
-                  bg-gradient-to-r from-violet-500 to-sky-500 bg-clip-text text-transparent">
+                  bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
                   SmartTourism
                 </span>
                 <span className={`text-[9px] font-bold tracking-widest uppercase mt-0.5
-                  ${isAuthority ? 'text-violet-400' : 'text-sky-400'}`}>
+                  text-blue-500`}>
                   {isAuthority ? 'City Command' : 'Agency Hub'}
                 </span>
               </div>
@@ -104,7 +102,7 @@ export function DashboardLayout({
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold
                   transition-all duration-200 group relative overflow-hidden
                   ${isActive
-                    ? `bg-gradient-to-r ${primaryGrad} text-white shadow-lg shadow-${accentColor}-500/20`
+                    ? `bg-gradient-to-r ${primaryGrad} text-white shadow-lg shadow-blue-500/20`
                     : darkMode
                       ? 'text-slate-400 hover:text-white hover:bg-white/5'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
@@ -133,8 +131,7 @@ export function DashboardLayout({
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold truncate">{user?.name || 'User'}</p>
-                <p className={`text-[10px] font-semibold uppercase tracking-wider truncate
-                  ${isAuthority ? 'text-violet-400' : 'text-sky-400'}`}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider truncate text-blue-500">
                   {role}
                 </p>
               </div>
@@ -154,8 +151,8 @@ export function DashboardLayout({
 
       {/* ── Main area ── */}
       <div
-        className="flex-1 flex flex-col min-w-0 transition-all duration-300"
-        style={{ paddingLeft: collapsed ? 72 : 256 }}
+        className="flex-1 flex flex-col min-w-0 transition-all duration-300 lg:pl-[var(--sidebar-width)]"
+        style={{ '--sidebar-width': sidebarWidth }}
       >
         {/* Top header */}
         <header className={`h-16 sticky top-0 z-30 flex items-center justify-between px-6
@@ -176,7 +173,7 @@ export function DashboardLayout({
 
             <div>
               <h1 className="text-sm font-black tracking-tight">{title}</h1>
-              <p className={`text-[10px] font-semibold ${isAuthority ? 'text-violet-400' : 'text-sky-400'} mt-0.5`}>
+              <p className="text-[10px] font-semibold text-blue-500 mt-0.5">
                 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
@@ -254,8 +251,7 @@ export function DashboardLayout({
                   >
                     <div className="flex justify-between items-center mb-3">
                       <h4 className="font-bold text-sm">Live Notifications</h4>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full
-                        ${isAuthority ? 'bg-violet-500/15 text-violet-400' : 'bg-sky-500/15 text-sky-400'}`}>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-500">
                         LIVE
                       </span>
                     </div>

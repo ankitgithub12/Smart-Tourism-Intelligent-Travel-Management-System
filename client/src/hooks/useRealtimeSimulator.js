@@ -1,22 +1,37 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { telemetryAPI, agencyAPI } from '../services/api';
-import { initialAgencyData, initialAdminData } from '../utils/simulationData';
+import { initialAdminData } from '../utils/simulationData';
+
+const emptyAgencyData = {
+  stats: [],
+  financials: { monthlyRevenue: 0, pendingPayouts: 0, refunds: 0 },
+  revenueSeries: [],
+  monthlyRevenueSeries: [],
+  packages: [],
+  tours: [],
+  vehicles: [],
+  guides: [],
+  bookings: [],
+};
 
 /**
  * Real-time dashboard hook.
  * 1. Fetches initial data from Laravel REST API.
- * 2. Subscribes to Reverb public channels (telemetry / agency) via Laravel Echo.
+ * 2. Subscribes to Reverb channels via Laravel Echo.
  * 3. Falls back to 5-second polling if WebSockets unavailable.
  *
  * @param {'agency' | 'admin'} type
  * @param {number} intervalMs  Polling fallback interval (default 5000ms)
  */
 export function useRealtimeSimulator(type, intervalMs = 5000) {
+  const userId = useSelector((state) => state.auth.user?.id);
   const [data, setData] = useState(() =>
-    type === 'agency' ? initialAgencyData : initialAdminData
+    type === 'agency' ? emptyAgencyData : initialAdminData
   );
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
   const pollingRef = useRef(null);
   const channelRef = useRef(null);
 
@@ -27,10 +42,10 @@ export function useRealtimeSimulator(type, intervalMs = 5000) {
         ? await agencyAPI.getDashboard()
         : await telemetryAPI.get();
       setData(res.data);
+      setError(null);
       setLoading(false);
     } catch (err) {
-      // If API fails, keep using local simulation data silently
-      console.warn('[useRealtimeSimulator] API fetch failed, using local data:', err?.message);
+      setError(err.response?.data?.message || 'Unable to load live dashboard data.');
       setLoading(false);
     }
   }, [type]);
@@ -71,7 +86,7 @@ export function useRealtimeSimulator(type, intervalMs = 5000) {
     fetchData();
 
     let echoInstance = null;
-    const channelName = type === 'agency' ? 'agency' : 'telemetry';
+    const channelName = type === 'agency' ? `agency.${userId}` : 'telemetry';
     const eventName = type === 'agency'
       ? '.AgencyDataUpdated'
       : '.TelemetryUpdated';
@@ -80,7 +95,7 @@ export function useRealtimeSimulator(type, intervalMs = 5000) {
       // Dynamic import to avoid crashing if Echo is not configured
       import('../services/echo').then(({ default: echo }) => {
         echoInstance = echo;
-        const channel = echo.channel(channelName);
+        const channel = type === 'agency' ? echo.private(channelName) : echo.channel(channelName);
         channelRef.current = channel;
 
         channel.listen(eventName, (payload) => {
@@ -112,9 +127,9 @@ export function useRealtimeSimulator(type, intervalMs = 5000) {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  }, [type, userId]);
 
-  return [data, setData, { loading, connected, refetch: fetchData, triggerTick }];
+  return [data, setData, { loading, connected, error, refetch: fetchData, triggerTick }];
 }
 
 export default useRealtimeSimulator;

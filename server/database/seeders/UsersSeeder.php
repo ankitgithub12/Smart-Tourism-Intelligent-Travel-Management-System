@@ -24,6 +24,7 @@ class UsersSeeder extends Seeder
                 'email'      => 'agency@rajasthan.travel',
                 'password'   => Hash::make('password123'),
                 'role'       => 'agency',
+                'approval_status' => 'approved',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

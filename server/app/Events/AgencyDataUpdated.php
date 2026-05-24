@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -14,7 +14,7 @@ class AgencyDataUpdated implements ShouldBroadcastNow
 
     public $data;
 
-    public function __construct(array $data)
+    public function __construct(public int $agencyId, array $data)
     {
         $this->data = $data;
     }
@@ -22,7 +22,7 @@ class AgencyDataUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new Channel('agency'),
+            new PrivateChannel('agency.' . $this->agencyId),
         ];
     }
 

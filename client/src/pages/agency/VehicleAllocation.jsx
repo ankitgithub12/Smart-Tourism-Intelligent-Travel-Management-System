@@ -42,17 +42,17 @@ export function VehicleAllocation({ data, setData }) {
   };
 
 
-  const toggleStatus = (id) => {
-    setData(prev => ({
-      ...prev,
-      vehicles: prev.vehicles.map(v => {
-        if (v.id === id) {
-          const nextStatus = v.status === 'Active' ? 'Idle' : v.status === 'Idle' ? 'Maintenance' : 'Active';
-          return { ...v, status: nextStatus, currentLoad: nextStatus === 'Active' ? 4 : 0 };
-        }
-        return v;
-      })
-    }));
+  const toggleStatus = async (vehicle) => {
+    const nextStatus = vehicle.status === 'Active' ? 'Idle' : vehicle.status === 'Idle' ? 'Maintenance' : 'Active';
+    const toastId = toast.loading('Updating vehicle dispatch status...');
+    try {
+      const res = await agencyAPI.updateVehicleStatus(vehicle.id, nextStatus);
+      setData(res.data.agency);
+      toast.success('Vehicle status updated.', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update vehicle status.', { id: toastId });
+    }
   };
 
   return (
@@ -201,7 +201,7 @@ export function VehicleAllocation({ data, setData }) {
               {/* Action Buttons */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => toggleStatus(v.id)}
+                  onClick={() => toggleStatus(v)}
                   className="flex-1 text-[10px] font-bold py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                 >
                   <Play size={10} className="text-emerald-500" /> Dispatch

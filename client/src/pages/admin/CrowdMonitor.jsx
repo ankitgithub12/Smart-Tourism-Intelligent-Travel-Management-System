@@ -3,11 +3,15 @@ import { motion } from 'framer-motion';
 import { Users, AlertTriangle, Send } from 'lucide-react';
 
 export function CrowdMonitor({ data }) {
+  const cityLabel = data.cityData ? `${data.cityData.city}, ${data.cityData.country}` : 'stored city zones';
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="font-black text-base">Crowd Density Monitoring</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400">Live crowd capacity sensors and risk assessment metrics</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Real city POIs and risk estimates for {cityLabel}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -39,7 +43,7 @@ export function CrowdMonitor({ data }) {
                       <span className="opacity-70 flex items-center gap-1">
                         <Users size={12} /> Live Visitors
                       </span>
-                      <span>{zone.visitors} est.</span>
+                      <span>{zone.visitors == null ? 'Open-data estimate' : `${zone.visitors} est.`}</span>
                     </div>
                     <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                       <div
@@ -55,6 +59,11 @@ export function CrowdMonitor({ data }) {
 
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-xs font-black">{zone.density}% Capacity</span>
+                {zone.source && (
+                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg">
+                    Real city feed
+                  </span>
+                )}
                 {isCritical && (
                   <button className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:bg-rose-500/20 transition-all">
                     <Send size={10} /> Broadcast Alert

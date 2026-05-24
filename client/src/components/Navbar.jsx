@@ -16,6 +16,8 @@ const navLinks = [
   { label: 'Contact', path: '/contact' },
 ];
 
+const touristOnlyNavPaths = new Set(['/planner']);
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,6 +25,10 @@ const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
   const { theme } = useTheme();
+  const isTourist = user?.role === 'tourist';
+  const visibleNavLinks = navLinks.filter(
+    (link) => !isAuthenticated || isTourist || !touristOnlyNavPaths.has(link.path)
+  );
 
   const getDashboardRoute = (role) => {
     if (role === 'admin' || role === 'authority') return '/admin/dashboard';
@@ -68,7 +74,7 @@ const Navbar = () => {
 
             {/* Desktop Nav */}
             <div className="hidden lg:flex items-center gap-0.5">
-              {navLinks.map((link) => (
+              {visibleNavLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
@@ -130,12 +136,16 @@ const Navbar = () => {
                           <Link to={getDashboardRoute(user?.role)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
                             <LayoutDashboard size={16} className="opacity-40" /> Dashboard
                           </Link>
-                          <Link to="/my-trips" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
-                            <MapPin size={16} className="opacity-40" /> My Trips
-                          </Link>
-                          <Link to="/saved" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
-                            <Heart size={16} className="opacity-40" /> Wishlist
-                          </Link>
+                          {isTourist && (
+                            <>
+                              <Link to="/my-trips" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
+                                <MapPin size={16} className="opacity-40" /> My Trips
+                              </Link>
+                              <Link to="/saved" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
+                                <Heart size={16} className="opacity-40" /> Wishlist
+                              </Link>
+                            </>
+                          )}
                           <button
                             onClick={logout}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
@@ -183,7 +193,7 @@ const Navbar = () => {
               className="lg:hidden overflow-hidden glass-surface border-t border-[hsl(var(--primary)/0.1)]"
             >
               <div className="px-4 py-4 space-y-1">
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}

@@ -35,4 +35,21 @@ return [
         ],
     ],
 
+    'openweather' => [
+        'key' => env('OPENWEATHER_API_KEY'),
+    ],
+
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    'real_city' => [
+        'enabled' => env('CITY_DATA_ENABLED', true),
+        'city' => env('CITY_DATA_CITY', 'Jaipur'),
+        'country' => env('CITY_DATA_COUNTRY', 'IN'),
+        'lat' => env('CITY_DATA_LAT', 26.9124),
+        'lon' => env('CITY_DATA_LON', 75.7873),
+        'radius_meters' => env('CITY_DATA_RADIUS_METERS', 6000),
+    ],
+
 ];

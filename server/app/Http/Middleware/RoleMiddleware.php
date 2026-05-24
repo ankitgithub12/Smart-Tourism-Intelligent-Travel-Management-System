@@ -28,6 +28,12 @@ class RoleMiddleware
             ], 403);
         }
 
+        if ($user->role === 'agency' && ($user->approval_status !== 'approved' || $user->deactivated_at)) {
+            return response()->json([
+                'message' => 'Your travel agency account requires City Authority approval.',
+            ], 403);
+        }
+
         return $next($request);
     }
 }

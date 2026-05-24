@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Map, Plane, Compass, Heart, CreditCard, Clock, Bell, User, Loader2, Calendar, Sparkles, AlertOctagon, Phone, MapPin, Navigation, Shield, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import api, { favoritesAPI, aiAPI } from '../../services/api';
+import api, { favoritesAPI, aiAPI, touristAPI } from '../../services/api';
 import { markAllAsRead } from '../../redux/notificationsSlice';
 import toast from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
@@ -31,6 +31,9 @@ const TouristDashboard = () => {
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [activeServiceTab, setActiveServiceTab] = useState('hospitals');
   const [sosSent, setSosSent] = useState(false);
+  const [assistance, setAssistance] = useState(null);
+  const [loadingAssistance, setLoadingAssistance] = useState(false);
+  const [assistanceError, setAssistanceError] = useState('');
 
   const translations = {
     en: {
@@ -141,6 +144,45 @@ const TouristDashboard = () => {
     .sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
     
   const nextTrip = sortedUpcoming[0] || trips.find(t => t.status === 'pending');
+  const assistanceDestination = nextTrip?.to_destination || '';
+  const assistanceOrigin = nextTrip?.from_location || '';
+
+  const fetchTravelAssistance = useCallback(async (refresh = false) => {
+    if (!assistanceDestination) {
+      setAssistance(null);
+      setAssistanceError('');
+      return;
+    }
+
+    setLoadingAssistance(true);
+    setAssistanceError('');
+
+    try {
+      const response = await touristAPI.getAssistance({
+        destination: assistanceDestination,
+        ...(assistanceOrigin ? { origin: assistanceOrigin } : {}),
+        ...(refresh ? { refresh: 1 } : {}),
+      });
+      setAssistance(response.data);
+    } catch (error) {
+      console.error('Failed to load live travel assistance:', error);
+      setAssistanceError('Live route and nearby service data is temporarily unavailable.');
+    } finally {
+      setLoadingAssistance(false);
+    }
+  }, [assistanceDestination, assistanceOrigin]);
+
+  useEffect(() => {
+    setAssistance(null);
+    fetchTravelAssistance();
+
+    if (!assistanceDestination) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => fetchTravelAssistance(true), 5 * 60 * 1000);
+    return () => window.clearInterval(intervalId);
+  }, [assistanceDestination, fetchTravelAssistance]);
 
   const stats = [
     { label: t.stats[0], value: upcomingTripsCount, icon: Plane, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -158,78 +200,11 @@ const TouristDashboard = () => {
     return 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=500';
   };
 
-  // Nearby Services & Route Optimizations Data Map
-  const getDestinationKey = () => {
-    const dest = nextTrip?.to_destination?.toLowerCase() || '';
-    if (dest.includes('jaipur')) return 'jaipur';
-    if (dest.includes('goa')) return 'goa';
-    return 'default';
-  };
-
-  const destKey = getDestinationKey();
-
-  const nearbyServicesData = {
-    jaipur: {
-      hospitals: [
-        { name: 'SMS Government Hospital', distance: '1.2 km', phone: '0141-2560291', status: '24/7 Trauma Wing open' },
-        { name: 'Fortis Escorts Super Specialty', distance: '4.5 km', phone: '0141-2724800', status: '24/7 ICU open' }
-      ],
-      atms: [
-        { name: 'State Bank of India ATM (Hawa Mahal)', distance: '0.4 km', status: 'Cash Available' },
-        { name: 'HDFC Bank ATM (M.I. Road)', distance: '0.7 km', status: 'Cash Available' }
-      ],
-      restaurants: [
-        { name: 'Laxmi Mishthan Bhandar (LMB)', distance: '1.5 km', rating: '4.5 ★' },
-        { name: 'The Peacock Rooftop Restaurant', distance: '2.1 km', rating: '4.7 ★' }
-      ]
-    },
-    goa: {
-      hospitals: [
-        { name: 'Goa Medical College Hospital', distance: '3.1 km', phone: '0832-2458727', status: '24/7 Emergency open' },
-        { name: 'Manipal Hospital Panaji', distance: '5.2 km', phone: '0832-3048888', status: '24/7 Emergency open' }
-      ],
-      atms: [
-        { name: 'ICICI Bank ATM (Calangute)', distance: '0.3 km', status: 'Cash Available' },
-        { name: 'Axis Bank ATM (Panaji)', distance: '1.1 km', status: 'Cash Available' }
-      ],
-      restaurants: [
-        { name: 'The Fisherman\'s Wharf', distance: '2.4 km', rating: '4.6 ★' },
-        { name: 'Britto\'s Bar & Restaurant', distance: '4.8 km', rating: '4.4 ★' }
-      ]
-    },
-    default: {
-      hospitals: [
-        { name: 'City Civil Hospital', distance: '2.0 km', phone: '108', status: '24/7 Open' }
-      ],
-      atms: [
-        { name: 'National Bank Multi-brand ATM', distance: '0.5 km', status: 'Cash Available' }
-      ],
-      restaurants: [
-        { name: 'Local Heritage Diner', distance: '1.0 km', rating: '4.5 ★' }
-      ]
-    }
-  };
-
-  const routeOptimizations = {
-    jaipur: {
-      route: "Hotel → Hawa Mahal → City Palace → Amer Fort",
-      savings: "Saved 24 mins via Jaipur Bypass bypass road",
-      traffic: "Light traffic on Amer Rd"
-    },
-    goa: {
-      route: "Airport → Resort → Calangute Beach → Fort Aguada",
-      savings: "Saved 18 mins via NH66 highway",
-      traffic: "Moderate traffic near Panaji bridge"
-    },
-    default: {
-      route: "Hotel → Nearest Attraction A → Attraction B",
-      savings: "Optimized route computed dynamically",
-      traffic: "Normal traffic flow"
-    }
-  };
-
-  const activeServices = nearbyServicesData[destKey][activeServiceTab] || [];
-  const activeRoute = routeOptimizations[destKey];
+  const activeServices = assistance?.services?.[activeServiceTab] || [];
+  const activeRoute = assistance?.route;
+  const assistanceUpdatedAt = assistance?.updated_at
+    ? new Date(assistance.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   const handleSOSBroadcast = () => {
     setSosSent(true);
@@ -328,7 +303,7 @@ const TouristDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">
-              {t.welcome}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-500">{user?.name || 'Traveler'}</span>!
+              {t.welcome}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-blue-500">{user?.name || 'Traveler'}</span>!
             </h1>
             <p className="text-[hsl(var(--text-muted))] text-sm">{t.sub}</p>
           </div>
@@ -353,7 +328,7 @@ const TouristDashboard = () => {
               <AlertOctagon size={14} /> {t.sos}
             </button>
 
-            <Link to="/planner" className="btn-primary !py-2.5 !px-5 flex items-center gap-2 shadow-lg shadow-indigo-500/15 text-xs font-extrabold">
+            <Link to="/planner" className="btn-primary !py-2.5 !px-5 flex items-center gap-2 shadow-lg shadow-blue-500/15 text-xs font-extrabold">
               <Map size={16} /> {t.plan}
             </Link>
           </div>
@@ -474,26 +449,58 @@ const TouristDashboard = () => {
                   transition={{ delay: 0.25 }} 
                   className="glass-surface rounded-3xl p-6 border border-white/5 relative overflow-hidden"
                 >
-                  <h2 className="font-extrabold text-lg mb-4 flex items-center gap-2 text-[hsl(var(--text))]">
-                    <Navigation size={20} className="text-indigo-400" /> 
-                    Smart Route Optimization: {nextTrip ? nextTrip.to_destination : 'Jaipur'}
-                  </h2>
-                  <div className="p-4 rounded-2xl bg-white/3 border border-white/5">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                      <div>
-                        <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Computed Dynamic Path</p>
-                        <p className="text-sm font-black text-white mt-1 flex items-center gap-1.5">
-                          <Navigation size={12} className="text-[hsl(var(--primary))] animate-bounce" /> {activeRoute.route}
-                        </p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase">
-                        {activeRoute.savings}
-                      </span>
-                    </div>
-                    <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2 text-xs text-indigo-300 font-semibold">
-                      <Shield size={12} /> Traffic Alert: {activeRoute.traffic}
-                    </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
+                      <Navigation size={20} className="text-blue-400" />
+                      Smart Route Optimization: {assistanceDestination || 'Next trip'}
+                    </h2>
+                    {nextTrip && (
+                      <button
+                        onClick={() => fetchTravelAssistance(true)}
+                        disabled={loadingAssistance}
+                        className="text-[10px] uppercase font-black text-blue-300 border border-blue-500/20 rounded-lg px-3 py-1.5 hover:bg-blue-500/10 disabled:opacity-50"
+                      >
+                        {loadingAssistance ? 'Updating...' : 'Refresh live data'}
+                      </button>
+                    )}
                   </div>
+                  {!nextTrip ? (
+                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5 text-sm text-neutral-400">
+                      Plan a trip to receive live route guidance for your destination.
+                    </div>
+                  ) : loadingAssistance && !assistance ? (
+                    <div className="p-8 flex items-center justify-center gap-2 text-sm text-neutral-400">
+                      <Loader2 size={18} className="animate-spin text-blue-400" /> Calculating a live route...
+                    </div>
+                  ) : assistanceError ? (
+                    <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-300">
+                      {assistanceError}
+                    </div>
+                  ) : activeRoute ? (
+                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                          <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Live Recommended Path</p>
+                          <p className="text-sm font-black text-white mt-1 flex items-center gap-1.5">
+                            <Navigation size={12} className="text-[hsl(var(--primary))]" /> {activeRoute.path}
+                          </p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase">
+                          {activeRoute.distance} / {activeRoute.duration}
+                        </span>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-300 font-semibold">
+                        <span className="flex items-center gap-2"><Shield size={12} /> {activeRoute.traffic.message}</span>
+                        {assistanceUpdatedAt && (
+                          <span className="text-neutral-500">{assistance?.source?.route} | Updated {assistanceUpdatedAt}</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5 text-sm text-neutral-400">
+                      A route could not be calculated for the stored trip locations.
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* Nearby Essential Services Finder */}
@@ -506,7 +513,7 @@ const TouristDashboard = () => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
                     <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
                       <MapPin size={20} className="text-emerald-400" />
-                      Essential Services near {nextTrip ? nextTrip.to_destination : 'Jaipur'}
+                      Essential Services near {assistanceDestination || 'your next destination'}
                     </h2>
                     
                     {/* Tab Selectors */}
@@ -525,25 +532,41 @@ const TouristDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {activeServices.map((service, i) => (
-                      <div key={i} className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:border-[hsl(var(--primary)/0.2)] transition-all">
-                        <h3 className="text-sm font-bold text-white mb-1">{service.name}</h3>
-                        <div className="flex justify-between items-center text-xs text-neutral-400 mt-2 font-medium">
-                          <span className="flex items-center gap-1"><MapPin size={12} className="text-emerald-500" /> {service.distance}</span>
-                          <span className="text-[10px] font-bold text-indigo-300">{service.status || service.rating}</span>
-                        </div>
-                        {service.phone && (
-                          <a 
-                            href={`tel:${service.phone}`} 
-                            className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-black text-[hsl(var(--primary))] hover:underline"
-                          >
-                            <Phone size={10} /> Call helpline: {service.phone}
-                          </a>
-                        )}
+                  {!nextTrip ? (
+                    <p className="text-sm text-neutral-400">Plan a trip to find live nearby services.</p>
+                  ) : loadingAssistance && !assistance ? (
+                    <div className="py-8 flex justify-center gap-2 text-sm text-neutral-400">
+                      <Loader2 size={18} className="animate-spin text-emerald-400" /> Finding nearby services...
+                    </div>
+                  ) : activeServices.length ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {activeServices.map((service) => (
+                          <div key={service.id || service.name} className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:border-[hsl(var(--primary)/0.2)] transition-all">
+                            <h3 className="text-sm font-bold text-white mb-1">{service.name}</h3>
+                            {service.address && <p className="text-[10px] text-neutral-500 line-clamp-2">{service.address}</p>}
+                            <div className="flex justify-between items-center text-xs text-neutral-400 mt-2 font-medium gap-2">
+                              <span className="flex items-center gap-1"><MapPin size={12} className="text-emerald-500" /> {service.distance}</span>
+                              {service.status && <span className="text-[10px] font-bold text-blue-300 text-right">{service.status}</span>}
+                            </div>
+                            {service.phone && (
+                              <a
+                                href={`tel:${service.phone}`}
+                                className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-black text-[hsl(var(--primary))] hover:underline"
+                              >
+                                <Phone size={10} /> Call: {service.phone}
+                              </a>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-[10px] text-neutral-500 mt-4">
+                        Live places source: {assistance?.source?.services}{assistanceUpdatedAt ? ` | Updated ${assistanceUpdatedAt}` : ''}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-neutral-400">No nearby {activeServiceTab} were returned for this destination.</p>
+                  )}
                 </motion.div>
 
                 {/* AI Suggestions */}

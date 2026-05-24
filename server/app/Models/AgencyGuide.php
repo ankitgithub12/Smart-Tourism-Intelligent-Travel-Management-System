@@ -11,11 +11,17 @@ class AgencyGuide extends Model
 
     protected $fillable = [
         'id',
+        'agency_id',
         'name',
         'specialty',
         'rating',
         'status',
         'active_tours',
         'contact',
+    ];
+
+    protected $casts = [
+        'rating' => 'float',
+        'active_tours' => 'integer',
     ];
 }

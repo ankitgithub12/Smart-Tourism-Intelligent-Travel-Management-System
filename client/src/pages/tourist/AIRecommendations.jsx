@@ -50,7 +50,7 @@ const AIRecommendations = () => {
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-200">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
               <Brain size={24} />
             </div>
             <div>
@@ -71,7 +71,7 @@ const AIRecommendations = () => {
               placeholder="e.g. Less crowded heritage sites, good for photography..."
               className="flex-1 px-5 py-4 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
             <button type="submit" disabled={loading || !preferences.trim()} id="ai-recommend-btn"
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold px-6 py-4 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all shadow-md disabled:opacity-50">
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-600 text-white font-semibold px-6 py-4 rounded-xl hover:from-blue-700 hover:to-blue-700 transition-all shadow-md disabled:opacity-50">
               {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
               {loading ? 'Thinking...' : 'Get AI Tips'}
             </button>
@@ -100,7 +100,7 @@ const AIRecommendations = () => {
           {hasSearched && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <h3 className="text-xl font-bold text-gray-900 mb-5 flex items-center gap-2">
-                <Sparkles size={20} className="text-purple-500" />
+                <Sparkles size={20} className="text-blue-500" />
                 Recommended for You
               </h3>
               <div className="grid md:grid-cols-3 gap-6">
@@ -131,7 +131,7 @@ const AIRecommendations = () => {
 
           {loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-lg animate-pulse">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg animate-pulse">
                 <Brain size={30} className="text-white" />
               </div>
               <p className="text-gray-500 font-medium">AI is analysing your preferences...</p>

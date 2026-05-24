@@ -4,8 +4,8 @@ import { Leaf, Award, Recycle, CloudRain } from 'lucide-react';
 export function SustainabilityDashboard({ data }) {
   const cards = [
     { label: 'Carbon Offset Goal', value: `${data.sustainability.carbonOffset} Tonnes`, desc: 'Offset via smart routes & trees', icon: CloudRain, color: 'text-sky-500', bg: 'bg-sky-500/10' },
-    { label: 'Smart Plastics Collected', value: `${data.sustainability.totalPlasticsCollected} kg`, desc: 'Retrieved from smart waste bins', icon: Recycle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-    { label: 'Green Fleet Ratio', value: `${data.sustainability.greenFleetRatio}%`, desc: 'Buses powered by solar/electric', icon: Award, color: 'text-indigo-500', bg: 'bg-indigo-500/10' }
+    { label: 'Smart Plastics Collected', value: `${data.sustainability.totalPlasticsCollected} kg`, desc: 'Retrieved from smart waste bins', icon: Recycle, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Green Fleet Ratio', value: `${data.sustainability.greenFleetRatio}%`, desc: 'Buses powered by solar/electric', icon: Award, color: 'text-blue-500', bg: 'bg-blue-500/10' }
   ];
 
   return (

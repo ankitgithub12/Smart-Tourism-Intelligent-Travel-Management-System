@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { Search, Check, X, Filter } from 'lucide-react';
+import { agencyAPI } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 export function BookingManager({ data, setData }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  const updateBookingStatus = (id, newStatus) => {
-    setData(prev => ({
-      ...prev,
-      bookings: prev.bookings.map(b => b.id === id ? { ...b, status: newStatus } : b)
-    }));
+  const updateBookingStatus = async (id, newStatus) => {
+    const toastId = toast.loading('Updating booking status...');
+    try {
+      const res = await agencyAPI.updateBookingStatus(id, newStatus);
+      setData(res.data.agency);
+      toast.success('Booking status updated.', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update booking status.', { id: toastId });
+    }
   };
 
   const filteredBookings = data.bookings.filter(b => {

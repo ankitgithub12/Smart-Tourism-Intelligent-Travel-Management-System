@@ -85,8 +85,8 @@ export function AdminDashboard() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold
                   transition-all whitespace-nowrap border shrink-0
                   ${isActive
-                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white border-transparent shadow-lg shadow-violet-500/20'
-                    : 'bg-white/50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:border-violet-400/40 hover:text-violet-500'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-600 text-white border-transparent shadow-lg shadow-blue-500/20'
+                    : 'bg-white/50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:border-blue-400/40 hover:text-blue-500'
                   }`}
               >
                 <Icon size={12} />

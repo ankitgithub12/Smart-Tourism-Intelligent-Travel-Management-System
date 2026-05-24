@@ -6,13 +6,13 @@ import { useForm } from 'react-hook-form';
 import useAuth from '../hooks/useAuth';
 
 const roles = [
-  { value: 'tourist', label: '🧳 Tourist', desc: 'I want to explore destinations' },
-  { value: 'agency', label: '🏢 Travel Agency', desc: 'I manage travel services' },
-  { value: 'authority', label: '🏛️ City Authority', desc: 'I manage city tourism' },
+  { value: 'tourist', label: 'Tourist', desc: 'I want to explore destinations' },
+  { value: 'agency', label: 'Travel Agency', desc: 'I manage travel services and need authority approval' },
 ];
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [approvalSubmitted, setApprovalSubmitted] = useState(false);
   const { register: registerUser, loading, error, dismissError } = useAuth();
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
@@ -38,7 +38,11 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     dismissError();
-    await registerUser(data);
+    setApprovalSubmitted(false);
+    const result = await registerUser(data);
+    if (result.payload?.requires_approval) {
+      setApprovalSubmitted(true);
+    }
   };
 
   return (
@@ -62,6 +66,13 @@ const Register = () => {
           {error && (
             <div className="mb-5 flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
               <AlertCircle size={18} className="shrink-0" /> {error}
+            </div>
+          )}
+
+          {approvalSubmitted && (
+            <div className="mb-5 flex items-start gap-3 p-4 bg-green-50 border border-green-100 rounded-xl text-green-700 text-sm">
+              <CheckCircle size={18} className="shrink-0 mt-0.5" />
+              <span>Your travel agency request has been sent to the City Authority. You can sign in after it is approved.</span>
             </div>
           )}
 

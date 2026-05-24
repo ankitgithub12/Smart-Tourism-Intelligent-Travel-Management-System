@@ -388,7 +388,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
             <p className="text-[hsl(var(--primary))] font-extrabold text-xs uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
               <Sparkles size={14} className="animate-pulse" /> AI ITINERARY GENERATOR
             </p>
-            <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600">
+            <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600">
               Plan Your Dream Trip
             </h1>
             <p className="text-[hsl(var(--text-muted))] max-w-md mx-auto text-sm">
@@ -404,7 +404,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
           >
             {/* Ambient Background Blur inside the card */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-[hsl(var(--primary))] opacity-10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500 opacity-10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500 opacity-10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 relative z-10">
               <div>
@@ -469,7 +469,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
               <button 
                 onClick={handleAISuggest} 
                 disabled={aiLoading} 
-                className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-black text-base hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-black text-base hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
               >
                 {aiLoading ? (
                   <>
@@ -502,9 +502,9 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 onClick={() => setStep(i)} 
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold transition-all duration-300 relative ${
                   i < step 
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md' 
+                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-md' 
                     : i === step 
-                    ? 'bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white shadow-lg shadow-indigo-500/25 scale-110' 
+                    ? 'bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-110' 
                     : 'glass-surface text-[hsl(var(--text-muted))] border border-white/5'
                 }`}
               >
@@ -512,7 +512,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 {i === step && <div className="absolute -inset-1 rounded-full border-2 border-[hsl(var(--primary))] opacity-50 animate-ping" />}
               </button>
               <span className={`ml-2.5 text-xs font-black uppercase tracking-wider hidden sm:block ${i === step ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-muted))] opacity-60'}`}>{s}</span>
-              {i < 5 && <div className={`w-8 md:w-16 h-0.5 mx-3 ${i < step ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-white/10'}`} />}
+              {i < 5 && <div className={`w-8 md:w-16 h-0.5 mx-3 ${i < step ? 'bg-gradient-to-r from-emerald-500 to-blue-500' : 'bg-white/10'}`} />}
             </div>
           ))}
         </div>
@@ -538,7 +538,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 
                 {wantHotel === null ? (
                   <div className="flex gap-4">
-                    <button onClick={() => setWantHotel(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Hotels</button>
+                    <button onClick={() => setWantHotel(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Hotels</button>
                     <button onClick={() => { setWantHotel(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Hotel</button>
                   </div>
                 ) : (
@@ -549,7 +549,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                         onClick={() => setSelectedHotel(h)} 
                         className={`flex flex-col md:flex-row gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
                           selectedHotel?.id === h.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] shadow-lg shadow-indigo-500/5' 
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] shadow-lg shadow-blue-500/5' 
                             : 'border-transparent bg-white/3 hover:border-white/10 hover:bg-white/5'
                         }`}
                       >
@@ -569,7 +569,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                             <p className="text-2xl font-black text-[hsl(var(--primary))]">₹{h.price.toLocaleString()}</p>
                             <p className="text-xs opacity-50">/ night</p>
                           </div>
-                          <p className="text-xs font-extrabold text-indigo-500 mt-1">{nights} nights = ₹{(h.price*nights).toLocaleString()}</p>
+                          <p className="text-xs font-extrabold text-blue-500 mt-1">{nights} nights = ₹{(h.price*nights).toLocaleString()}</p>
                         </div>
                       </div>
                     ))}
@@ -588,7 +588,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 
                 {wantFood === null ? (
                   <div className="flex gap-4">
-                    <button onClick={() => setWantFood(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Select Meal</button>
+                    <button onClick={() => setWantFood(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Select Meal</button>
                     <button onClick={() => { setWantFood(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Meals</button>
                   </div>
                 ) : (
@@ -625,7 +625,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 
                 {wantCab === null ? (
                   <div className="flex gap-4">
-                    <button onClick={() => setWantCab(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Cabs</button>
+                    <button onClick={() => setWantCab(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Cabs</button>
                     <button onClick={() => { setWantCab(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Cab</button>
                   </div>
                 ) : (
@@ -662,7 +662,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 
                 {wantGuide === null ? (
                   <div className="flex gap-4">
-                    <button onClick={() => setWantGuide(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Assign Guide</button>
+                    <button onClick={() => setWantGuide(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Assign Guide</button>
                     <button onClick={() => { setWantGuide(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Guide</button>
                   </div>
                 ) : (
@@ -705,7 +705,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 
                 {wantVehicle === null ? (
                   <div className="flex gap-4">
-                    <button onClick={() => setWantVehicle(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Vehicles</button>
+                    <button onClick={() => setWantVehicle(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Vehicles</button>
                     <button onClick={() => { setWantVehicle(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Renting</button>
                   </div>
                 ) : (
@@ -741,10 +741,10 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-violet-600/10 to-indigo-600/10 border border-violet-500/20 text-sm shadow-inner"
+                    className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-blue-600/10 to-blue-600/10 border border-blue-500/20 text-sm shadow-inner"
                   >
                     <p className="font-extrabold text-[hsl(var(--primary))] mb-1 flex items-center gap-1.5">
-                      <Sparkles size={16} className="text-violet-500 animate-pulse" /> AI Consultant Review
+                      <Sparkles size={16} className="text-blue-500 animate-pulse" /> AI Consultant Review
                     </p>
                     <p className="text-[hsl(var(--text-muted))] leading-relaxed italic text-xs">
                       {typeof aiSummary === 'object' ? (aiSummary.plan_summary || JSON.stringify(aiSummary)) : aiSummary}
@@ -782,7 +782,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button onClick={handleCheckout} className="py-3 px-6 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-sm hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"><CreditCard size={16} /> Book & Checkout</button>
+                  <button onClick={handleCheckout} className="py-3 px-6 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-sm hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"><CreditCard size={16} /> Book & Checkout</button>
                   <button onClick={handleSave} className="py-3 px-6 rounded-xl bg-neutral-800 text-white font-extrabold text-sm hover:bg-neutral-700 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/5"><Save size={16} /> Save Itinerary</button>
                   <button onClick={handleDownloadPDF} className="py-3 px-6 rounded-xl bg-neutral-800 text-white font-extrabold text-sm hover:bg-neutral-700 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/5"><Download size={16} /> Download PDF</button>
                 </div>
@@ -803,7 +803,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
           {step < 5 && (
             <button 
               onClick={next} 
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-indigo-600 text-white font-extrabold text-sm hover:opacity-90 transition-all flex items-center gap-2 shadow-md shadow-indigo-500/15"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-sm hover:opacity-90 transition-all flex items-center gap-2 shadow-md shadow-blue-500/15"
             >
               Next <ArrowRight size={16} />
             </button>

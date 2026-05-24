@@ -80,7 +80,7 @@ const Hero = () => {
             <span className="text-sm font-medium text-gray-500 uppercase tracking-widest">AI Recommendations</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
             <span className="text-sm font-medium text-gray-500 uppercase tracking-widest">Smart Routing</span>
           </div>
         </div>

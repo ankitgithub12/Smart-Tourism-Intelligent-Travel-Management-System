@@ -3,8 +3,8 @@
 export const initialAgencyData = {
   stats: [
     { label: 'Active Bookings', value: 45, icon: 'Users', color: 'text-sky-500', bg: 'bg-sky-500/10' },
-    { label: 'Revenue (Month)', value: '₹2.4L', icon: 'DollarSign', color: 'text-teal-500', bg: 'bg-teal-500/10' },
-    { label: 'Listed Properties', value: 12, icon: 'Building2', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+    { label: 'Revenue (Month)', value: '₹2.4L', icon: 'DollarSign', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Listed Properties', value: 12, icon: 'Building2', color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { label: 'Average Rating', value: '4.8', icon: 'Star', color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ],
   packages: [

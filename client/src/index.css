@@ -11,142 +11,32 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root,
-[data-theme="tropical"] {
-  --primary: 199 89% 48%; /* Sky Blue */
-  --primary-light: 199 89% 65%;
-  --primary-dark: 200 95% 35%;
-  --accent: 174 86% 44%; /* Teal */
-  --accent-light: 174 86% 75%;
-  --secondary: 43 96% 56%; /* Coral/Yellow */
-  --bg-start: 199 80% 97%;
-  --bg-end: 174 40% 95%;
-  --bg-dark-start: 200 50% 8%;
-  --bg-dark-end: 174 50% 6%;
-  --surface: 0 0% 100%;
-  --surface-dark: 200 40% 12%;
-  --text: 200 50% 10%;
-  --text-muted: 200 20% 45%;
-  --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 199 30% 90%;
-  --hero-gradient: linear-gradient(135deg, #0ea5e9 0%, #0d9488 50%, #0369a1 100%);
-  --wave-color-1: #0ea5e9;
-  --wave-color-2: #0d9488;
-  --wave-color-3: #0369a1;
-}
-
-[data-theme="ice"] {
-  --primary: 210 90% 50%; /* Ice Blue */
-  --primary-light: 210 90% 70%;
-  --primary-dark: 215 90% 35%;
-  --accent: 180 100% 45%; /* Cyan */
-  --accent-light: 180 100% 75%;
-  --secondary: 200 80% 60%;
-  --bg-start: 210 60% 98%;
-  --bg-end: 180 40% 97%;
-  --bg-dark-start: 215 40% 8%;
-  --bg-dark-end: 180 40% 7%;
-  --surface: 0 0% 100%;
-  --surface-dark: 215 30% 12%;
-  --text: 215 40% 12%;
-  --text-muted: 215 15% 45%;
-  --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 210 30% 90%;
-  --hero-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 50%, #1d4ed8 100%);
-  --wave-color-1: #3b82f6;
-  --wave-color-2: #06b6d4;
-  --wave-color-3: #1d4ed8;
-}
-
-[data-theme="mountain"] {
-  --primary: 35 40% 45%; /* Earth Brown */
-  --primary-light: 35 40% 60%;
-  --primary-dark: 35 50% 30%;
-  --accent: 25 75% 50%; /* Copper Orange */
-  --accent-light: 25 75% 75%;
-  --secondary: 120 15% 40%; /* Slate Green */
-  --bg-start: 35 30% 98%;
-  --bg-end: 120 10% 97%;
-  --bg-dark-start: 35 25% 10%;
-  --bg-dark-end: 120 20% 8%;
-  --surface: 0 0% 100%;
-  --surface-dark: 35 15% 14%;
-  --text: 35 30% 15%;
-  --text-muted: 35 10% 45%;
-  --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 35 20% 90%;
-  --hero-gradient: linear-gradient(135deg, #854d0e 0%, #a16207 50%, #451a03 100%);
-  --wave-color-1: #854d0e;
-  --wave-color-2: #a16207;
-  --wave-color-3: #451a03;
-}
-
-[data-theme="forest"] {
-  --primary: 142 76% 36%; /* Forest Green */
-  --primary-light: 142 76% 55%;
-  --primary-dark: 142 80% 25%;
-  --accent: 84 80% 45%; /* Lime Green */
-  --accent-light: 84 80% 75%;
-  --secondary: 160 60% 40%;
-  --bg-start: 142 40% 98%;
-  --bg-end: 84 30% 97%;
-  --bg-dark-start: 142 50% 6%;
-  --bg-dark-end: 84 40% 6%;
-  --surface: 0 0% 100%;
-  --surface-dark: 142 30% 10%;
-  --text: 142 40% 12%;
-  --text-muted: 142 15% 45%;
-  --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 142 20% 90%;
-  --hero-gradient: linear-gradient(135deg, #16a34a 0%, #65a30d 50%, #14532d 100%);
-  --wave-color-1: #16a34a;
-  --wave-color-2: #65a30d;
-  --wave-color-3: #14532d;
-}
-
-[data-theme="desert"] {
-  --primary: 25 85% 55%; /* Warm Orange */
-  --primary-light: 25 85% 70%;
-  --primary-dark: 20 90% 40%;
-  --accent: 38 90% 60%; /* Sand/Gold */
-  --accent-light: 38 90% 80%;
-  --secondary: 5 80% 55%; /* Terracotta */
-  --bg-start: 25 60% 98%;
-  --bg-end: 38 50% 97%;
-  --bg-dark-start: 25 50% 8%;
-  --bg-dark-end: 38 40% 8%;
-  --surface: 0 0% 100%;
-  --surface-dark: 25 30% 12%;
-  --text: 25 40% 12%;
-  --text-muted: 25 15% 45%;
-  --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 25 20% 90%;
-  --hero-gradient: linear-gradient(135deg, #f97316 0%, #eab308 50%, #c2410c 100%);
-  --wave-color-1: #f97316;
-  --wave-color-2: #eab308;
-  --wave-color-3: #c2410c;
-}
-
+[data-theme="tropical"],
+[data-theme="ice"],
+[data-theme="mountain"],
+[data-theme="forest"],
+[data-theme="desert"],
 [data-theme="nightcity"] {
-  --primary: 315 90% 55%; /* Neon Magenta */
-  --primary-light: 315 90% 70%;
-  --primary-dark: 320 100% 40%;
-  --accent: 180 100% 50%; /* Neon Cyan */
-  --accent-light: 180 100% 75%;
-  --secondary: 270 90% 60%; /* Cyber Purple */
-  --bg-start: 315 40% 98%;
-  --bg-end: 180 30% 97%;
-  --bg-dark-start: 270 50% 7%;
-  --bg-dark-end: 180 50% 6%;
+  --primary: 221 83% 53%;
+  --primary-light: 213 94% 68%;
+  --primary-dark: 224 76% 34%;
+  --accent: 217 91% 60%;
+  --accent-light: 214 100% 86%;
+  --secondary: 221 83% 53%;
+  --bg-start: 216 100% 98%;
+  --bg-end: 214 95% 96%;
+  --bg-dark-start: 224 71% 8%;
+  --bg-dark-end: 221 83% 10%;
   --surface: 0 0% 100%;
-  --surface-dark: 270 30% 10%;
-  --text: 270 40% 12%;
-  --text-muted: 270 15% 45%;
+  --surface-dark: 224 40% 13%;
+  --text: 224 47% 11%;
+  --text-muted: 215 16% 47%;
   --glass-bg: 0 0% 100% / 0.7;
-  --glass-border: 315 20% 90%;
-  --hero-gradient: linear-gradient(135deg, #ec4899 0%, #06b6d4 50%, #7c3aed 100%);
-  --wave-color-1: #ec4899;
-  --wave-color-2: #06b6d4;
-  --wave-color-3: #7c3aed;
+  --glass-border: 214 32% 91%;
+  --hero-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 52%, #1e40af 100%);
+  --wave-color-1: #2563eb;
+  --wave-color-2: #1d4ed8;
+  --wave-color-3: #1e40af;
 }
 
 
@@ -181,6 +71,13 @@ body {
   background: linear-gradient(135deg, hsl(var(--bg-start)), hsl(var(--bg-end)));
   color: hsl(var(--text));
   transition: background 0.5s ease, color 0.3s ease;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 body.dark-mode {
@@ -469,4 +366,56 @@ body.dark-mode {
 .badge-warning { background: rgba(245, 158, 11, 0.15); color: rgb(245, 158, 11); }
 .badge-danger { background: rgba(239, 68, 68, 0.15); color: rgb(239, 68, 68); }
 .badge-info { background: rgba(59, 130, 246, 0.15); color: rgb(59, 130, 246); }
+
+/* Unified page treatment based on the Contact/About blue template. */
+.page-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+}
+
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
+}
+
+.page-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 70% 45%, rgba(255,255,255,0.10), transparent 58%);
+  pointer-events: none;
+}
+
+.section-kicker {
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.blue-panel {
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(191,219,254,0.8);
+  box-shadow: 0 20px 60px rgba(37,99,235,0.10);
+}
+
+.glass-surface {
+  box-shadow: 0 14px 42px hsl(var(--primary) / 0.08);
+}
+
+@media (max-width: 640px) {
+  .dashboard-content,
+  main {
+    overflow-x: hidden;
+  }
+
+  .custom-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
 

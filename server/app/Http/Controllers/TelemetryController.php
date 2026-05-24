@@ -9,6 +9,7 @@ use App\Models\WasteBin;
 use App\Models\SustainabilityMetric;
 use App\Models\User;
 use App\Events\TelemetryUpdated;
+use App\Services\RealCityDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -58,37 +59,19 @@ class TelemetryController extends Controller
             'status' => 'required|string|in:Approved,Rejected,Pending',
         ]);
 
-        // In this implementation, we map approved/rejected statuses.
-        // For compliance, we can store it in a database table or just update a custom status in memory/cache/column.
-        // Wait, since we need to seed and show agencies, let's see how they are listed.
-        // The mock had Rajasthan Travel Agency, Pristine Beach, Peak Adventure, etc.
-        // Let's store mock agencies state in the database using a table or DB settings, or just let users have their approval status tracked.
-        // Wait, Rajasthan Travel Agency is seeded in `users` table with email `agency@rajasthan.travel` and name 'Rajasthan Travel Agency'.
-        // Let's see: `UsersSeeder` seeds the role `agency`.
-        // Let's make it so we retrieve agencies by reading the `users` table where `role = 'agency'`.
-        // For users table, we can retrieve:
-        // - `id` (e.g. user ID)
-        // - `name` (e.g. Rajasthan Travel Agency)
-        // - `owner` (name or sub-field)
-        // - `license` (email or custom field)
-        // - `status` (active or deactivated_at status)
-        // Or to keep it perfectly aligned with `agencies` dashboard structure, we can return the mock array but with the actual DB-driven users merged in!
-        // Yes, let's load all users with role `agency` and map them!
-        // To make it simple, let's do:
-        // Rajasthan Travel Agency (id: 'AG-901', name: Rajasthan Travel Agency, owner: 'Vikram Joshi', license: 'L-Goa-44129', status: 'Pending', rating: 0, date: 'May 20, 2026')
-        // Wait, we can fetch all users with role 'agency' and list them! Let's return dynamic database users as agencies.
-        // To persist the approved/rejected status, we can use `deactivated_at`.
-        // - If `deactivated_at` is null, it's "Approved"
-        // - If `deactivated_at` is set, it's "Rejected" or "Deactivated"
-        // - Or we can store an in-memory/cache map, or just update the user!
-        // Let's do this: if status is Approved, we set `deactivated_at = null`. If Rejected, we deactivate the user!
-        // That is elegant and matches Laravel's existing UserController!
-
         $user = User::findOrFail($id);
-        if ($request->status === 'Approved') {
-            $user->update(['deactivated_at' => null]);
-        } else if ($request->status === 'Rejected') {
-            $user->update(['deactivated_at' => now()]);
+        if ($user->role !== 'agency') {
+            abort(422, 'Only travel agency accounts can be approved.');
+        }
+
+        $status = strtolower($request->status);
+        $user->update([
+            'approval_status' => $status,
+            'deactivated_at' => $status === 'rejected' ? now() : null,
+        ]);
+
+        if ($status !== 'approved') {
+            $user->tokens()->delete();
         }
 
         $telemetry = $this->gatherTelemetryData();
@@ -197,6 +180,10 @@ class TelemetryController extends Controller
 
     private function gatherTelemetryData()
     {
+        $cityData = config('services.real_city.enabled')
+            ? app(RealCityDataService::class)->snapshot()
+            : null;
+
         $crowdZones = CrowdZone::all();
         $trafficPoints = TrafficPoint::all();
         $emergencies = Emergency::orderBy('created_at', 'desc')->get();
@@ -208,42 +195,22 @@ class TelemetryController extends Controller
             'green_fleet_ratio' => 65,
         ];
 
-        // Gather all users with role 'agency' as compliance list
-        $agencyUsers = User::where('role', 'agency')->get();
-        $agencies = [];
-        foreach ($agencyUsers as $index => $u) {
-            $agencies[] = [
-                'id' => $u->id,
-                'name' => $u->name,
-                'owner' => 'Vikram Joshi', // default owner
-                'license' => 'L-Raj-' . (55312 + $index),
-                'status' => is_null($u->deactivated_at) ? 'Approved' : 'Pending',
-                'rating' => 4.6,
-                'date' => $u->created_at->format('M d, Y'),
-            ];
-        }
-
-        // Add additional pending ones if we want to show list approvals
-        if (count($agencies) == 1) {
-            $agencies[] = [
-                'id' => 9991,
-                'name' => 'Pristine Beach Tours',
-                'owner' => 'Karan Malhotra',
-                'license' => 'L-Goa-44129',
-                'status' => 'Pending',
-                'rating' => 0.0,
-                'date' => 'May 20, 2026',
-            ];
-            $agencies[] = [
-                'id' => 9992,
-                'name' => 'Peak Adventure Co.',
-                'owner' => 'Tenzing Norgay Jr.',
-                'license' => 'L-HP-10023',
-                'status' => 'Pending',
-                'rating' => 0.0,
-                'date' => 'May 21, 2026',
-            ];
-        }
+        $agencies = User::where('role', 'agency')
+            ->latest()
+            ->get()
+            ->map(function (User $user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'owner' => $user->name,
+                    'license' => 'AG-' . str_pad((string) $user->id, 6, '0', STR_PAD_LEFT),
+                    'status' => ucfirst($user->approval_status ?? 'pending'),
+                    'rating' => null,
+                    'date' => $user->created_at->format('M d, Y'),
+                ];
+            })
+            ->values()
+            ->all();
 
         // Hardcode charts telemetry details similar to simulator
         $powerUsage = [
@@ -268,8 +235,14 @@ class TelemetryController extends Controller
             ['hour' => '22:00', 'flow' => 150],
         ];
 
+        $realCrowdZones = $cityData
+            ? app(RealCityDataService::class)->crowdZonesFromPlaces($cityData)
+            : [];
+
         return [
-            'crowdZones' => $crowdZones,
+            'cityData' => $cityData,
+            'crowdZones' => count($realCrowdZones) ? $realCrowdZones : $crowdZones,
+            'storedCrowdZones' => $crowdZones,
             'trafficPoints' => $trafficPoints,
             'publicTransports' => [
                 ['id' => 'BUS-104', 'line' => 'Blue Route 4A', 'capacity' => 60, 'currentLoad' => rand(40, 58), 'status' => 'On Time', 'speed' => 38],

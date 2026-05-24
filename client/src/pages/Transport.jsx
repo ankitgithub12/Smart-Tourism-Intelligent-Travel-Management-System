@@ -118,7 +118,7 @@ const Transport = () => {
 
           {/* Sidebar Insights */}
           <div className="space-y-8">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[3rem] p-8 text-white relative overflow-hidden shadow-xl shadow-blue-200">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[3rem] p-8 text-white relative overflow-hidden shadow-xl shadow-blue-200">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-10 -translate-y-10 blur-2xl"></div>
               <h3 className="text-2xl font-black mb-6">AI Optimization</h3>
               <p className="text-blue-100 font-medium mb-8">System suggests rerouting 4 units to Amber Fort to handle peak afternoon crowd.</p>

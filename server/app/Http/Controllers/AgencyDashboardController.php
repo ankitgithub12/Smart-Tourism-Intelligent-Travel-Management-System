@@ -2,44 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AgencyDataUpdated;
+use App\Models\AgencyGuide;
 use App\Models\AgencyPackage;
 use App\Models\AgencyTour;
 use App\Models\AgencyVehicle;
-use App\Models\AgencyGuide;
 use App\Models\Booking;
-use App\Events\AgencyDataUpdated;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class AgencyDashboardController extends Controller
 {
-    private function checkAgency(Request $request)
-    {
-        if (!in_array($request->user()?->role, ['agency', 'authority'])) {
-            abort(403, 'Agency portal access required.');
-        }
-    }
-
     public function getDashboard(Request $request)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
-        return response()->json($this->gatherAgencyData());
+        return response()->json($this->gatherAgencyData($agency));
     }
 
     public function createPackage(Request $request)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
         $request->validate([
             'name' => 'required|string|max:255',
             'destination' => 'required|string|max:255',
-            'duration' => 'nullable|string',
+            'duration' => 'nullable|string|max:100',
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|string|url',
         ]);
 
-        $pkg = AgencyPackage::create([
+        AgencyPackage::create([
+            'agency_id' => $agency->id,
             'name' => $request->name,
             'destination' => $request->destination,
             'duration' => $request->duration ?: '3 Days, 2 Nights',
@@ -49,45 +45,33 @@ class AgencyDashboardController extends Controller
             'image' => $request->image ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=60',
         ]);
 
-        $agencyData = $this->gatherAgencyData();
-        event(new AgencyDataUpdated($agencyData));
-
-        return response()->json([
-            'message' => 'Package created successfully.',
-            'agency' => $agencyData,
-        ]);
+        return $this->broadcastResponse($agency, 'Package created successfully.');
     }
 
     public function deletePackage(Request $request, $id)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
-        $pkg = AgencyPackage::findOrFail($id);
-        $pkg->delete();
+        AgencyPackage::where('agency_id', $agency->id)->findOrFail($id)->delete();
 
-        $agencyData = $this->gatherAgencyData();
-        event(new AgencyDataUpdated($agencyData));
-
-        return response()->json([
-            'message' => 'Package deleted successfully.',
-            'agency' => $agencyData,
-        ]);
+        return $this->broadcastResponse($agency, 'Package deleted successfully.');
     }
 
     public function createTour(Request $request)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
         $request->validate([
-            'package_name' => 'required|string',
+            'package_name' => 'required|string|max:255',
             'date' => 'required|date',
-            'time' => 'required|string',
-            'guide_name' => 'required|string',
+            'time' => 'required|string|max:30',
+            'guide_name' => 'required|string|max:255',
             'capacity' => 'required|integer|min:1',
         ]);
 
-        $tour = AgencyTour::create([
-            'id' => 'T-' . rand(104, 999),
+        AgencyTour::create([
+            'id' => 'T-' . strtoupper(Str::random(8)),
+            'agency_id' => $agency->id,
             'package_name' => $request->package_name,
             'date' => $request->date,
             'time' => $request->time,
@@ -97,28 +81,23 @@ class AgencyDashboardController extends Controller
             'filled' => 0,
         ]);
 
-        $agencyData = $this->gatherAgencyData();
-        event(new AgencyDataUpdated($agencyData));
-
-        return response()->json([
-            'message' => 'Tour scheduled successfully.',
-            'agency' => $agencyData,
-        ]);
+        return $this->broadcastResponse($agency, 'Tour scheduled successfully.');
     }
 
     public function createVehicle(Request $request)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
         $request->validate([
-            'model' => 'required|string',
-            'type' => 'required|string',
-            'driver' => 'required|string',
-            'location' => 'required|string',
+            'model' => 'required|string|max:255',
+            'type' => 'required|string|max:100',
+            'driver' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
         ]);
 
-        $vehicle = AgencyVehicle::create([
-            'id' => 'V-' . str_pad(rand(5, 999), 3, '0', STR_PAD_LEFT),
+        AgencyVehicle::create([
+            'id' => 'V-' . strtoupper(Str::random(8)),
+            'agency_id' => $agency->id,
             'model' => $request->model,
             'type' => $request->type,
             'driver' => $request->driver,
@@ -128,27 +107,38 @@ class AgencyDashboardController extends Controller
             'location' => $request->location,
         ]);
 
-        $agencyData = $this->gatherAgencyData();
-        event(new AgencyDataUpdated($agencyData));
+        return $this->broadcastResponse($agency, 'Vehicle added successfully.');
+    }
 
-        return response()->json([
-            'message' => 'Vehicle added successfully.',
-            'agency' => $agencyData,
+    public function updateVehicleStatus(Request $request, string $id)
+    {
+        $agency = $this->approvedAgency($request);
+        $validated = $request->validate([
+            'status' => 'required|string|in:Active,Idle,Maintenance',
         ]);
+
+        $vehicle = AgencyVehicle::where('agency_id', $agency->id)->findOrFail($id);
+        $vehicle->update([
+            'status' => $validated['status'],
+            'current_load' => $validated['status'] === 'Active' ? max(1, $vehicle->current_load) : 0,
+        ]);
+
+        return $this->broadcastResponse($agency, 'Vehicle status updated successfully.');
     }
 
     public function createGuide(Request $request)
     {
-        $this->checkAgency($request);
+        $agency = $this->approvedAgency($request);
 
         $request->validate([
-            'name' => 'required|string',
-            'specialty' => 'required|string',
-            'contact' => 'required|string',
+            'name' => 'required|string|max:255',
+            'specialty' => 'required|string|max:255',
+            'contact' => 'required|string|max:100',
         ]);
 
-        $guide = AgencyGuide::create([
-            'id' => 'G-' . rand(205, 999),
+        AgencyGuide::create([
+            'id' => 'G-' . strtoupper(Str::random(8)),
+            'agency_id' => $agency->id,
             'name' => $request->name,
             'specialty' => $request->specialty,
             'rating' => 5.00,
@@ -157,68 +147,173 @@ class AgencyDashboardController extends Controller
             'contact' => $request->contact,
         ]);
 
-        $agencyData = $this->gatherAgencyData();
-        event(new AgencyDataUpdated($agencyData));
+        return $this->broadcastResponse($agency, 'Guide registered successfully.');
+    }
+
+    public function updateGuideStatus(Request $request, string $id)
+    {
+        $agency = $this->approvedAgency($request);
+        $validated = $request->validate([
+            'status' => 'required|string|in:Available,Unavailable,Assigned',
+        ]);
+
+        AgencyGuide::where('agency_id', $agency->id)
+            ->findOrFail($id)
+            ->update(['status' => $validated['status']]);
+
+        return $this->broadcastResponse($agency, 'Guide availability updated successfully.');
+    }
+
+    public function updateBookingStatus(Request $request, string $id)
+    {
+        $agency = $this->approvedAgency($request);
+        $validated = $request->validate([
+            'status' => 'required|string|in:Confirmed,Cancelled',
+        ]);
+
+        $bookingId = Str::startsWith($id, 'B-') ? Str::after($id, 'B-') : $id;
+        $booking = Booking::findOrFail($bookingId);
+        $status = strtolower($validated['status']);
+        $updates = ['status' => $status];
+
+        if ($status === 'cancelled') {
+            $updates['cancelled_at'] = now();
+        }
+
+        $booking->update($updates);
+
+        return $this->broadcastResponse($agency, 'Booking status updated successfully.');
+    }
+
+    private function approvedAgency(Request $request): User
+    {
+        $agency = $request->user();
+
+        if (! $agency || $agency->role !== 'agency') {
+            abort(403, 'Agency portal access required.');
+        }
+
+        if ($agency->approval_status !== 'approved' || $agency->deactivated_at) {
+            abort(403, 'Your travel agency account requires City Authority approval.');
+        }
+
+        return $agency;
+    }
+
+    private function broadcastResponse(User $agency, string $message)
+    {
+        $agencyData = $this->gatherAgencyData($agency);
+        event(new AgencyDataUpdated($agency->id, $agencyData));
 
         return response()->json([
-            'message' => 'Guide registered successfully.',
+            'message' => $message,
             'agency' => $agencyData,
         ]);
     }
 
-    private function gatherAgencyData()
+    private function gatherAgencyData(User $agency): array
     {
-        // DB stats
-        $totalBookingsCount = Booking::count();
-        $totalRevenueSum = Booking::where('status', 'confirmed')->sum('total_price');
-        $totalPlacesCount = DB::table('tourist_places')->count();
-        $avgRatingVal = number_format(DB::table('reviews')->avg('rating') ?: 4.8, 1);
+        $packages = AgencyPackage::where('agency_id', $agency->id)->latest()->get();
+        $tours = AgencyTour::where('agency_id', $agency->id)->latest()->get();
+        $vehicles = AgencyVehicle::where('agency_id', $agency->id)->latest()->get();
+        $guides = AgencyGuide::where('agency_id', $agency->id)->latest()->get();
 
-        $stats = [
-            ['label' => 'Active Bookings', 'value' => $totalBookingsCount ?: 45, 'icon' => 'Users', 'color' => 'text-sky-500', 'bg' => 'bg-sky-500/10'],
-            ['label' => 'Revenue (Month)', 'value' => '₹' . number_format(($totalRevenueSum ?: 240000) / 100000, 1) . 'L', 'icon' => 'DollarSign', 'color' => 'text-teal-500', 'bg' => 'bg-teal-500/10'],
-            ['label' => 'Listed Properties', 'value' => $totalPlacesCount ?: 12, 'icon' => 'Building2', 'color' => 'text-indigo-500', 'bg' => 'bg-indigo-500/10'],
-            ['label' => 'Average Rating', 'value' => $avgRatingVal, 'icon' => 'Star', 'color' => 'text-amber-500', 'bg' => 'bg-amber-500/10'],
-        ];
+        $bookingsQuery = Booking::query();
+        $activeBookings = (clone $bookingsQuery)->where('status', 'confirmed')->count();
+        $monthlyRevenue = (float) (clone $bookingsQuery)
+            ->where('status', 'confirmed')
+            ->whereBetween('booking_date', [now()->startOfMonth(), now()->endOfMonth()])
+            ->sum('total_price');
+        $pendingPayouts = (float) (clone $bookingsQuery)->where('status', 'pending')->sum('total_price');
+        $refunds = (float) (clone $bookingsQuery)->where('status', 'cancelled')->sum('total_price');
+        $averageRating = $guides->avg('rating') ?? 0;
 
-        $packages = AgencyPackage::all();
-        $tours = AgencyTour::all();
-        $vehicles = AgencyVehicle::all();
-        $guides = AgencyGuide::all();
-
-        // Join actual bookings with tourist place names and users
-        $bookingsList = Booking::orderBy('created_at', 'desc')
+        $bookings = Booking::with(['user', 'place'])
+            ->latest()
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(fn (Booking $booking) => [
+                'id' => 'B-' . $booking->id,
+                'customer' => $booking->user?->name ?? 'Guest User',
+                'listing' => $booking->place?->name ?? 'Custom Trip Tour',
+                'dates' => Carbon::parse($booking->booking_date)->format('d M Y'),
+                'amount' => (float) $booking->total_price,
+                'status' => ucfirst($booking->status),
+                'time' => $booking->created_at?->diffForHumans() ?? '',
+            ])
+            ->values();
 
-        $bookings = [];
-        foreach ($bookingsList as $b) {
-            $user = DB::table('users')->where('id', $b->user_id)->first();
-            $place = DB::table('tourist_places')->where('id', $b->tourist_place_id)->first();
-            $bookings[] = [
-                'id' => 'B-' . $b->id,
-                'customer' => $user ? $user->name : 'Guest User',
-                'listing' => $place ? $place->name : 'Custom Trip Tour',
-                'dates' => $b->start_date . ' - ' . $b->end_date,
-                'amount' => (float)$b->total_price,
-                'status' => ucfirst($b->status),
-                'time' => $b->created_at->diffForHumans(),
-            ];
-        }
+        $revenueSeries = collect(range(6, 0))
+            ->map(function (int $daysAgo) use ($bookingsQuery) {
+                $date = Carbon::today()->subDays($daysAgo);
 
-        if (empty($bookings)) {
-            $bookings = [
-                ['id' => 'B-8901', 'customer' => 'Rahul Sharma', 'listing' => 'Ocean Breeze Escape', 'dates' => '25 May - 28 May', 'amount' => 25000, 'status' => 'Confirmed', 'time' => '5 mins ago'],
-                ['id' => 'B-8902', 'customer' => 'Priya Patel', 'listing' => 'Cab Service (V-001)', 'dates' => '24 May', 'amount' => 3500, 'status' => 'Pending', 'time' => '15 mins ago'],
-            ];
-        }
+                return [
+                    'name' => $date->format('D'),
+                    'revenue' => (float) (clone $bookingsQuery)
+                        ->where('status', 'confirmed')
+                        ->whereDate('booking_date', $date)
+                        ->sum('total_price'),
+                ];
+            });
+
+        $monthlyRevenueSeries = collect(range(5, 0))
+            ->map(function (int $monthsAgo) use ($bookingsQuery) {
+                $month = Carbon::today()->subMonths($monthsAgo);
+
+                return [
+                    'month' => $month->format('M'),
+                    'amount' => (float) (clone $bookingsQuery)
+                        ->where('status', 'confirmed')
+                        ->whereYear('booking_date', $month->year)
+                        ->whereMonth('booking_date', $month->month)
+                        ->sum('total_price'),
+                ];
+            });
 
         return [
-            'stats' => $stats,
+            'stats' => [
+                ['label' => 'Active Bookings', 'value' => $activeBookings],
+                ['label' => 'Revenue (Month)', 'value' => 'INR ' . number_format($monthlyRevenue)],
+                ['label' => 'Listed Packages', 'value' => $packages->count()],
+                ['label' => 'Average Rating', 'value' => number_format($averageRating, 1)],
+            ],
+            'financials' => [
+                'monthlyRevenue' => $monthlyRevenue,
+                'pendingPayouts' => $pendingPayouts,
+                'refunds' => $refunds,
+            ],
+            'revenueSeries' => $revenueSeries,
+            'monthlyRevenueSeries' => $monthlyRevenueSeries,
             'packages' => $packages,
-            'tours' => $tours,
-            'vehicles' => $vehicles,
-            'guides' => $guides,
+            'tours' => $tours->map(fn (AgencyTour $tour) => [
+                'id' => $tour->id,
+                'package' => $tour->package_name,
+                'date' => $tour->date->format('Y-m-d'),
+                'time' => $tour->time,
+                'guide' => $tour->guide_name,
+                'status' => $tour->status,
+                'capacity' => $tour->capacity,
+                'filled' => $tour->filled,
+            ])->values(),
+            'vehicles' => $vehicles->map(fn (AgencyVehicle $vehicle) => [
+                'id' => $vehicle->id,
+                'model' => $vehicle->model,
+                'type' => $vehicle->type,
+                'driver' => $vehicle->driver,
+                'currentLoad' => $vehicle->current_load,
+                'status' => $vehicle->status,
+                'fuel' => $vehicle->fuel,
+                'location' => $vehicle->location,
+            ])->values(),
+            'guides' => $guides->map(fn (AgencyGuide $guide) => [
+                'id' => $guide->id,
+                'name' => $guide->name,
+                'specialty' => $guide->specialty,
+                'rating' => (float) $guide->rating,
+                'status' => $guide->status,
+                'activeTours' => $guide->active_tours,
+                'contact' => $guide->contact,
+            ])->values(),
             'bookings' => $bookings,
         ];
     }

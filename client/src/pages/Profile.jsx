@@ -31,7 +31,7 @@ const Profile = () => {
   const stats = [
     { icon: MapPin, label: 'Places Visited', value: '12', color: 'bg-blue-50 text-blue-600' },
     { icon: Calendar, label: 'Trips Booked', value: '4', color: 'bg-green-50 text-green-600' },
-    { icon: TrendingUp, label: 'Loyalty Points', value: '1,250', color: 'bg-purple-50 text-purple-600' },
+    { icon: TrendingUp, label: 'Loyalty Points', value: '1,250', color: 'bg-blue-50 text-blue-600' },
   ];
 
   return (

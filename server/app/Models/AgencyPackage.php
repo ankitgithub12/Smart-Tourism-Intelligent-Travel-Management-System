@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class AgencyPackage extends Model
 {
     protected $fillable = [
+        'agency_id',
         'name',
         'destination',
         'duration',
@@ -14,5 +15,10 @@ class AgencyPackage extends Model
         'status',
         'bookings',
         'image',
+    ];
+
+    protected $casts = [
+        'price' => 'float',
+        'bookings' => 'integer',
     ];
 }

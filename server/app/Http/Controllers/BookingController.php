@@ -162,6 +162,10 @@ class BookingController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
+        if ($user->role === 'agency' && ($user->approval_status !== 'approved' || $user->deactivated_at)) {
+            return response()->json(['message' => 'Your travel agency account requires City Authority approval.'], 403);
+        }
+
         $booking = DB::table('bookings')
             ->join('tourist_places', 'bookings.tourist_place_id', '=', 'tourist_places.id')
             ->where('bookings.id', $id)

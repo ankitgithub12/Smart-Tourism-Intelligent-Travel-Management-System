@@ -25,6 +25,9 @@ const useAuth = () => {
   const register = async (userData) => {
     const result = await dispatch(registerUser(userData));
     if (registerUser.fulfilled.match(result)) {
+      if (result.payload?.requires_approval) {
+        return result;
+      }
       const role = result.payload?.user?.role;
       if (role === 'admin' || role === 'authority') {
         navigate('/admin/dashboard');

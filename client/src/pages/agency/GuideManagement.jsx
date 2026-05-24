@@ -40,16 +40,17 @@ export function GuideManagement({ data, setData }) {
   };
 
 
-  const toggleAvailability = (id) => {
-    setData(prev => ({
-      ...prev,
-      guides: prev.guides.map(g => {
-        if (g.id === id) {
-          return { ...g, status: g.status === 'Available' ? 'Unavailable' : 'Available' };
-        }
-        return g;
-      })
-    }));
+  const toggleAvailability = async (guide) => {
+    const nextStatus = guide.status === 'Available' ? 'Unavailable' : 'Available';
+    const toastId = toast.loading('Updating guide availability...');
+    try {
+      const res = await agencyAPI.updateGuideStatus(guide.id, nextStatus);
+      setData(res.data.agency);
+      toast.success('Guide availability updated.', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update guide availability.', { id: toastId });
+    }
   };
 
   return (
@@ -156,7 +157,7 @@ export function GuideManagement({ data, setData }) {
               <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2">
                   <Star size={14} className="text-amber-500 fill-amber-500" />
-                  <span className="font-bold">{g.rating.toFixed(1)} / 5.0 Rating</span>
+                  <span className="font-bold">{Number(g.rating || 0).toFixed(1)} / 5.0 Rating</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone size={14} className="opacity-60" />
@@ -167,10 +168,10 @@ export function GuideManagement({ data, setData }) {
 
             <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
-                {g.activeTours} Active Tours
+                {g.activeTours ?? g.active_tours ?? 0} Active Tours
               </span>
               <button
-                onClick={() => toggleAvailability(g.id)}
+                onClick={() => toggleAvailability(g)}
                 className="text-[10px] font-bold text-[hsl(var(--primary))] hover:underline"
               >
                 Toggle Availability

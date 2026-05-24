@@ -83,6 +83,10 @@ export const favoritesAPI = {
   remove: (placeId) => api.delete(`/favorites/${placeId}`),
 };
 
+export const touristAPI = {
+  getAssistance: (params) => api.get('/tourist/assistance', { params }),
+};
+
 // ── Transport ─────────────────────────────────────────
 export const transportAPI = {
   getAll: (params) => api.get('/transports', { params }),
@@ -135,7 +139,10 @@ export const agencyAPI = {
   deletePackage: (id)               => api.delete(`/agency/packages/${id}`),
   createTour: (data)                => api.post('/agency/tours', data),
   createVehicle: (data)             => api.post('/agency/vehicles', data),
+  updateVehicleStatus: (id, status) => api.patch(`/agency/vehicles/${id}/status`, { status }),
   createGuide: (data)               => api.post('/agency/guides', data),
+  updateGuideStatus: (id, status)   => api.patch(`/agency/guides/${id}/status`, { status }),
+  updateBookingStatus: (id, status) => api.patch(`/agency/bookings/${id}/status`, { status }),
 };
 
 export default api;

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const team = [
   { name: 'Dr. Aryan Kapoor', role: 'AI & ML Lead', avatar: 'AK', color: 'from-blue-500 to-blue-600' },
-  { name: 'Sneha Verma', role: 'Full Stack Engineer', avatar: 'SV', color: 'from-purple-500 to-purple-600' },
+  { name: 'Sneha Verma', role: 'Full Stack Engineer', avatar: 'SV', color: 'from-blue-500 to-blue-600' },
   { name: 'Ravi Gupta', role: 'Smart City Analyst', avatar: 'RG', color: 'from-green-500 to-green-600' },
   { name: 'Meera Joshi', role: 'UX/UI Designer', avatar: 'MJ', color: 'from-orange-500 to-orange-600' },
 ];
@@ -69,7 +69,7 @@ const About = () => {
             className="grid grid-cols-2 gap-5">
             {[{ value: '50K+', label: 'Tourists Served', color: 'bg-blue-50 text-blue-600' },
               { value: '30%', label: 'Congestion Reduced', color: 'bg-green-50 text-green-600' },
-              { value: '200+', label: 'Destinations', color: 'bg-purple-50 text-purple-600' },
+              { value: '200+', label: 'Destinations', color: 'bg-blue-50 text-blue-600' },
               { value: '95%', label: 'AI Accuracy', color: 'bg-orange-50 text-orange-600' },
             ].map((s, i) => (
               <div key={i} className={`${s.color} rounded-3xl p-8 text-center`}>

@@ -67,18 +67,18 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/transport" element={<Transport />} />
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/planner" element={<TripPlanner />} />
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route path="/payment/cancel" element={<PaymentCancel />} />
       </Route>
 
       {/* Tourist Protected Routes */}
       <Route element={<ProtectedRoute requiredRole="tourist"><MainLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<TouristDashboard />} />
+        <Route path="/planner" element={<TripPlanner />} />
         <Route path="/my-trips" element={<MyTrips />} />
         <Route path="/trip-itinerary/:tripId" element={<TripItinerary />} />
         <Route path="/saved" element={<SavedDestinations />} />
         <Route path="/ai-recommendations" element={<AIRecommendations />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
       </Route>
 
       {/* Agency Protected Routes */}

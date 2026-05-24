@@ -11,6 +11,7 @@ class AgencyTour extends Model
 
     protected $fillable = [
         'id',
+        'agency_id',
         'package_name',
         'date',
         'time',
@@ -18,5 +19,11 @@ class AgencyTour extends Model
         'status',
         'capacity',
         'filled',
+    ];
+
+    protected $casts = [
+        'date' => 'date:Y-m-d',
+        'capacity' => 'integer',
+        'filled' => 'integer',
     ];
 }

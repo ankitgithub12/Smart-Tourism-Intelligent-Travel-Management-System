@@ -11,6 +11,7 @@ class AgencyVehicle extends Model
 
     protected $fillable = [
         'id',
+        'agency_id',
         'model',
         'type',
         'driver',
@@ -18,5 +19,10 @@ class AgencyVehicle extends Model
         'status',
         'fuel',
         'location',
+    ];
+
+    protected $casts = [
+        'current_load' => 'integer',
+        'fuel' => 'integer',
     ];
 }

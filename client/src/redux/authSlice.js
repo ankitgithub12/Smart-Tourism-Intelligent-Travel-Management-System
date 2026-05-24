@@ -119,6 +119,14 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
+        if (action.payload.requires_approval) {
+          state.user = null;
+          state.token = null;
+          state.isAuthenticated = false;
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth_user');
+          return;
+        }
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;

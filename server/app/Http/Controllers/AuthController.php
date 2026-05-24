@@ -18,7 +18,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|string|in:tourist,agency,authority',
+            'role' => 'required|string|in:tourist,agency',
         ]);
 
         $user = User::create([
@@ -26,7 +26,16 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'approval_status' => $request->role === 'agency' ? 'pending' : null,
         ]);
+
+        if ($user->role === 'agency') {
+            return response()->json([
+                'message' => 'Your travel agency registration has been submitted for City Authority approval.',
+                'requires_approval' => true,
+                'user' => $user,
+            ], 202);
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -49,6 +58,18 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        if ($user->deactivated_at) {
+            return response()->json(['message' => 'Your account is inactive. Please contact the City Authority.'], 403);
+        }
+
+        if ($user->role === 'agency' && $user->approval_status !== 'approved') {
+            $message = $user->approval_status === 'rejected'
+                ? 'Your travel agency application was rejected by the City Authority.'
+                : 'Your travel agency account is awaiting City Authority approval.';
+
+            return response()->json(['message' => $message], 403);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
