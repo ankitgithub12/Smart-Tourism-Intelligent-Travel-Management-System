@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard, Package, Calendar, Car, UserCheck, BookOpen,
-  BarChart3, DollarSign, Lightbulb
+  BarChart3, DollarSign, Lightbulb, Hotel, Mail
 } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useRealtimeSimulator from '../../hooks/useRealtimeSimulator';
@@ -9,6 +9,7 @@ import useRealtimeSimulator from '../../hooks/useRealtimeSimulator';
 // Subpage components
 import AgencyOverview from './AgencyOverview';
 import PackageManager from './PackageManager';
+import HotelManager from './HotelManager';
 import TourScheduler from './TourScheduler';
 import VehicleAllocation from './VehicleAllocation';
 import GuideManagement from './GuideManagement';
@@ -16,17 +17,20 @@ import BookingManager from './BookingManager';
 import TouristAnalytics from './TouristAnalytics';
 import RevenueDashboard from './RevenueDashboard';
 import SmartRecommendations from './SmartRecommendations';
+import MessagesPanel from '../dashboard/MessagesPanel';
 
 const navItems = [
   { label: 'Overview', path: 'overview', icon: LayoutDashboard },
   { label: 'Packages', path: 'packages', icon: Package },
+  { label: 'Hotels', path: 'hotels', icon: Hotel },
   { label: 'Schedules', path: 'tours', icon: Calendar },
   { label: 'Vehicles', path: 'vehicles', icon: Car },
   { label: 'Guides', path: 'guides', icon: UserCheck },
   { label: 'Bookings', path: 'bookings', icon: BookOpen },
   { label: 'Analytics', path: 'analytics', icon: BarChart3 },
   { label: 'Revenue', path: 'revenue', icon: DollarSign },
-  { label: 'AI Smart Tips', path: 'recommendations', icon: Lightbulb }
+  { label: 'AI Smart Tips', path: 'recommendations', icon: Lightbulb },
+  { label: 'Messages', path: 'messages', icon: Mail }
 ];
 
 export function AgencyDashboard() {
@@ -38,6 +42,8 @@ export function AgencyDashboard() {
     switch (activeTab) {
       case 'packages':
         return <PackageManager data={data} setData={setData} />;
+      case 'hotels':
+        return <HotelManager data={data} setData={setData} />;
       case 'tours':
         return <TourScheduler data={data} setData={setData} />;
       case 'vehicles':
@@ -52,6 +58,8 @@ export function AgencyDashboard() {
         return <RevenueDashboard data={data} setData={setData} />;
       case 'recommendations':
         return <SmartRecommendations data={data} setData={setData} />;
+      case 'messages':
+        return <MessagesPanel messages={data.messages || []} title="Tourist Contact Messages" />;
       case 'overview':
       default:
         return <AgencyOverview data={data} setTab={setActiveTab} />;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, DollarSign, Hotel, Car, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
-import api from '../../services/api';
+import api, { tripAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const MyTrips = () => {
@@ -10,6 +10,7 @@ const MyTrips = () => {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, upcoming, past, cancelled
+  const [ratingDrafts, setRatingDrafts] = useState({});
 
   useEffect(() => {
     fetchTrips();
@@ -23,12 +24,8 @@ const MyTrips = () => {
       const res = await api.get('/trips');
       setTrips(res.data.data);
     } catch (err) {
-      console.log('Using mock trips data');
-      setTrips([
-        { id: 1, from_location: 'Mumbai', to_destination: 'Goa', departure_date: '2026-06-01', return_date: '2026-06-05', travelers: 2, status: 'confirmed', total_price: 24500, hotel: { name: 'Ocean Pearl Resort' }, cabService: { label: 'Private Cab' } },
-        { id: 2, from_location: 'Delhi', to_destination: 'Jaipur', departure_date: '2026-04-10', return_date: '2026-04-12', travelers: 4, status: 'completed', total_price: 18000, hotel: { name: 'Heritage Palace' }, cabService: null },
-        { id: 3, from_location: 'Bangalore', to_destination: 'Coorg', departure_date: '2026-07-15', return_date: '2026-07-18', travelers: 2, status: 'pending', total_price: 15000, hotel: null, cabService: { label: 'Shared Cab' } },
-      ]);
+      toast.error(err.response?.data?.message || 'Unable to load trips.');
+      setTrips([]);
     } finally {
       setLoading(false);
     }
@@ -57,6 +54,40 @@ const MyTrips = () => {
 
   const handleViewItinerary = (tripId) => {
     navigate(`/trip-itinerary/${tripId}`);
+  };
+
+  const canCancel = (trip) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return ['pending', 'confirmed'].includes(trip.status) && new Date(trip.departure_date) >= today;
+  };
+
+  const handleCancelTrip = async (tripId) => {
+    const toastId = toast.loading('Cancelling trip...');
+    try {
+      const res = await tripAPI.cancel(tripId);
+      setTrips(prev => prev.map(trip => trip.id === tripId ? res.data.data : trip));
+      toast.success('Trip cancelled successfully.', { id: toastId });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to cancel trip.', { id: toastId });
+    }
+  };
+
+  const handleRateTrip = async (tripId) => {
+    const rating = Number(ratingDrafts[tripId] || 0);
+    if (!rating) {
+      toast.error('Choose a rating first.');
+      return;
+    }
+
+    const toastId = toast.loading('Submitting rating...');
+    try {
+      const res = await tripAPI.rate(tripId, { rating });
+      setTrips(prev => prev.map(trip => trip.id === tripId ? res.data.data : trip));
+      toast.success('Rating updated.', { id: toastId });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to submit rating.', { id: toastId });
+    }
   };
 
   return (
@@ -106,11 +137,13 @@ const MyTrips = () => {
                 {/* Main Details */}
                 <div className="flex-1 w-full">
                   <h3 className="text-xl font-black mb-1">{trip.from_location} <span className="text-[hsl(var(--text-muted))] text-sm mx-2">→</span> {trip.to_destination}</h3>
-                  <p className="text-sm text-[hsl(var(--text-muted))] mb-4">{trip.travelers} Travelers</p>
+                  <p className="text-sm text-[hsl(var(--text-muted))] mb-4">{trip.traveler_name || 'Traveler'} · {trip.travelers} Travelers</p>
                   
                   <div className="flex flex-wrap gap-3">
                     {trip.hotel && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.1)] text-xs font-semibold"><Hotel size={12} className="text-[hsl(var(--primary))]" /> {trip.hotel.name}</span>}
                     {trip.cabService && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.1)] text-xs font-semibold"><Car size={12} className="text-[hsl(var(--primary))]" /> {trip.cabService.label}</span>}
+                    {trip.agencyGuide && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.1)] text-xs font-semibold">Guide: {trip.agencyGuide.name}</span>}
+                    {trip.agencyVehicle && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.1)] text-xs font-semibold">Vehicle: {trip.agencyVehicle.model}</span>}
                   </div>
                 </div>
 
@@ -121,7 +154,21 @@ const MyTrips = () => {
                   <div className="flex gap-2 justify-start md:justify-end">
                     <button onClick={() => handleViewItinerary(trip.id)} className="btn-secondary !py-2 !px-4 text-xs">View Itinerary</button>
                     {trip.status === 'pending' && <button className="btn-primary !py-2 !px-4 text-xs">Pay Now</button>}
+                    {canCancel(trip) && <button onClick={() => handleCancelTrip(trip.id)} className="!py-2 !px-4 text-xs rounded-xl font-bold bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors">Cancel</button>}
                   </div>
+                  {trip.status !== 'cancelled' && (
+                    <div className="mt-3 flex items-center gap-2 justify-start md:justify-end">
+                      <select
+                        value={ratingDrafts[trip.id] || trip.rating || ''}
+                        onChange={(e) => setRatingDrafts(prev => ({ ...prev, [trip.id]: e.target.value }))}
+                        className="glass-surface rounded-lg px-2 py-1.5 text-xs outline-none"
+                      >
+                        <option value="">Rate</option>
+                        {[5, 4, 3, 2, 1].map(value => <option key={value} value={value}>{value} Stars</option>)}
+                      </select>
+                      <button onClick={() => handleRateTrip(trip.id)} className="btn-secondary !py-1.5 !px-3 text-[10px]">Save Rating</button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}

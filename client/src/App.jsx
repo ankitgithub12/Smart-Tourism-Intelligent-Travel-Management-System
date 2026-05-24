@@ -42,7 +42,10 @@ import AgencyDashboard from './pages/agency/AgencyDashboard';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 
+import useEcho from './hooks/useEcho';
+
 function App() {
+  useEcho();
   return (
     <Routes>
       {/* Public Routes - Wrapped in MainLayout */}

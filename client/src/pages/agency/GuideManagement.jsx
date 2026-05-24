@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Plus, Star, Phone, Check, Eye } from 'lucide-react';
+import { User, Plus, Star, Phone, Check, Eye, Trash2 } from 'lucide-react';
 import { agencyAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -50,6 +50,20 @@ export function GuideManagement({ data, setData }) {
     } catch (err) {
       console.error(err);
       toast.error('Failed to update guide availability.', { id: toastId });
+    }
+  };
+
+  const handleDelete = async (guideId) => {
+    if (!window.confirm('Are you sure you want to delete this guide?')) return;
+
+    const toastId = toast.loading('Deleting guide registration...');
+    try {
+      const res = await agencyAPI.deleteGuide(guideId);
+      setData(res.data.agency);
+      toast.success('Guide deleted successfully.', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete guide.', { id: toastId });
     }
   };
 
@@ -166,16 +180,25 @@ export function GuideManagement({ data, setData }) {
               </div>
             </div>
 
-            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase shrink-0">
                 {g.activeTours ?? g.active_tours ?? 0} Active Tours
               </span>
-              <button
-                onClick={() => toggleAvailability(g)}
-                className="text-[10px] font-bold text-[hsl(var(--primary))] hover:underline"
-              >
-                Toggle Availability
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleAvailability(g)}
+                  className="text-[10px] font-bold text-[hsl(var(--primary))] hover:underline"
+                >
+                  Toggle Availability
+                </button>
+                <button
+                  onClick={() => handleDelete(g.id)}
+                  className="p-1 rounded-lg border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center justify-center"
+                  title="Delete Guide"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}

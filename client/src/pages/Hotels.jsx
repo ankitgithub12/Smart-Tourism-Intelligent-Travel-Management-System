@@ -1,16 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Star, Wifi, Car, UtensilsCrossed, Search, Filter, Waves, Dumbbell } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const mockHotels = [
-  { id: 1, name: 'Ocean Pearl Resort', location: 'Goa, India', stars: 5, price: 8500, rating: 4.9, reviews: 342, image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format', amenities: ['wifi', 'pool', 'restaurant', 'parking', 'gym'] },
-  { id: 2, name: 'Heritage Palace Hotel', location: 'Jaipur, India', stars: 5, price: 12000, rating: 4.8, reviews: 256, image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&auto=format', amenities: ['wifi', 'pool', 'restaurant', 'parking'] },
-  { id: 3, name: 'Mountain View Lodge', location: 'Manali, India', stars: 4, price: 4500, rating: 4.7, reviews: 189, image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&auto=format', amenities: ['wifi', 'restaurant', 'parking'] },
-  { id: 4, name: 'Backwater Houseboat', location: 'Kerala, India', stars: 4, price: 6000, rating: 4.9, reviews: 198, image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format', amenities: ['restaurant', 'pool'] },
-  { id: 5, name: 'City Business Suites', location: 'Mumbai, India', stars: 4, price: 5500, rating: 4.5, reviews: 145, image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&auto=format', amenities: ['wifi', 'gym', 'restaurant', 'parking'] },
-  { id: 6, name: 'Beachside Villa', location: 'Andaman, India', stars: 5, price: 15000, rating: 4.9, reviews: 89, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format', amenities: ['wifi', 'pool', 'restaurant', 'parking', 'gym'] },
-];
+import { listingAPI } from '../services/api';
 
 const amenityIcons = { wifi: Wifi, pool: Waves, restaurant: UtensilsCrossed, parking: Car, gym: Dumbbell };
 const amenityLabels = { wifi: 'WiFi', pool: 'Pool', restaurant: 'Dining', parking: 'Parking', gym: 'Gym' };
@@ -18,8 +10,21 @@ const amenityLabels = { wifi: 'WiFi', pool: 'Pool', restaurant: 'Dining', parkin
 const Hotels = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('rating');
+  const [hotels, setHotels] = useState([]);
 
-  const filtered = mockHotels
+  useEffect(() => {
+    const loadHotels = () => {
+      listingAPI.getHotels()
+        .then((res) => setHotels(res.data || []))
+        .catch((err) => console.error('Failed to load hotels', err));
+    };
+
+    loadHotels();
+    const interval = setInterval(loadHotels, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filtered = hotels
     .filter(h => h.name.toLowerCase().includes(searchTerm.toLowerCase()) || h.location.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => sortBy === 'price' ? a.price - b.price : b.rating - a.rating);
 
@@ -60,17 +65,18 @@ const Hotels = () => {
                   {Array.from({ length: hotel.stars }).map((_, i) => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
                 </div>
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-amber-500 flex items-center gap-1">
-                  <Star size={12} fill="currentColor" /> {hotel.rating}
+                  <Star size={12} fill="currentColor" /> {Number(hotel.rating || 0).toFixed(1)}
                 </div>
               </div>
               <div className="p-5">
                 <h3 className="font-bold text-lg mb-1 group-hover:text-[hsl(var(--primary))] transition-colors">{hotel.name}</h3>
                 <p className="text-xs text-[hsl(var(--text-muted))] flex items-center gap-1 mb-4"><MapPin size={11} /> {hotel.location} · {hotel.reviews} reviews</p>
                 <div className="flex gap-2 mb-4">
-                  {hotel.amenities.map(a => {
-                    const Icon = amenityIcons[a];
+                  {(hotel.amenities || []).map(a => {
+                    const key = String(a).toLowerCase();
+                    const Icon = amenityIcons[key];
                     return Icon ? (
-                      <div key={a} className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.08)] flex items-center justify-center" title={amenityLabels[a]}>
+                      <div key={a} className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.08)] flex items-center justify-center" title={amenityLabels[key]}>
                         <Icon size={14} className="text-[hsl(var(--primary))]" />
                       </div>
                     ) : null;
@@ -87,6 +93,11 @@ const Hotels = () => {
             </motion.div>
           ))}
         </div>
+        {!filtered.length && (
+          <div className="glass-surface rounded-2xl p-10 text-center text-sm text-[hsl(var(--text-muted))]">
+            No hotels are available yet.
+          </div>
+        )}
       </div>
     </div>
   );

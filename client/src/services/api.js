@@ -87,6 +87,13 @@ export const touristAPI = {
   getAssistance: (params) => api.get('/tourist/assistance', { params }),
 };
 
+export const tripAPI = {
+  options: () => api.get('/trip-options'),
+  create: (data) => api.post('/trips', data),
+  cancel: (id) => api.post(`/trips/${id}/cancel`),
+  rate: (id, data) => api.post(`/trips/${id}/rate`, data),
+};
+
 // ── Transport ─────────────────────────────────────────
 export const transportAPI = {
   getAll: (params) => api.get('/transports', { params }),
@@ -95,6 +102,15 @@ export const transportAPI = {
   create: (data) => api.post('/transports', data),
   update: (id, data) => api.put(`/transports/${id}`, data),
   updateLoad: (id, load) => api.patch(`/transports/${id}/load`, { current_load: load }),
+};
+
+export const listingAPI = {
+  getPackages: () => api.get('/packages'),
+  getHotels: () => api.get('/hotels'),
+};
+
+export const contactAPI = {
+  send: (data) => api.post('/contact', data),
 };
 
 // ── AI ────────────────────────────────────────────────
@@ -135,13 +151,17 @@ export const telemetryAPI = {
 // ── Agency Dashboard ──────────────────────────────
 export const agencyAPI = {
   getDashboard: ()                  => api.get('/agency/dashboard'),
-  createPackage: (data)             => api.post('/agency/packages', data),
+  createPackage: (data)             => api.post('/agency/packages', data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
   deletePackage: (id)               => api.delete(`/agency/packages/${id}`),
+  createHotel: (data)               => api.post('/agency/hotels', data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
+  deleteHotel: (id)                 => api.delete(`/agency/hotels/${id}`),
   createTour: (data)                => api.post('/agency/tours', data),
   createVehicle: (data)             => api.post('/agency/vehicles', data),
   updateVehicleStatus: (id, status) => api.patch(`/agency/vehicles/${id}/status`, { status }),
+  deleteVehicle: (id)               => api.delete(`/agency/vehicles/${id}`),
   createGuide: (data)               => api.post('/agency/guides', data),
   updateGuideStatus: (id, status)   => api.patch(`/agency/guides/${id}/status`, { status }),
+  deleteGuide: (id)                 => api.delete(`/agency/guides/${id}`),
   updateBookingStatus: (id, status) => api.patch(`/agency/bookings/${id}/status`, { status }),
 };
 

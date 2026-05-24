@@ -78,10 +78,29 @@ class PaymentController extends Controller
                 $payment->stripe_payment_id = $session->payment_intent;
                 $payment->save();
 
-                $trip = Trip::find($tripId);
+                $trip = Trip::with(['agencyPackage', 'agencyGuide', 'agencyVehicle', 'user'])->find($tripId);
                 if ($trip) {
                     $trip->status = 'confirmed';
                     $trip->save();
+
+                    event(new \App\Events\NotificationSent(
+                        $trip->user_id,
+                        "Your payment for trip to {$trip->to_destination} was successful!",
+                        'success',
+                        ['trip_id' => $trip->id]
+                    ));
+
+                    $agencyId = $trip->agencyPackage?->agency_id
+                        ?? $trip->agencyGuide?->agency_id
+                        ?? $trip->agencyVehicle?->agency_id;
+                    if ($agencyId) {
+                        event(new \App\Events\NotificationSent(
+                            $agencyId,
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'info',
+                            ['trip_id' => $trip->id]
+                        ));
+                    }
                 }
             }
         }
@@ -120,6 +139,7 @@ class PaymentController extends Controller
 
                 $trip = Trip::where('id', $request->trip_id)
                             ->where('user_id', $request->user()->id)
+                            ->with(['agencyPackage', 'agencyGuide', 'agencyVehicle', 'user'])
                             ->first();
                 if ($trip) {
                     $trip->status = 'confirmed';
@@ -131,6 +151,18 @@ class PaymentController extends Controller
                         'success',
                         ['trip_id' => $trip->id]
                     ));
+
+                    $agencyId = $trip->agencyPackage?->agency_id
+                        ?? $trip->agencyGuide?->agency_id
+                        ?? $trip->agencyVehicle?->agency_id;
+                    if ($agencyId) {
+                        event(new \App\Events\NotificationSent(
+                            $agencyId,
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'info',
+                            ['trip_id' => $trip->id]
+                        ));
+                    }
                 }
 
                 return response()->json(['status' => 'success', 'message' => 'Payment confirmed successfully.']);
@@ -164,6 +196,7 @@ class PaymentController extends Controller
 
                 $trip = Trip::where('id', $request->trip_id)
                             ->where('user_id', $request->user()->id)
+                            ->with(['agencyPackage', 'agencyGuide', 'agencyVehicle', 'user'])
                             ->first();
                 if ($trip) {
                     $trip->status = 'confirmed';
@@ -175,6 +208,18 @@ class PaymentController extends Controller
                         'success',
                         ['trip_id' => $trip->id]
                     ));
+
+                    $agencyId = $trip->agencyPackage?->agency_id
+                        ?? $trip->agencyGuide?->agency_id
+                        ?? $trip->agencyVehicle?->agency_id;
+                    if ($agencyId) {
+                        event(new \App\Events\NotificationSent(
+                            $agencyId,
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'info',
+                            ['trip_id' => $trip->id]
+                        ));
+                    }
                 }
 
                 return response()->json(['status' => 'success', 'message' => 'Payment confirmed via Dev Mock fallback due to Stripe network timeout.']);

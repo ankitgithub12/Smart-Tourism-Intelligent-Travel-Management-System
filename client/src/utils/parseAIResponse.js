@@ -11,16 +11,7 @@
 export const parseAIJsonArray = (rawText) => {
   if (!rawText) throw new Error('Empty response');
   
-  let cleanText = rawText;
-  
-  // Remove markdown code blocks
-  cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
-  
-  // Remove escape sequences from backticks
-  cleanText = cleanText.replace(/\\`/g, '`');
-  
-  // Trim whitespace
-  cleanText = cleanText.trim();
+  let cleanText = rawText.trim();
   
   // Find JSON array boundaries
   const startIdx = cleanText.indexOf('[');
@@ -30,21 +21,33 @@ export const parseAIJsonArray = (rawText) => {
     throw new Error('No valid JSON array found in response');
   }
   
-  // Extract just the JSON array
-  cleanText = cleanText.substring(startIdx, lastIdx + 1);
+  const jsonCandidate = cleanText.substring(startIdx, lastIdx + 1);
   
-  // Fix common JSON issues
-  cleanText = cleanText.replace(/\\n/g, ' ').replace(/\n/g, ' ');
-  cleanText = cleanText.replace(/\\"/g, '"');
-  cleanText = cleanText.replace(/\r/g, ' ');
-  
-  // Try to parse
+  // Try parsing the raw candidate first. If it is valid, return it!
   try {
-    return JSON.parse(cleanText);
+    return JSON.parse(jsonCandidate);
   } catch (e) {
-    // If parsing still fails, try removing any remaining escape sequences
-    cleanText = cleanText.replace(/\\/g, '');
-    return JSON.parse(cleanText);
+    // Fall back to cleaning
+  }
+  
+  let cleaned = jsonCandidate;
+  
+  // Remove markdown code blocks if they are inside
+  cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
+  
+  // Fix newlines and carriage returns
+  cleaned = cleaned.replace(/\r?\n/g, ' ');
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Fix trailing commas
+    cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      throw new Error(`Failed to parse AI JSON: ${e2.message}. Raw text: ${rawText}`);
+    }
   }
 };
 
@@ -56,16 +59,7 @@ export const parseAIJsonArray = (rawText) => {
 export const parseAIJsonObject = (rawText) => {
   if (!rawText) throw new Error('Empty response');
   
-  let cleanText = rawText;
-  
-  // Remove markdown code blocks
-  cleanText = cleanText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
-  
-  // Remove escape sequences from backticks
-  cleanText = cleanText.replace(/\\`/g, '`');
-  
-  // Trim whitespace
-  cleanText = cleanText.trim();
+  let cleanText = rawText.trim();
   
   // Find JSON object boundaries - look for first { and last }
   const startIdx = cleanText.indexOf('{');
@@ -75,21 +69,33 @@ export const parseAIJsonObject = (rawText) => {
     throw new Error('No valid JSON object found in response');
   }
   
-  // Extract just the JSON object
-  cleanText = cleanText.substring(startIdx, lastIdx + 1);
+  const jsonCandidate = cleanText.substring(startIdx, lastIdx + 1);
   
-  // Fix common JSON issues
-  cleanText = cleanText.replace(/\\n/g, ' ').replace(/\n/g, ' ');
-  cleanText = cleanText.replace(/\\"/g, '"');
-  cleanText = cleanText.replace(/\r/g, ' ');
-  
-  // Try to parse
+  // Try parsing the raw candidate first. If it is valid, return it!
   try {
-    return JSON.parse(cleanText);
+    return JSON.parse(jsonCandidate);
   } catch (e) {
-    // If parsing still fails, try removing any remaining escape sequences
-    cleanText = cleanText.replace(/\\/g, '');
-    return JSON.parse(cleanText);
+    // Fall back to cleaning
+  }
+  
+  let cleaned = jsonCandidate;
+  
+  // Remove markdown code blocks if they are inside
+  cleaned = cleaned.replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
+  
+  // Fix newlines and carriage returns
+  cleaned = cleaned.replace(/\r?\n/g, ' ');
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Fix trailing commas
+    cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      throw new Error(`Failed to parse AI JSON: ${e2.message}. Raw text: ${rawText}`);
+    }
   }
 };
 

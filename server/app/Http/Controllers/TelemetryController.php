@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CrowdZone;
 use App\Models\TrafficPoint;
 use App\Models\Emergency;
+use App\Models\ContactMessage;
 use App\Models\WasteBin;
 use App\Models\SustainabilityMetric;
 use App\Models\User;
@@ -212,6 +213,22 @@ class TelemetryController extends Controller
             ->values()
             ->all();
 
+        $messages = ContactMessage::where('recipient_role', 'authority')
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn (ContactMessage $message) => [
+                'id' => $message->id,
+                'name' => $message->name,
+                'email' => $message->email,
+                'subject' => $message->subject,
+                'message' => $message->message,
+                'senderRole' => $message->sender_role,
+                'time' => $message->created_at?->diffForHumans() ?? '',
+            ])
+            ->values()
+            ->all();
+
         // Hardcode charts telemetry details similar to simulator
         $powerUsage = [
             ['hour' => '08:00', 'load' => 320],
@@ -257,6 +274,7 @@ class TelemetryController extends Controller
                 'waterConsumption' => $waterConsumption,
             ],
             'agencies' => $agencies,
+            'messages' => $messages,
             'sustainability' => [
                 'ecoScore' => $sustainability->eco_score ?? 78,
                 'carbonOffset' => (float)($sustainability->carbon_offset ?? 12.4),

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard, Users, MapPin, Compass, Activity, ShieldAlert,
-  Truck, Brain, Calendar, CheckCircle, Leaf
+  Truck, Brain, Calendar, CheckCircle, Leaf, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../../layouts/DashboardLayout';
@@ -19,6 +19,7 @@ import FlowPrediction from './FlowPrediction';
 import EventManager from './EventManager';
 import AgencyApprovals from './AgencyApprovals';
 import SustainabilityDashboard from './SustainabilityDashboard';
+import MessagesPanel from '../dashboard/MessagesPanel';
 
 const navItems = [
   { label: 'Overview',        path: 'overview',      icon: LayoutDashboard },
@@ -32,6 +33,7 @@ const navItems = [
   { label: 'Event Manager',   path: 'events',        icon: Calendar },
   { label: 'Agency Approvals',path: 'agencies',      icon: CheckCircle },
   { label: 'Sustainability',  path: 'sustainability', icon: Leaf },
+  { label: 'Messages',        path: 'messages',      icon: Mail },
 ];
 
 export function AdminDashboard() {
@@ -55,6 +57,7 @@ export function AdminDashboard() {
       case 'events':       return <EventManager data={data} setData={setData} />;
       case 'agencies':     return <AgencyApprovals data={data} setData={setData} />;
       case 'sustainability': return <SustainabilityDashboard data={data} setData={setData} />;
+      case 'messages':     return <MessagesPanel messages={data.messages || []} title="Agency Contact Messages" />;
       default:             return <AdminOverview data={data} setTab={setActiveTab} loading={loading} />;
     }
   };

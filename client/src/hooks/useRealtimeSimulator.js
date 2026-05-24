@@ -9,6 +9,8 @@ const emptyAgencyData = {
   revenueSeries: [],
   monthlyRevenueSeries: [],
   packages: [],
+  hotels: [],
+  messages: [],
   tours: [],
   vehicles: [],
   guides: [],
@@ -99,13 +101,21 @@ export function useRealtimeSimulator(type, intervalMs = 5000) {
         channelRef.current = channel;
 
         channel.listen(eventName, (payload) => {
-          setData(payload);
+          if (payload && Object.keys(payload).length > 0) {
+            setData(payload);
+          } else {
+            fetchData();
+          }
           setConnected(true);
         });
 
-        // Mark connected; stop polling if it was started
+        // Admin telemetry still needs a local tick driver when no scheduler is running.
         setConnected(true);
-        stopPolling();
+        if (type === 'admin') {
+          startPolling();
+        } else {
+          stopPolling();
+        }
       }).catch(() => {
         // Echo unavailable – start polling
         startPolling();

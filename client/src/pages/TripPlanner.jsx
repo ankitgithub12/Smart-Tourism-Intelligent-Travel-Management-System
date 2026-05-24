@@ -1,39 +1,39 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Calendar, Users, DollarSign, Hotel, UtensilsCrossed, Car, UserCheck, Bike, CheckCircle, ArrowRight, ArrowLeft, Download, Save, CreditCard, Star, Sparkles, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import api, { aiAPI } from '../services/api';
+import api, { aiAPI, tripAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import { parseAIJsonObject } from '../utils/parseAIResponse';
 
 const steps = ['Hotel', 'Food', 'Cab', 'Guide', 'Vehicle', 'Summary'];
 
-const hotels = [
+const fallbackHotels = [
   { id: 1, name: 'Ocean Pearl Resort', stars: 5, price: 8500, rating: 4.9, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format', amenities: ['Beach View','Pool','WiFi','Breakfast'] },
   { id: 2, name: 'Comfort Inn Suites', stars: 4, price: 4500, rating: 4.6, img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&auto=format', amenities: ['WiFi','Parking','Restaurant'] },
   { id: 3, name: 'Budget Stay Express', stars: 3, price: 2000, rating: 4.2, img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&auto=format', amenities: ['WiFi','AC'] },
 ];
 
-const foodOptions = [
+const fallbackFoodOptions = [
   { id: 1, label: 'Vegetarian', emoji: '🥗', price: 800 },
   { id: 2, label: 'Non-Vegetarian', emoji: '🍗', price: 1000 },
   { id: 3, label: 'Vegan', emoji: '🌱', price: 900 },
 ];
 
-const cabOptions = [
+const fallbackCabOptions = [
   { id: 1, label: 'Shared Cab', price: 500, desc: 'Affordable, shared ride' },
   { id: 2, label: 'Private Cab', price: 1500, desc: 'Comfortable sedan' },
   { id: 3, label: 'Luxury Car', price: 3500, desc: 'Premium experience' },
 ];
 
-const guides = [
+const fallbackGuides = [
   { id: 1, name: 'Rajesh Kumar', type: 'Local Guide', rating: 4.8, exp: '5 years', langs: 'Hindi, English', price: 1200 },
   { id: 2, name: 'Maria Fernandes', type: 'Professional', rating: 4.9, exp: '8 years', langs: 'English, Portuguese', price: 2000 },
   { id: 3, name: 'Akira Tanaka', type: 'Multilingual', rating: 4.7, exp: '6 years', langs: 'English, Japanese, Hindi', price: 2500 },
 ];
 
-const vehicles = [
+const fallbackVehicles = [
   { id: 1, type: 'SUV', seats: 7, fuel: 'Diesel', price: 2500 },
   { id: 2, type: 'Sedan', seats: 4, fuel: 'Petrol', price: 1800 },
   { id: 3, type: 'Bike', seats: 2, fuel: 'Petrol', price: 600 },
@@ -46,6 +46,7 @@ const TripPlanner = () => {
   const [step, setStep] = useState(0);
   const [from, setFrom] = useState(searchParams.get('from') || '');
   const [to, setTo] = useState(searchParams.get('to') || '');
+  const [travelerName, setTravelerName] = useState('');
   const [depDate, setDepDate] = useState('');
   const [retDate, setRetDate] = useState('');
   const [travelers, setTravelers] = useState(2);
@@ -53,6 +54,15 @@ const TripPlanner = () => {
   const [started, setStarted] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
+  const [packages, setPackages] = useState([]);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [hotels, setHotels] = useState(fallbackHotels);
+  const [foodOptions, setFoodOptions] = useState(fallbackFoodOptions);
+  const [cabOptions, setCabOptions] = useState(fallbackCabOptions);
+  const [guides, setGuides] = useState(fallbackGuides);
+  const [vehicles, setVehicles] = useState(fallbackVehicles);
+
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   // Selections
   const [wantHotel, setWantHotel] = useState(null);
@@ -66,16 +76,46 @@ const TripPlanner = () => {
   const [wantVehicle, setWantVehicle] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
 
+  useEffect(() => {
+    tripAPI.options()
+      .then((res) => {
+        setPackages(res.data.packages || []);
+        setHotels(res.data.hotels?.length ? res.data.hotels : fallbackHotels);
+        setFoodOptions(res.data.foodOptions?.length ? res.data.foodOptions : fallbackFoodOptions);
+        setCabOptions(res.data.cabOptions?.length ? res.data.cabOptions : fallbackCabOptions);
+        setGuides(res.data.guides?.length ? res.data.guides : fallbackGuides);
+        setVehicles(res.data.vehicles?.length ? res.data.vehicles : fallbackVehicles);
+
+        const packageId = searchParams.get('package_id');
+        if (packageId) {
+          const pkg = (res.data.packages || []).find(item => String(item.id) === String(packageId));
+          if (pkg) {
+            setSelectedPackage(pkg);
+            setTo(pkg.destination);
+          }
+        }
+      })
+      .catch((err) => console.error('Failed to load trip options', err));
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!depDate || !selectedPackage?.duration_days) return;
+    const nextReturn = new Date(depDate);
+    nextReturn.setDate(nextReturn.getDate() + Number(selectedPackage.duration_days) - 1);
+    setRetDate(nextReturn.toISOString().slice(0, 10));
+  }, [depDate, selectedPackage]);
+
   const nights = depDate && retDate ? Math.max(1, Math.ceil((new Date(retDate) - new Date(depDate)) / 86400000)) : 3;
   const days = nights + 1;
 
+  const packageCost = selectedPackage ? Number(selectedPackage.price || 0) * travelers : 0;
   const hotelCost = selectedHotel ? selectedHotel.price * nights : 0;
   const foodCost = selectedFood ? selectedFood.price * days * travelers : 0;
   const cabCost = selectedCab ? selectedCab.price * travelers : 0;
   const guideCost = selectedGuide ? selectedGuide.price * days : 0;
   const vehicleCost = selectedVehicle ? selectedVehicle.price * days : 0;
   
-  const subtotal = hotelCost + foodCost + cabCost + guideCost + vehicleCost;
+  const subtotal = packageCost + hotelCost + foodCost + cabCost + guideCost + vehicleCost;
   const tax = Math.round(subtotal * 0.05);
   const discount = subtotal > 20000 ? Math.round(subtotal * 0.1) : 0;
   const total = subtotal + tax - discount;
@@ -83,10 +123,47 @@ const TripPlanner = () => {
   const next = () => { if (step < 5) setStep(step + 1); };
   const prev = () => { if (step > 0) setStep(step - 1); };
 
+  const validateStartFields = () => {
+    if (!travelerName.trim()) return 'Please enter traveler name.';
+    if (!to.trim()) return 'Please enter destination.';
+    if (!depDate || depDate < today) return 'Departure date cannot be in the past.';
+    if (!retDate || retDate <= depDate) return 'Return date must be after departure date.';
+    return null;
+  };
+
+  const buildTripData = () => ({
+    traveler_name: travelerName.trim(),
+    from_location: from,
+    to_destination: to,
+    departure_date: depDate,
+    return_date: retDate,
+    travelers,
+    agency_package_id: selectedPackage?.id,
+    hotel_id: selectedHotel?.id,
+    food_package_id: selectedFood?.id,
+    cab_service_id: selectedCab?.id,
+    agency_guide_id: selectedGuide?.id,
+    agency_vehicle_id: selectedVehicle?.id,
+    subtotal,
+    tax,
+    discount,
+    total_price: total,
+  });
+
+  const startManualPlanning = () => {
+    const error = validateStartFields();
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    setStarted(true);
+  };
+
   // AI Planner Auto-fill
   const handleAISuggest = async () => {
-    if (!from || !to || !depDate || !retDate) {
-      toast.error('Please enter From Location, To Destination, and travel dates first!');
+    const fieldError = validateStartFields();
+    if (fieldError) {
+      toast.error(fieldError);
       return;
     }
     setAiLoading(true);
@@ -195,22 +272,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
     try {
       toast.loading('Preparing your checkout session...', { id: 'checkout' });
 
-      const tripData = {
-        from_location: from,
-        to_destination: to,
-        departure_date: depDate,
-        return_date: retDate,
-        travelers,
-        hotel_id: selectedHotel?.id,
-        food_package_id: selectedFood?.id,
-        cab_service_id: selectedCab?.id,
-        guide_id: selectedGuide?.id,
-        rental_vehicle_id: selectedVehicle?.id,
-        subtotal,
-        tax,
-        discount,
-        total_price: total,
-      };
+      const tripData = buildTripData();
 
       const { data: tripRes } = await api.post('/trips', tripData);
       const tripId = tripRes.data.id;
@@ -230,22 +292,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
     try {
       toast.loading('Saving your itinerary...', { id: 'save-trip' });
 
-      const tripData = {
-        from_location: from,
-        to_destination: to,
-        departure_date: depDate,
-        return_date: retDate,
-        travelers,
-        hotel_id: selectedHotel?.id,
-        food_package_id: selectedFood?.id,
-        cab_service_id: selectedCab?.id,
-        guide_id: selectedGuide?.id,
-        rental_vehicle_id: selectedVehicle?.id,
-        subtotal,
-        tax,
-        discount,
-        total_price: total,
-      };
+      const tripData = buildTripData();
 
       await api.post('/trips', tripData);
       toast.success('Itinerary saved successfully! View it in your dashboard.', { id: 'save-trip' });
@@ -302,6 +349,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       printLine('From Location:', from || 'Not Specified');
       printLine('To Destination:', to || 'Not Specified');
+      printLine('Traveler Name:', travelerName || 'Not Specified');
       printLine('Departure Date:', depDate || 'Not Specified');
       printLine('Return Date:', retDate || 'Not Specified');
       printLine('Travelers Count:', travelers);
@@ -320,6 +368,9 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       if (selectedHotel) {
         printLine('Selected Hotel:', `${selectedHotel.name} (${selectedHotel.stars} Stars) - INR ${hotelCost.toLocaleString()}`);
+      }
+      if (selectedPackage) {
+        printLine('Selected Package:', `${selectedPackage.name} - INR ${packageCost.toLocaleString()}`);
       }
       if (selectedFood) {
         printLine('Meals Selection:', `${selectedFood.label} Package - INR ${foodCost.toLocaleString()}`);
@@ -407,6 +458,34 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
             <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500 opacity-10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 relative z-10">
+              {packages.length > 0 && (
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Package Booking</label>
+                  <select
+                    value={selectedPackage?.id || ''}
+                    onChange={(e) => {
+                      const pkg = packages.find(item => String(item.id) === e.target.value) || null;
+                      setSelectedPackage(pkg);
+                      if (pkg) setTo(pkg.destination);
+                    }}
+                    className="w-full glass-surface rounded-xl px-4 py-3 border border-white/5 bg-transparent text-sm outline-none"
+                  >
+                    <option value="">Custom trip planning</option>
+                    {packages.map(pkg => (
+                      <option key={pkg.id} value={pkg.id}>{pkg.name} · {pkg.duration} · ₹{Number(pkg.price).toLocaleString()}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Traveler Name</label>
+                <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
+                  <Users size={18} className="text-[hsl(var(--primary))] mr-3" />
+                  <input type="text" value={travelerName} onChange={e=>setTravelerName(e.target.value)} placeholder="Name on booking" className="w-full bg-transparent text-sm outline-none" />
+                </div>
+              </div>
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">From Location</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
@@ -427,7 +506,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Departure Date</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Calendar size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="date" value={depDate} onChange={e=>setDepDate(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+                  <input type="date" min={today} value={depDate} onChange={e=>setDepDate(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
               
@@ -435,8 +514,9 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Return Date</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Calendar size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="date" value={retDate} onChange={e=>setRetDate(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+                  <input type="date" min={depDate || today} value={retDate} onChange={e=>setRetDate(e.target.value)} disabled={Boolean(selectedPackage?.duration_days)} className="w-full bg-transparent text-sm outline-none disabled:opacity-70" />
                 </div>
+                {selectedPackage?.duration_days && <p className="text-[10px] text-[hsl(var(--primary))] font-bold mt-1">Auto-calculated from fixed package duration: {selectedPackage.duration}</p>}
               </div>
               
               <div>
@@ -461,7 +541,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
             <div className="flex flex-col sm:flex-row gap-4 relative z-10">
               <button 
-                onClick={() => setStarted(true)} 
+                onClick={startManualPlanning} 
                 className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-neutral-800 to-neutral-700 text-white font-extrabold text-base hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
               >
                 Manual Wizard <ArrowRight size={18} />
@@ -754,11 +834,13 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
                 <div className="bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.1)] rounded-2xl p-6 mb-6">
                   <p className="font-black text-lg text-[hsl(var(--text))]">{from || 'Departure'} → {to || 'Destination'}</p>
-                  <p className="text-xs text-[hsl(var(--text-muted))] uppercase font-bold tracking-wider mt-1">{days} Days · {nights} Nights · {travelers} Travelers</p>
+                  <p className="text-xs text-[hsl(var(--text-muted))] uppercase font-bold tracking-wider mt-1">{travelerName} · {days} Days · {nights} Nights · {travelers} Travelers</p>
+                  {selectedPackage && <p className="text-[10px] text-[hsl(var(--primary))] font-bold mt-2">Package: {selectedPackage.name} ({selectedPackage.duration})</p>}
                 </div>
 
                 <div className="space-y-3 mb-8">
                   {selectedHotel && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🏨 {selectedHotel.name} ({nights}N)</span><span className="font-bold">₹{hotelCost.toLocaleString()}</span></div>}
+                  {selectedPackage && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>Package base price ({travelers} traveler{travelers > 1 ? 's' : ''})</span><span className="font-bold">₹{packageCost.toLocaleString()}</span></div>}
                   {selectedFood && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>{selectedFood.emoji} {selectedFood.label} Plan ({days}D)</span><span className="font-bold">₹{foodCost.toLocaleString()}</span></div>}
                   {selectedCab && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🚕 {selectedCab.label} Transfer</span><span className="font-bold">₹{cabCost.toLocaleString()}</span></div>}
                   {selectedGuide && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🧑‍🏫 {selectedGuide.name} ({days}D)</span><span className="font-bold">₹{guideCost.toLocaleString()}</span></div>}

@@ -33,6 +33,6 @@ class TelemetryUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        return $this->data;
+        return [];
     }
 }

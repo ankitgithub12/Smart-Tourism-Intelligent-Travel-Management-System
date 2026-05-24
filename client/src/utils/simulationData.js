@@ -97,6 +97,7 @@ export const initialAdminData = {
     { id: 'AG-903', name: 'Desert Nomads Group', owner: 'Salim Khan', license: 'L-Raj-55312', status: 'Approved', rating: 4.6, date: 'May 10, 2026' },
     { id: 'AG-904', name: 'Agra City Guides', owner: 'Rashid Ali', license: 'L-UP-00892', status: 'Rejected', rating: 2.1, date: 'May 08, 2026' }
   ],
+  messages: [],
   sustainability: {
     ecoScore: 78,
     carbonOffset: 12.4, // tonnes

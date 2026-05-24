@@ -8,7 +8,11 @@ use App\Models\AgencyPackage;
 use App\Models\AgencyTour;
 use App\Models\AgencyVehicle;
 use App\Models\Booking;
+use App\Models\ContactMessage;
+use App\Models\Hotel;
+use App\Models\Trip;
 use App\Models\User;
+use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -22,7 +26,7 @@ class AgencyDashboardController extends Controller
         return response()->json($this->gatherAgencyData($agency));
     }
 
-    public function createPackage(Request $request)
+    public function createPackage(Request $request, CloudinaryService $cloudinary)
     {
         $agency = $this->approvedAgency($request);
 
@@ -31,8 +35,16 @@ class AgencyDashboardController extends Controller
             'destination' => 'required|string|max:255',
             'duration' => 'nullable|string|max:100',
             'price' => 'required|numeric|min:0',
-            'image' => 'nullable|string|url',
+            'image' => 'nullable|url',
+            'image_file' => 'nullable|image|max:5120',
         ]);
+
+        $imageUrl = $request->input('image');
+        if ($request->hasFile('image_file')) {
+            $upload = $cloudinary->upload($request->file('image_file'), 'smart-tourism/packages');
+            abort_if(! $upload, 422, 'Image upload failed. Please check Cloudinary configuration.');
+            $imageUrl = $upload['url'];
+        }
 
         AgencyPackage::create([
             'agency_id' => $agency->id,
@@ -42,10 +54,60 @@ class AgencyDashboardController extends Controller
             'price' => $request->price,
             'status' => 'Active',
             'bookings' => 0,
-            'image' => $request->image ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=60',
+            'image' => $imageUrl ?: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&auto=format&fit=crop&q=60',
         ]);
 
         return $this->broadcastResponse($agency, 'Package created successfully.');
+    }
+
+    public function createHotel(Request $request, CloudinaryService $cloudinary)
+    {
+        $agency = $this->approvedAgency($request);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'stars' => 'required|integer|min:1|max:5',
+            'price_per_night' => 'required|numeric|min:0',
+            'image' => 'nullable|url',
+            'image_file' => 'nullable|image|max:5120',
+            'amenities' => 'nullable',
+        ]);
+
+        $amenities = $request->input('amenities', []);
+        if (is_string($amenities)) {
+            $amenities = array_values(array_filter(array_map('trim', explode(',', $amenities))));
+        }
+
+        $imageUrl = $request->input('image');
+        if ($request->hasFile('image_file')) {
+            $upload = $cloudinary->upload($request->file('image_file'), 'smart-tourism/hotels');
+            abort_if(! $upload, 422, 'Image upload failed. Please check Cloudinary configuration.');
+            $imageUrl = $upload['url'];
+        }
+
+        Hotel::create([
+            'agency_id' => $agency->id,
+            'name' => $validated['name'],
+            'location' => $validated['location'],
+            'stars' => $validated['stars'],
+            'price_per_night' => $validated['price_per_night'],
+            'rating' => 0,
+            'reviews_count' => 0,
+            'image' => $imageUrl ?: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format',
+            'amenities' => $amenities,
+        ]);
+
+        return $this->broadcastResponse($agency, 'Hotel created successfully.');
+    }
+
+    public function deleteHotel(Request $request, $id)
+    {
+        $agency = $this->approvedAgency($request);
+
+        Hotel::where('agency_id', $agency->id)->findOrFail($id)->delete();
+
+        return $this->broadcastResponse($agency, 'Hotel deleted successfully.');
     }
 
     public function deletePackage(Request $request, $id)
@@ -56,6 +118,25 @@ class AgencyDashboardController extends Controller
 
         return $this->broadcastResponse($agency, 'Package deleted successfully.');
     }
+
+    public function deleteVehicle(Request $request, $id)
+    {
+        $agency = $this->approvedAgency($request);
+
+        AgencyVehicle::where('agency_id', $agency->id)->findOrFail($id)->delete();
+
+        return $this->broadcastResponse($agency, 'Vehicle deleted successfully.');
+    }
+
+    public function deleteGuide(Request $request, $id)
+    {
+        $agency = $this->approvedAgency($request);
+
+        AgencyGuide::where('agency_id', $agency->id)->findOrFail($id)->delete();
+
+        return $this->broadcastResponse($agency, 'Guide deleted successfully.');
+    }
+
 
     public function createTour(Request $request)
     {
@@ -217,15 +298,22 @@ class AgencyDashboardController extends Controller
         $tours = AgencyTour::where('agency_id', $agency->id)->latest()->get();
         $vehicles = AgencyVehicle::where('agency_id', $agency->id)->latest()->get();
         $guides = AgencyGuide::where('agency_id', $agency->id)->latest()->get();
+        $hotels = Hotel::where('agency_id', $agency->id)->latest()->get();
+        $messages = ContactMessage::where('recipient_role', 'agency')->latest()->limit(20)->get();
 
-        $bookingsQuery = Booking::query();
-        $activeBookings = (clone $bookingsQuery)->where('status', 'confirmed')->count();
-        $monthlyRevenue = (float) (clone $bookingsQuery)
+        $agencyTripQuery = Trip::with(['user', 'agencyPackage'])
+            ->where(function ($query) use ($agency) {
+                $query->whereHas('agencyPackage', fn ($q) => $q->where('agency_id', $agency->id))
+                    ->orWhereHas('agencyGuide', fn ($q) => $q->where('agency_id', $agency->id))
+                    ->orWhereHas('agencyVehicle', fn ($q) => $q->where('agency_id', $agency->id));
+            });
+        $activeBookings = (clone $agencyTripQuery)->where('status', 'confirmed')->count();
+        $monthlyRevenue = (float) (clone $agencyTripQuery)
             ->where('status', 'confirmed')
-            ->whereBetween('booking_date', [now()->startOfMonth(), now()->endOfMonth()])
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->sum('total_price');
-        $pendingPayouts = (float) (clone $bookingsQuery)->where('status', 'pending')->sum('total_price');
-        $refunds = (float) (clone $bookingsQuery)->where('status', 'cancelled')->sum('total_price');
+        $pendingPayouts = (float) (clone $agencyTripQuery)->where('status', 'pending')->sum('total_price');
+        $refunds = (float) (clone $agencyTripQuery)->where('status', 'cancelled')->sum('total_price');
         $averageRating = $guides->avg('rating') ?? 0;
 
         $bookings = Booking::with(['user', 'place'])
@@ -243,29 +331,44 @@ class AgencyDashboardController extends Controller
             ])
             ->values();
 
+        $tripBookings = (clone $agencyTripQuery)
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (Trip $trip) => [
+                'id' => 'T-' . $trip->id,
+                'customer' => $trip->traveler_name ?: ($trip->user?->name ?? 'Guest User'),
+                'listing' => $trip->agencyPackage?->name ?? $trip->to_destination,
+                'dates' => $trip->departure_date?->format('d M Y') . ' - ' . $trip->return_date?->format('d M Y'),
+                'amount' => (float) $trip->total_price,
+                'status' => ucfirst($trip->status),
+                'time' => $trip->created_at?->diffForHumans() ?? '',
+            ])
+            ->values();
+
         $revenueSeries = collect(range(6, 0))
-            ->map(function (int $daysAgo) use ($bookingsQuery) {
+            ->map(function (int $daysAgo) use ($agencyTripQuery) {
                 $date = Carbon::today()->subDays($daysAgo);
 
                 return [
                     'name' => $date->format('D'),
-                    'revenue' => (float) (clone $bookingsQuery)
+                    'revenue' => (float) (clone $agencyTripQuery)
                         ->where('status', 'confirmed')
-                        ->whereDate('booking_date', $date)
+                        ->whereDate('created_at', $date)
                         ->sum('total_price'),
                 ];
             });
 
         $monthlyRevenueSeries = collect(range(5, 0))
-            ->map(function (int $monthsAgo) use ($bookingsQuery) {
+            ->map(function (int $monthsAgo) use ($agencyTripQuery) {
                 $month = Carbon::today()->subMonths($monthsAgo);
 
                 return [
                     'month' => $month->format('M'),
-                    'amount' => (float) (clone $bookingsQuery)
+                    'amount' => (float) (clone $agencyTripQuery)
                         ->where('status', 'confirmed')
-                        ->whereYear('booking_date', $month->year)
-                        ->whereMonth('booking_date', $month->month)
+                        ->whereYear('created_at', $month->year)
+                        ->whereMonth('created_at', $month->month)
                         ->sum('total_price'),
                 ];
             });
@@ -285,6 +388,26 @@ class AgencyDashboardController extends Controller
             'revenueSeries' => $revenueSeries,
             'monthlyRevenueSeries' => $monthlyRevenueSeries,
             'packages' => $packages,
+            'hotels' => $hotels->map(fn (Hotel $hotel) => [
+                'id' => $hotel->id,
+                'name' => $hotel->name,
+                'location' => $hotel->location,
+                'stars' => (int) $hotel->stars,
+                'price' => (float) $hotel->price_per_night,
+                'rating' => (float) $hotel->rating,
+                'reviews' => (int) $hotel->reviews_count,
+                'image' => $hotel->image,
+                'amenities' => $hotel->amenities ?: [],
+            ])->values(),
+            'messages' => $messages->map(fn (ContactMessage $message) => [
+                'id' => $message->id,
+                'name' => $message->name,
+                'email' => $message->email,
+                'subject' => $message->subject,
+                'message' => $message->message,
+                'senderRole' => $message->sender_role,
+                'time' => $message->created_at?->diffForHumans() ?? '',
+            ])->values(),
             'tours' => $tours->map(fn (AgencyTour $tour) => [
                 'id' => $tour->id,
                 'package' => $tour->package_name,
@@ -314,7 +437,12 @@ class AgencyDashboardController extends Controller
                 'activeTours' => $guide->active_tours,
                 'contact' => $guide->contact,
             ])->values(),
-            'bookings' => $bookings,
+            'bookings' => $tripBookings->concat($bookings)->take(10)->values(),
         ];
+    }
+
+    public function agencyDataFor(int $agencyId): array
+    {
+        return $this->gatherAgencyData(User::findOrFail($agencyId));
     }
 }

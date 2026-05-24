@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Edit3, Image as ImageIcon, MapPin, Calendar, CreditCard } from 'lucide-react';
+import { Plus, Trash2, Image as ImageIcon, MapPin, Calendar } from 'lucide-react';
 import { agencyAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -11,12 +11,16 @@ export function PackageManager({ data, setData }) {
     destination: '',
     duration: '',
     price: '',
-    image: '',
+    imageFile: null,
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    setFormData(prev => ({ ...prev, imageFile: e.target.files?.[0] || null }));
   };
 
   const handleFormSubmit = async (e) => {
@@ -25,15 +29,16 @@ export function PackageManager({ data, setData }) {
 
     const toastId = toast.loading('Creating package...');
     try {
-      const res = await agencyAPI.createPackage({
-        name: formData.name,
-        destination: formData.destination,
-        duration: formData.duration || '3 Days, 2 Nights',
-        price: parseFloat(formData.price),
-        image: formData.image
-      });
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('destination', formData.destination);
+      payload.append('duration', formData.duration || '3 Days, 2 Nights');
+      payload.append('price', parseFloat(formData.price));
+      if (formData.imageFile) payload.append('image_file', formData.imageFile);
+
+      const res = await agencyAPI.createPackage(payload);
       setData(res.data.agency);
-      setFormData({ name: '', destination: '', duration: '', price: '', image: '' });
+      setFormData({ name: '', destination: '', duration: '', price: '', imageFile: null });
       setShowAddForm(false);
       toast.success('Package created successfully!', { id: toastId });
     } catch (err) {
@@ -79,7 +84,7 @@ export function PackageManager({ data, setData }) {
             className="glass-surface rounded-2xl p-6 shadow-md border border-[hsl(var(--primary))/0.1]"
           >
             <h4 className="font-bold text-sm mb-4">Create New Package</h4>
-            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
               <div>
                 <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Package Title</label>
                 <div className="relative">
@@ -133,6 +138,15 @@ export function PackageManager({ data, setData }) {
                   className="w-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))] outline-none"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Package Image</label>
+                <label className="flex items-center gap-2 w-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs cursor-pointer hover:border-[hsl(var(--primary))] transition-colors">
+                  <ImageIcon size={14} className="text-[hsl(var(--primary))]" />
+                  <span className="truncate">{formData.imageFile?.name || 'Upload image'}</span>
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                </label>
               </div>
 
               <div className="flex gap-2">

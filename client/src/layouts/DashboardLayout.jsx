@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { markAsRead } from '../redux/notificationsSlice';
+
 
 export function DashboardLayout({
   children, role, navItems, title, activeTab, onTabChange,
@@ -19,6 +22,10 @@ export function DashboardLayout({
   const location = useLocation();
   const { user, logout } = useAuth();
   const { darkMode, toggleDark } = useTheme();
+  
+  const dispatch = useDispatch();
+  const notifications = useSelector((state) => state.notifications.notifications);
+  const unreadCount = useSelector((state) => state.notifications.unreadCount);
 
   const isAuthority = role === 'authority';
   const primaryGrad = 'from-blue-600 to-blue-800';
@@ -234,9 +241,11 @@ export function DashboardLayout({
                   ${darkMode ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
               >
                 <Bell size={15} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#0d1117]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-[#0d1117]" />
+                )}
               </button>
-
+ 
               <AnimatePresence>
                 {notificationsOpen && (
                   <motion.div
@@ -255,35 +264,31 @@ export function DashboardLayout({
                         LIVE
                       </span>
                     </div>
-                    <div className="space-y-2">
-                      {isAuthority ? (
-                        <>
-                          <div className={`p-3 rounded-xl text-xs border
-                            ${darkMode ? 'bg-white/3 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                            <p className="font-bold flex items-center gap-1.5 text-rose-400">
-                              <ShieldAlert size={11} /> Crowd Alert: Beach Road
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                      {notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            onClick={() => dispatch(markAsRead(notif.id))}
+                            className={`p-3 rounded-xl text-xs border cursor-pointer transition-colors ${
+                              notif.read
+                                ? (darkMode ? 'bg-white/3 border-white/5 opacity-60' : 'bg-slate-50 border-slate-100 opacity-60')
+                                : (darkMode ? 'bg-blue-500/10 border-blue-500/20' : 'bg-blue-50 border-blue-100')
+                            }`}
+                          >
+                            <p className={`font-bold ${
+                              notif.type === 'alert' ? 'text-rose-500' : notif.type === 'success' ? 'text-emerald-500' : 'text-blue-500'
+                            }`}>
+                              {notif.title || 'System Notification'}
                             </p>
-                            <p className="text-slate-500 mt-0.5">Visitor density reached 78% capacity</p>
+                            <p className="text-slate-500 mt-0.5">{notif.message}</p>
+                            <p className="text-[9px] text-slate-400 mt-1">
+                              {new Date(notif.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
                           </div>
-                          <div className={`p-3 rounded-xl text-xs border
-                            ${darkMode ? 'bg-white/3 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                            <p className="font-bold text-amber-400">⚠ Traffic Gridlock Detected</p>
-                            <p className="text-slate-500 mt-0.5">Market Main Blvd — avg speed 12 km/h</p>
-                          </div>
-                        </>
+                        ))
                       ) : (
-                        <>
-                          <div className={`p-3 rounded-xl text-xs border
-                            ${darkMode ? 'bg-white/3 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                            <p className="font-bold text-sky-400">New Booking Confirmed</p>
-                            <p className="text-slate-500 mt-0.5">Rahul Sharma — Ocean Breeze Escape</p>
-                          </div>
-                          <div className={`p-3 rounded-xl text-xs border
-                            ${darkMode ? 'bg-white/3 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                            <p className="font-bold text-emerald-400">Revenue milestone ₹2.5L reached</p>
-                            <p className="text-slate-500 mt-0.5">Monthly target achieved — May 2026</p>
-                          </div>
-                        </>
+                        <p className="text-center py-4 text-xs text-slate-500 font-medium">No new notifications.</p>
                       )}
                     </div>
                   </motion.div>

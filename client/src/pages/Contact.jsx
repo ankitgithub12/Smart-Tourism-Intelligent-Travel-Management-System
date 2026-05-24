@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, MessageSquare } from 'lucide-react';
+import { contactAPI } from '../services/api';
 
 const contactInfo = [
   { icon: MapPin, label: 'Address', value: 'Smart City HQ, Jaipur, Rajasthan 302001, India' },
@@ -16,10 +17,19 @@ const Contact = () => {
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => { setLoading(false); setSubmitted(true); }, 1500);
+    try {
+      await contactAPI.send(formData);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch (err) {
+      console.error('Failed to send contact message', err);
+      alert(err.response?.data?.message || 'Unable to send message right now.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

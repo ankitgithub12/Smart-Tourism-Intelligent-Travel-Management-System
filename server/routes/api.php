@@ -15,6 +15,8 @@ use App\Http\Controllers\API\TripController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\TelemetryController;
 use App\Http\Controllers\AgencyDashboardController;
+use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\ListingController;
 use App\Http\Controllers\TouristAssistanceController;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -38,6 +40,10 @@ Route::get('/places/{id}/crowd-status',        [PlaceController::class, 'crowdSt
 // Public Reviews (home page testimonials)
 Route::get('/reviews',            [ReviewController::class, 'all']);
 Route::get('/reviews/{placeId}',  [ReviewController::class, 'index']);
+Route::get('/packages',           [ListingController::class, 'packages']);
+Route::get('/hotels',             [ListingController::class, 'hotels']);
+Route::get('/trip-options',       [TripController::class, 'options']);
+Route::post('/contact',           [ContactMessageController::class, 'store']);
 
 // Public Transports
 Route::get('/transports',         [TransportController::class, 'index']);
@@ -73,6 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/trips',                    [TripController::class, 'index'])->middleware('role:tourist');
     Route::post('/trips',                   [TripController::class, 'store'])->middleware('role:tourist');
     Route::get('/trips/{tripId}',           [TripController::class, 'show'])->middleware('role:tourist');
+    Route::post('/trips/{tripId}/cancel',   [TripController::class, 'cancel'])->middleware('role:tourist');
+    Route::post('/trips/{tripId}/rate',     [TripController::class, 'rate'])->middleware('role:tourist');
     Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession'])->middleware('role:tourist');
     Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment'])->middleware('role:tourist');
 
@@ -128,11 +136,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard',                     [AgencyDashboardController::class, 'getDashboard']);
         Route::post('/packages',                     [AgencyDashboardController::class, 'createPackage']);
         Route::delete('/packages/{id}',              [AgencyDashboardController::class, 'deletePackage']);
+        Route::post('/hotels',                       [AgencyDashboardController::class, 'createHotel']);
+        Route::delete('/hotels/{id}',                [AgencyDashboardController::class, 'deleteHotel']);
         Route::post('/tours',                        [AgencyDashboardController::class, 'createTour']);
         Route::post('/vehicles',                     [AgencyDashboardController::class, 'createVehicle']);
         Route::patch('/vehicles/{id}/status',        [AgencyDashboardController::class, 'updateVehicleStatus']);
+        Route::delete('/vehicles/{id}',              [AgencyDashboardController::class, 'deleteVehicle']);
         Route::post('/guides',                       [AgencyDashboardController::class, 'createGuide']);
         Route::patch('/guides/{id}/status',          [AgencyDashboardController::class, 'updateGuideStatus']);
+        Route::delete('/guides/{id}',                [AgencyDashboardController::class, 'deleteGuide']);
         Route::patch('/bookings/{id}/status',        [AgencyDashboardController::class, 'updateBookingStatus']);
     });
 });

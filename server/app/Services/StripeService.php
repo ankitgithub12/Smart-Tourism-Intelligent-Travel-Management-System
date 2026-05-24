@@ -18,6 +18,19 @@ class StripeService
         $lineItems = [];
 
         // Add main trip items as line items for Stripe Checkout
+        if ($trip->agency_package_id && $trip->agencyPackage) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'inr',
+                    'product_data' => [
+                        'name' => 'Package: ' . $trip->agencyPackage->name,
+                    ],
+                    'unit_amount' => (int) ($trip->agencyPackage->price * 100),
+                ],
+                'quantity' => max(1, (int) $trip->travelers),
+            ];
+        }
+
         if ($trip->hotel_id && $trip->hotel) {
             $nights = max(1, (new \DateTime($trip->return_date))->diff(new \DateTime($trip->departure_date))->days);
             $lineItems[] = [
@@ -73,6 +86,20 @@ class StripeService
             ];
         }
 
+        if ($trip->agency_guide_id && $trip->agencyGuide) {
+            $days = max(1, (new \DateTime($trip->return_date))->diff(new \DateTime($trip->departure_date))->days) + 1;
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'inr',
+                    'product_data' => [
+                        'name' => 'Tour Guide: ' . $trip->agencyGuide->name,
+                    ],
+                    'unit_amount' => 1200 * 100,
+                ],
+                'quantity' => $days,
+            ];
+        }
+
         if ($trip->rental_vehicle_id && $trip->rentalVehicle) {
             $days = max(1, (new \DateTime($trip->return_date))->diff(new \DateTime($trip->departure_date))->days) + 1;
             $lineItems[] = [
@@ -82,6 +109,20 @@ class StripeService
                         'name' => 'Rental Vehicle: ' . $trip->rentalVehicle->type,
                     ],
                     'unit_amount' => (int) ($trip->rentalVehicle->price_per_day * 100),
+                ],
+                'quantity' => $days,
+            ];
+        }
+
+        if ($trip->agency_vehicle_id && $trip->agencyVehicle) {
+            $days = max(1, (new \DateTime($trip->return_date))->diff(new \DateTime($trip->departure_date))->days) + 1;
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'inr',
+                    'product_data' => [
+                        'name' => 'Vehicle: ' . $trip->agencyVehicle->model,
+                    ],
+                    'unit_amount' => 1800 * 100,
                 ],
                 'quantity' => $days,
             ];

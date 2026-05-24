@@ -22,19 +22,21 @@ const Destinations = () => {
 
   // Fetch initial places from DB
   useEffect(() => {
-    const fetchPlaces = async () => {
+    const fetchPlaces = async (showError = true) => {
       try {
         const res = await placesAPI.getAll();
         const placesData = res.data?.data || res.data || [];
         setPlaces(placesData);
       } catch (err) {
         console.error('Error fetching places:', err);
-        toast.error('Failed to load destinations.');
+        if (showError) toast.error('Failed to load destinations.');
       } finally {
         setLoading(false);
       }
     };
     fetchPlaces();
+    const interval = setInterval(() => fetchPlaces(false), 10000);
+    return () => clearInterval(interval);
   }, []);
 
   // Filter local places matching search

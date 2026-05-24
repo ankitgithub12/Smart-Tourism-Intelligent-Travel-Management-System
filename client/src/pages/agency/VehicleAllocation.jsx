@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Car, Fuel, Users, Compass, AlertTriangle, Play, Settings } from 'lucide-react';
+import { Car, Fuel, Users, Compass, AlertTriangle, Play, Settings, Trash2 } from 'lucide-react';
 import { agencyAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -52,6 +52,20 @@ export function VehicleAllocation({ data, setData }) {
     } catch (err) {
       console.error(err);
       toast.error('Failed to update vehicle status.', { id: toastId });
+    }
+  };
+
+  const handleDelete = async (vehicleId) => {
+    if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
+
+    const toastId = toast.loading('Deleting fleet vehicle...');
+    try {
+      const res = await agencyAPI.deleteVehicle(vehicleId);
+      setData(res.data.agency);
+      toast.success('Vehicle deleted successfully.', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete vehicle.', { id: toastId });
     }
   };
 
@@ -205,6 +219,13 @@ export function VehicleAllocation({ data, setData }) {
                   className="flex-1 text-[10px] font-bold py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-1"
                 >
                   <Play size={10} className="text-emerald-500" /> Dispatch
+                </button>
+                <button
+                  onClick={() => handleDelete(v.id)}
+                  className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center justify-center"
+                  title="Delete Vehicle"
+                >
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>

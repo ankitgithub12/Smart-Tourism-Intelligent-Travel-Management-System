@@ -1,17 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Star, Clock, Users, Calendar, ArrowRight, Filter, Search } from 'lucide-react';
+import { MapPin, Star, Users, Calendar, ArrowRight, Search } from 'lucide-react';
 import { FaUmbrellaBeach, FaMountain, FaCity, FaTree } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-
-const mockPackages = [
-  { id: 1, name: 'Goa Beach Paradise', dest: 'Goa, India', days: 5, nights: 4, price: 15999, rating: 4.8, reviews: 234, image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=600&auto=format', includes: ['Hotel', 'Meals', 'Transport', 'Guide'], category: 'beach' },
-  { id: 2, name: 'Royal Rajasthan Tour', dest: 'Rajasthan, India', days: 7, nights: 6, price: 24999, rating: 4.9, reviews: 189, image: 'https://images.unsplash.com/photo-1599661046289-e31897851d41?w=600&auto=format', includes: ['Hotel', 'Meals', 'Transport', 'Guide'], category: 'heritage' },
-  { id: 3, name: 'Kerala Backwater Escape', dest: 'Kerala, India', days: 4, nights: 3, price: 12999, rating: 4.7, reviews: 156, image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format', includes: ['Houseboat', 'Meals', 'Ayurveda'], category: 'nature' },
-  { id: 4, name: 'Himalayan Adventure', dest: 'Manali, India', days: 6, nights: 5, price: 18999, rating: 4.6, reviews: 120, image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&auto=format', includes: ['Hotel', 'Meals', 'Trekking', 'Guide'], category: 'adventure' },
-  { id: 5, name: 'Mumbai City Explorer', dest: 'Mumbai, India', days: 3, nights: 2, price: 8999, rating: 4.5, reviews: 98, image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=600&auto=format', includes: ['Hotel', 'Transport', 'Food Tour'], category: 'city' },
-  { id: 6, name: 'Andaman Island Bliss', dest: 'Andaman, India', days: 5, nights: 4, price: 29999, rating: 4.9, reviews: 210, image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&auto=format', includes: ['Resort', 'Meals', 'Snorkeling', 'Ferry'], category: 'beach' },
-];
+import { listingAPI } from '../services/api';
 
 const categories = [
   { id: 'all', label: 'All', icon: Star },
@@ -24,10 +16,23 @@ const categories = [
 const Packages = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [packages, setPackages] = useState([]);
 
-  const filtered = mockPackages.filter(p => {
+  useEffect(() => {
+    const loadPackages = () => {
+      listingAPI.getPackages()
+        .then((res) => setPackages(res.data || []))
+        .catch((err) => console.error('Failed to load packages', err));
+    };
+
+    loadPackages();
+    const interval = setInterval(loadPackages, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filtered = packages.filter(p => {
     const matchCategory = activeCategory === 'all' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.dest.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.destination.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCategory && matchSearch;
   });
 
@@ -71,20 +76,20 @@ const Packages = () => {
                 <img src={pkg.image} alt={pkg.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-amber-500 flex items-center gap-1">
-                  <Star size={12} fill="currentColor" /> {pkg.rating}
+                  <Star size={12} fill="currentColor" /> {Number(pkg.rating || 0).toFixed(1)}
                 </div>
                 <div className="absolute bottom-3 left-3">
                   <p className="text-white font-black text-lg">{pkg.name}</p>
-                  <p className="text-white/70 text-xs flex items-center gap-1"><MapPin size={11} /> {pkg.dest}</p>
+                  <p className="text-white/70 text-xs flex items-center gap-1"><MapPin size={11} /> {pkg.destination}</p>
                 </div>
               </div>
               <div className="p-5">
                 <div className="flex items-center gap-4 mb-4 text-xs text-[hsl(var(--text-muted))] font-medium">
-                  <span className="flex items-center gap-1"><Calendar size={12} /> {pkg.days}D/{pkg.nights}N</span>
+                  <span className="flex items-center gap-1"><Calendar size={12} /> {pkg.duration}</span>
                   <span className="flex items-center gap-1"><Users size={12} /> {pkg.reviews} reviews</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {pkg.includes.map((item, i) => (
+                  {(pkg.includes || []).map((item, i) => (
                     <span key={i} className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))]">{item}</span>
                   ))}
                 </div>
@@ -93,7 +98,7 @@ const Packages = () => {
                     <p className="text-2xl font-black text-[hsl(var(--primary))]">₹{pkg.price.toLocaleString()}</p>
                     <p className="text-xs text-[hsl(var(--text-muted))]">per person</p>
                   </div>
-                  <Link to={`/planner?to=${pkg.dest}`} className="btn-primary !py-2.5 !px-5 text-sm flex items-center gap-2">
+                  <Link to={`/planner?package_id=${pkg.id}&to=${encodeURIComponent(pkg.destination)}`} className="btn-primary !py-2.5 !px-5 text-sm flex items-center gap-2">
                     Book <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -101,6 +106,11 @@ const Packages = () => {
             </motion.div>
           ))}
         </div>
+        {!filtered.length && (
+          <div className="glass-surface rounded-2xl p-10 text-center text-sm text-[hsl(var(--text-muted))]">
+            No travel packages are available yet.
+          </div>
+        )}
       </div>
     </div>
   );
