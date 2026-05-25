@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Trip;
 use App\Models\Payment;
 use App\Services\StripeService;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Webhook;
@@ -83,6 +84,8 @@ class PaymentController extends Controller
                     $trip->status = 'confirmed';
                     $trip->save();
 
+                    $this->sendTripConfirmationNotifications($trip);
+
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
                         "Your payment for trip to {$trip->to_destination} was successful!",
@@ -144,6 +147,8 @@ class PaymentController extends Controller
                 if ($trip) {
                     $trip->status = 'confirmed';
                     $trip->save();
+
+                    $this->sendTripConfirmationNotifications($trip);
                     
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
@@ -201,6 +206,8 @@ class PaymentController extends Controller
                 if ($trip) {
                     $trip->status = 'confirmed';
                     $trip->save();
+
+                    $this->sendTripConfirmationNotifications($trip, true);
                     
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
@@ -226,6 +233,37 @@ class PaymentController extends Controller
             }
 
             return response()->json(['error' => 'Unable to confirm payment status: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function sendTripConfirmationNotifications($trip, $isMock = false)
+    {
+        Notification::createUnique(
+            $trip->user_id,
+            'Payment Successful',
+            "Payment for your trip to {$trip->to_destination} has been confirmed. Your trip is now booked!" . ($isMock ? " (Dev Mock)" : ""),
+            'success',
+            'payment'
+        );
+
+        if ($trip->agency_vehicle_id) {
+            Notification::createUnique(
+                $trip->user_id,
+                'Vehicle Assigned',
+                "A vehicle has been assigned for your trip to {$trip->to_destination}.",
+                'info',
+                'vehicle'
+            );
+        }
+
+        if ($trip->agency_guide_id) {
+            Notification::createUnique(
+                $trip->user_id,
+                'Guide Assigned',
+                "A travel guide has been assigned for your trip to {$trip->to_destination}.",
+                'info',
+                'guide'
+            );
         }
     }
 }

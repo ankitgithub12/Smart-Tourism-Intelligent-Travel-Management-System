@@ -1,24 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Shield, Save, Camera, MapPin, Calendar, TrendingUp, CheckCircle } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { 
+  User, Mail, Shield, Save, Camera, MapPin, Calendar, TrendingUp, 
+  CheckCircle, Heart, Briefcase, Hotel, UserCheck, Car, Users, Compass, Star 
+} from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setCredentials } from '../redux/authSlice';
 import { avatarUrl, getRoleLabel, formatDate } from '../utils/helpers';
 import { userAPI } from '../services/api';
 
+const statConfig = {
+  // Tourist keys
+  trips: { icon: MapPin, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  confirmed: { icon: CheckCircle, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  completed: { icon: CheckCircle, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
+  spent: { icon: TrendingUp, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+  favorites: { icon: Heart, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
+  reviews: { icon: Star, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' },
+  bookings: { icon: Calendar, color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400' },
+
+  // Agency keys
+  packages: { icon: Briefcase, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+  hotels: { icon: Hotel, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
+  guides: { icon: UserCheck, color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400' },
+  vehicles: { icon: Car, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+  tours: { icon: MapPin, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  revenue: { icon: TrendingUp, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400' },
+
+  // Authority/Admin keys
+  users: { icon: Users, color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400' },
+  places: { icon: MapPin, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
+};
+
 const Profile = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, token } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({ name: user?.name || '', email: user?.email || '' });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [stats, setStats] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const notifications = useSelector((state) => state.notifications.notifications);
+
+  const fetchStats = async () => {
+    try {
+      const res = await userAPI.getProfileStats();
+      setStats(res.data.stats || []);
+    } catch (err) {
+      console.error('Failed to load profile stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      setFormData({ name: user.name || '', email: user.email || '' });
+      fetchStats();
+    }
+  }, [user, notifications.length]);
 
   const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const [saving, setSaving] = useState(false);
 
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await userAPI.updateProfile(formData);
+      const res = await userAPI.updateProfile(formData);
+      dispatch(setCredentials({ user: res.data.user, token }));
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -27,12 +76,6 @@ const Profile = () => {
       setSaving(false);
     }
   };
-
-  const stats = [
-    { icon: MapPin, label: 'Places Visited', value: '12', color: 'bg-blue-50 text-blue-600' },
-    { icon: Calendar, label: 'Trips Booked', value: '4', color: 'bg-green-50 text-green-600' },
-    { icon: TrendingUp, label: 'Loyalty Points', value: '1,250', color: 'bg-blue-50 text-blue-600' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-6">
@@ -62,18 +105,35 @@ const Profile = () => {
 
             {/* Stats */}
             <div className="space-y-3">
-              {stats.map((s, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center`}>
-                    <s.icon size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-medium">{s.label}</p>
-                    <p className="text-xl font-bold text-gray-900">{s.value}</p>
-                  </div>
-                </motion.div>
-              ))}
+              {loadingStats ? (
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center text-xs text-gray-400 font-medium">
+                  Loading statistics...
+                </div>
+              ) : stats.length > 0 ? (
+                stats.map((s, i) => {
+                  const config = statConfig[s.key] || { icon: Shield, color: 'bg-gray-500/10 text-gray-500' };
+                  const StatIcon = config.icon;
+                  const formattedValue = (s.key === 'spent' || s.key === 'revenue')
+                    ? `₹${parseFloat(s.value).toLocaleString()}`
+                    : s.value;
+                  return (
+                    <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
+                      className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl ${config.color} flex items-center justify-center shrink-0`}>
+                        <StatIcon size={18} />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 font-medium">{s.label}</p>
+                        <p className="text-xl font-bold text-gray-900">{formattedValue}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              ) : (
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center text-xs text-gray-400 font-medium">
+                  No stats available.
+                </div>
+              )}
             </div>
           </div>
 

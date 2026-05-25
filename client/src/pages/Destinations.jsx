@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Search, Filter, Compass, AlertTriangle, Star, Activity, Sparkles } from 'lucide-react';
+import { MapPin, Search, Filter, Compass, AlertTriangle, Star, Activity, Sparkles, Castle, Trees } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { placesAPI, aiAPI } from '../services/api';
@@ -421,15 +421,36 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
                     const level = parseInt(place.crowd_level) || 0;
                     let status = 'Low';
                     let statusColor = 'rgb(16 185 129)'; // emerald
-                    let icon = '🌳';
                     
-                    if (['heritage', 'fort', 'observatory', 'palace', 'monument', 'temple'].some(c => place.category.toLowerCase().includes(c))) {
-                      icon = '🕌';
-                    } else if (place.category.toLowerCase().includes('nature') || place.category.toLowerCase().includes('hill')) {
-                      icon = '🏔️';
-                    } else if (place.category.toLowerCase().includes('landmark') || place.category.toLowerCase().includes('square')) {
-                      icon = '📍';
+                    let categoryIconConfig = {
+                      icon: Compass,
+                      bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                    };
+
+                    const cat = place.category.toLowerCase();
+                    if (['heritage', 'fort', 'observatory', 'palace', 'monument', 'temple', 'castle'].some(c => cat.includes(c))) {
+                      categoryIconConfig = {
+                        icon: Castle,
+                        bg: 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                      };
+                    } else if (['nature', 'hill', 'mountain', 'forest', 'lake', 'river'].some(c => cat.includes(c))) {
+                      categoryIconConfig = {
+                        icon: Trees,
+                        bg: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                      };
+                    } else if (['landmark', 'square', 'park', 'plaza'].some(c => cat.includes(c))) {
+                      categoryIconConfig = {
+                        icon: MapPin,
+                        bg: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                      };
+                    } else if (['adventure', 'active', 'trek', 'hike', 'climb'].some(c => cat.includes(c))) {
+                      categoryIconConfig = {
+                        icon: Activity,
+                        bg: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      };
                     }
+                    
+                    const CategoryIcon = categoryIconConfig.icon;
 
                     if (level >= 80) {
                       status = 'Critical';
@@ -456,8 +477,11 @@ Ensure coordinates are highly accurate for Leaflet mapping. Return RAW JSON only
                         style={{ borderLeftColor: statusColor }}
                       >
                         <div className="flex justify-between items-start mb-1.5">
-                          <h3 className="font-bold text-sm text-[hsl(var(--text))] flex items-center gap-1.5">
-                            <span className="text-base">{icon}</span> {place.name}
+                          <h3 className="font-bold text-sm text-[hsl(var(--text))] flex items-center gap-2">
+                            <span className={`w-7 h-7 rounded-full flex items-center justify-center border shrink-0 ${categoryIconConfig.bg}`}>
+                              <CategoryIcon size={12} />
+                            </span>
+                            {place.name}
                           </h3>
                           <span
                             className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase"

@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown, LogOut, User, LayoutDashboard, MapPin, Compass, H
 import { FaUmbrellaBeach, FaHotel, FaRoute, FaRobot, FaInfoCircle, FaPhoneAlt } from 'react-icons/fa';
 import useAuth from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
+import NotificationDropdown from './NotificationDropdown';
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -104,7 +105,9 @@ const Navbar = () => {
             {/* Desktop Auth */}
             <div className="hidden lg:flex items-center gap-3">
               {isAuthenticated ? (
-                <div className="relative">
+                <>
+                  <NotificationDropdown />
+                  <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] transition-colors border border-[hsl(var(--primary)/0.1)]"
@@ -157,6 +160,7 @@ const Navbar = () => {
                     )}
                   </AnimatePresence>
                 </div>
+                </>
               ) : (
                 <>
                   <Link to="/login" className="text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] transition-colors">
@@ -210,6 +214,7 @@ const Navbar = () => {
                   <>
                     <Link to={getDashboardRoute(user?.role)} className="block px-4 py-3 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)]">Dashboard</Link>
                     <Link to="/profile" className="block px-4 py-3 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)]">Profile</Link>
+                    <Link to="/notifications" className="block px-4 py-3 rounded-xl text-sm font-medium hover:bg-[hsl(var(--primary)/0.05)]">Notifications</Link>
                     <button onClick={logout} className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">Sign Out</button>
                   </>
                 ) : (

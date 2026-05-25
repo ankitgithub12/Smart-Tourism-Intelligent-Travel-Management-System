@@ -114,6 +114,11 @@ export const contactAPI = {
 };
 
 // ── AI ────────────────────────────────────────────────
+// export const aiAPI = {
+//   chat: (message) => api.post('/ai/chat', { message }),
+//   chatWithHistory: (messages) => api.post('/ai/chat', { messages }),
+
+// ── AI ────────────────────────────────────────────────
 export const aiAPI = {
   chat: (message) => api.post('/ai/chat', { message }),
   chatWithHistory: (messages) => api.post('/ai/chat', { messages }),
@@ -126,6 +131,7 @@ export const aiAPI = {
 export const userAPI = {
   getProfile: () => api.get('/user'),
   updateProfile: (data) => api.put('/user', data),
+  getProfileStats: () => api.get('/user/profile-stats'),
   getAdminStats: () => api.get('/admin/stats'),
   getUsers: (params) => api.get('/admin/users', { params }),
   getUser: (id) => api.get(`/admin/users/${id}`),
@@ -163,6 +169,15 @@ export const agencyAPI = {
   updateGuideStatus: (id, status)   => api.patch(`/agency/guides/${id}/status`, { status }),
   deleteGuide: (id)                 => api.delete(`/agency/guides/${id}`),
   updateBookingStatus: (id, status) => api.patch(`/agency/bookings/${id}/status`, { status }),
+};
+
+// ── Notifications ─────────────────────────────────
+export const notificationAPI = {
+  getAll: () => api.get('/notifications'),
+  create: (data) => api.post('/notifications', data),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.post('/notifications/read-all'),
+  clearAll: () => api.delete('/notifications'),
 };
 
 export default api;

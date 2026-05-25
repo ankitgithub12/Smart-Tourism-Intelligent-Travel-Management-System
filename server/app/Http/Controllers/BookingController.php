@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Events\BookingStatusUpdated;
+use App\Models\Notification;
 
 class BookingController extends Controller
 {
@@ -191,6 +192,14 @@ class BookingController extends Controller
             
             // Real-time broadcast
             event(new BookingStatusUpdated($booking, 'confirmed', $booking->user_id));
+
+            Notification::createUnique(
+                $booking->user_id,
+                'Booking Confirmed',
+                "Your booking #{$booking->id} has been confirmed successfully.",
+                'success',
+                'booking'
+            );
         }
 
         return response()->json(['message' => 'Booking confirmed successfully.']);
@@ -242,6 +251,14 @@ class BookingController extends Controller
             
             // Real-time broadcast
             event(new BookingStatusUpdated($booking, 'cancelled', $booking->user_id));
+
+            Notification::createUnique(
+                $booking->user_id,
+                'Booking Cancelled',
+                "Your booking #{$booking->id} has been cancelled.",
+                'alert',
+                'booking'
+            );
         }
 
         return response()->json([

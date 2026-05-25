@@ -163,6 +163,79 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/user/profile-stats — dynamic profile statistics for any role
+     */
+    public function profileStats(Request $request)
+    {
+        $user = $request->user();
+        $userId = $user->id;
+        $role = $user->role;
+
+        $stats = [];
+
+        if ($role === 'tourist') {
+            $tripsCount = DB::table('trips')->where('user_id', $userId)->count();
+            $confirmedTrips = DB::table('trips')->where('user_id', $userId)->where('status', 'confirmed')->count();
+            $completedTrips = DB::table('trips')->where('user_id', $userId)->where('status', 'completed')->count();
+            $totalSpent = (float) DB::table('trips')->where('user_id', $userId)->whereIn('status', ['confirmed', 'completed'])->sum('total_price');
+            $favoritesCount = DB::table('user_favorites')->where('user_id', $userId)->count();
+            $reviewsCount = DB::table('reviews')->where('user_id', $userId)->count();
+            $bookingsCount = DB::table('bookings')->where('user_id', $userId)->count();
+
+            $stats = [
+                ['label' => 'Total Trips', 'value' => $tripsCount, 'key' => 'trips'],
+                ['label' => 'Confirmed Trips', 'value' => $confirmedTrips, 'key' => 'confirmed'],
+                ['label' => 'Completed', 'value' => $completedTrips, 'key' => 'completed'],
+                ['label' => 'Total Spent', 'value' => $totalSpent, 'key' => 'spent'],
+                ['label' => 'Saved Places', 'value' => $favoritesCount, 'key' => 'favorites'],
+                ['label' => 'Reviews Given', 'value' => $reviewsCount, 'key' => 'reviews'],
+                ['label' => 'Bookings', 'value' => $bookingsCount, 'key' => 'bookings'],
+            ];
+        } elseif ($role === 'agency') {
+            $packagesCount = DB::table('agency_packages')->where('agency_id', $userId)->count();
+            $hotelsCount = DB::table('hotels')->where('agency_id', $userId)->count();
+            $guidesCount = DB::table('agency_guides')->where('agency_id', $userId)->count();
+            $vehiclesCount = DB::table('agency_vehicles')->where('agency_id', $userId)->count();
+            $toursCount = DB::table('agency_tours')->where('agency_id', $userId)->count();
+            $revenue = (float) DB::table('trips')
+                ->join('agency_packages', 'trips.agency_package_id', '=', 'agency_packages.id')
+                ->where('agency_packages.agency_id', $userId)
+                ->whereIn('trips.status', ['confirmed', 'completed'])
+                ->sum('trips.total_price');
+
+            $stats = [
+                ['label' => 'Packages', 'value' => $packagesCount, 'key' => 'packages'],
+                ['label' => 'Hotels', 'value' => $hotelsCount, 'key' => 'hotels'],
+                ['label' => 'Guides', 'value' => $guidesCount, 'key' => 'guides'],
+                ['label' => 'Vehicles', 'value' => $vehiclesCount, 'key' => 'vehicles'],
+                ['label' => 'Tours', 'value' => $toursCount, 'key' => 'tours'],
+                ['label' => 'Revenue', 'value' => $revenue, 'key' => 'revenue'],
+            ];
+        } elseif ($role === 'authority' || $role === 'admin') {
+            $totalUsers = DB::table('users')->count();
+            $totalPlaces = DB::table('tourist_places')->whereNull('deleted_at')->count();
+            $totalBookings = DB::table('bookings')->count();
+            $totalTrips = DB::table('trips')->count();
+            $totalRevenue = (float) DB::table('trips')->whereIn('status', ['confirmed', 'completed'])->sum('total_price');
+            $totalReviews = DB::table('reviews')->count();
+
+            $stats = [
+                ['label' => 'Total Users', 'value' => $totalUsers, 'key' => 'users'],
+                ['label' => 'Destinations', 'value' => $totalPlaces, 'key' => 'places'],
+                ['label' => 'Bookings', 'value' => $totalBookings, 'key' => 'bookings'],
+                ['label' => 'Trips', 'value' => $totalTrips, 'key' => 'trips'],
+                ['label' => 'Revenue', 'value' => $totalRevenue, 'key' => 'revenue'],
+                ['label' => 'Reviews', 'value' => $totalReviews, 'key' => 'reviews'],
+            ];
+        }
+
+        return response()->json([
+            'user' => $user,
+            'stats' => $stats,
+        ]);
+    }
+
     // ── Helper ─────────────────────────────────────────────────────────────
 
     private function requireAdmin(Request $request): void

@@ -13,6 +13,7 @@ use App\Models\CabService;
 use App\Models\FoodPackage;
 use App\Models\Hotel;
 use App\Models\Trip;
+use App\Models\Notification;
 use App\Services\TripService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -152,6 +153,14 @@ class TripController extends Controller
             'alert',
             ['trip_id' => $trip->id]
         ));
+
+        Notification::createUnique(
+            $request->user()->id,
+            'Trip Cancelled',
+            "Your trip to {$trip->to_destination} has been cancelled.",
+            'alert',
+            'booking'
+        );
 
         $agencyId = $trip->agencyPackage?->agency_id
             ?? $trip->agencyGuide?->agency_id

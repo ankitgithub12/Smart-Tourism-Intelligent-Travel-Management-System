@@ -10,9 +10,9 @@ import { parseAIJsonObject } from '../utils/parseAIResponse';
 const steps = ['Hotel', 'Food', 'Cab', 'Guide', 'Vehicle', 'Summary'];
 
 const fallbackHotels = [
-  { id: 1, name: 'Ocean Pearl Resort', stars: 5, price: 8500, rating: 4.9, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format', amenities: ['Beach View','Pool','WiFi','Breakfast'] },
-  { id: 2, name: 'Comfort Inn Suites', stars: 4, price: 4500, rating: 4.6, img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&auto=format', amenities: ['WiFi','Parking','Restaurant'] },
-  { id: 3, name: 'Budget Stay Express', stars: 3, price: 2000, rating: 4.2, img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&auto=format', amenities: ['WiFi','AC'] },
+  { id: 1, name: 'Ocean Pearl Resort', stars: 5, price: 8500, rating: 4.9, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format', amenities: ['Beach View', 'Pool', 'WiFi', 'Breakfast'] },
+  { id: 2, name: 'Comfort Inn Suites', stars: 4, price: 4500, rating: 4.6, img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&auto=format', amenities: ['WiFi', 'Parking', 'Restaurant'] },
+  { id: 3, name: 'Budget Stay Express', stars: 3, price: 2000, rating: 4.2, img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&auto=format', amenities: ['WiFi', 'AC'] },
 ];
 
 const fallbackFoodOptions = [
@@ -52,6 +52,7 @@ const TripPlanner = () => {
   const [travelers, setTravelers] = useState(2);
   const [budget, setBudget] = useState(50000);
   const [started, setStarted] = useState(false);
+  const [budgetAlerted, setBudgetAlerted] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState('');
   const [packages, setPackages] = useState([]);
@@ -114,11 +115,25 @@ const TripPlanner = () => {
   const cabCost = selectedCab ? selectedCab.price * travelers : 0;
   const guideCost = selectedGuide ? selectedGuide.price * days : 0;
   const vehicleCost = selectedVehicle ? selectedVehicle.price * days : 0;
-  
+
   const subtotal = packageCost + hotelCost + foodCost + cabCost + guideCost + vehicleCost;
   const tax = Math.round(subtotal * 0.05);
   const discount = subtotal > 20000 ? Math.round(subtotal * 0.1) : 0;
   const total = subtotal + tax - discount;
+
+  useEffect(() => {
+    if (started && total > budget) {
+      if (!budgetAlerted) {
+        toast.error(`⚠️ Budget Limit Exceeded! Your current selections total ₹${total.toLocaleString()}, exceeding your limit of ₹${budget.toLocaleString()}.`, {
+          duration: 6000,
+          id: 'budget-warning'
+        });
+        setBudgetAlerted(true);
+      }
+    } else {
+      setBudgetAlerted(false);
+    }
+  }, [total, budget, started, budgetAlerted]);
 
   const next = () => { if (step < 5) setStep(step + 1); };
   const prev = () => { if (step > 0) setStep(step - 1); };
@@ -212,7 +227,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       const res = await aiAPI.chat(prompt);
       const replyText = res.data?.reply || res.data || '';
-      
+
       const parsed = parseAIJsonObject(replyText);
 
       // Pre-fill
@@ -431,7 +446,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
     return (
       <div className="min-h-screen py-10 px-4 md:px-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--background)/0.9)] flex flex-col justify-center">
         <div className="max-w-4xl mx-auto w-full">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-10"
@@ -447,7 +462,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
             </p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
@@ -482,7 +497,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Traveler Name</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Users size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="text" value={travelerName} onChange={e=>setTravelerName(e.target.value)} placeholder="Name on booking" className="w-full bg-transparent text-sm outline-none" />
+                  <input type="text" value={travelerName} onChange={e => setTravelerName(e.target.value)} placeholder="Name on booking" className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
 
@@ -490,49 +505,49 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">From Location</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <MapPin size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="text" value={from} onChange={e=>setFrom(e.target.value)} placeholder="City of departure" className="w-full bg-transparent text-sm outline-none" />
+                  <input type="text" value={from} onChange={e => setFrom(e.target.value)} placeholder="City of departure" className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">To Destination</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <MapPin size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="text" value={to} onChange={e=>setTo(e.target.value)} placeholder="Destination" className="w-full bg-transparent text-sm outline-none" />
+                  <input type="text" value={to} onChange={e => setTo(e.target.value)} placeholder="Destination" className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Departure Date</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Calendar size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="date" min={today} value={depDate} onChange={e=>setDepDate(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+                  <input type="date" min={today} value={depDate} onChange={e => setDepDate(e.target.value)} className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Return Date</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Calendar size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="date" min={depDate || today} value={retDate} onChange={e=>setRetDate(e.target.value)} disabled={Boolean(selectedPackage?.duration_days)} className="w-full bg-transparent text-sm outline-none disabled:opacity-70" />
+                  <input type="date" min={depDate || today} value={retDate} onChange={e => setRetDate(e.target.value)} disabled={Boolean(selectedPackage?.duration_days)} className="w-full bg-transparent text-sm outline-none disabled:opacity-70" />
                 </div>
                 {selectedPackage?.duration_days && <p className="text-[10px] text-[hsl(var(--primary))] font-bold mt-1">Auto-calculated from fixed package duration: {selectedPackage.duration}</p>}
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Travelers</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all">
                   <Users size={18} className="text-[hsl(var(--primary))] mr-3" />
-                  <input type="number" min="1" max="25" value={travelers} onChange={e=>setTravelers(+e.target.value)} className="w-full bg-transparent text-sm outline-none" />
+                  <input type="number" min="1" max="25" value={travelers} onChange={e => setTravelers(+e.target.value)} className="w-full bg-transparent text-sm outline-none" />
                 </div>
               </div>
-              
+
               <div>
                 <label className="text-[10px] font-extrabold uppercase tracking-widest mb-2 block opacity-60">Total Budget (₹)</label>
                 <div className="flex items-center glass-surface rounded-xl px-4 py-3 border border-white/5 focus-within:border-[hsl(var(--primary)/0.4)] transition-all justify-between">
                   <div className="flex items-center flex-1 mr-3">
                     <DollarSign size={18} className="text-[hsl(var(--primary))] mr-2" />
-                    <input type="range" min="5000" max="200000" step="5000" value={budget} onChange={e=>setBudget(+e.target.value)} className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[hsl(var(--primary))]" />
+                    <input type="range" min="5000" max="200000" step="5000" value={budget} onChange={e => setBudget(+e.target.value)} className="w-full h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[hsl(var(--primary))]" />
                   </div>
                   <span className="text-sm font-extrabold text-[hsl(var(--primary))] whitespace-nowrap">₹{budget.toLocaleString()}</span>
                 </div>
@@ -540,15 +555,15 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 relative z-10">
-              <button 
-                onClick={startManualPlanning} 
+              <button
+                onClick={startManualPlanning}
                 className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-neutral-800 to-neutral-700 text-white font-extrabold text-base hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 border border-white/10"
               >
                 Manual Wizard <ArrowRight size={18} />
               </button>
-              <button 
-                onClick={handleAISuggest} 
-                disabled={aiLoading} 
+              <button
+                onClick={handleAISuggest}
+                disabled={aiLoading}
                 className="flex-1 px-6 py-4 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-black text-base hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
               >
                 {aiLoading ? (
@@ -573,20 +588,19 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
   return (
     <div className="min-h-screen py-10 px-4 md:px-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--background)/0.95)]">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* Stepper Header */}
         <div className="flex items-center justify-between mb-10 overflow-x-auto pb-4 scrollbar-thin">
           {steps.map((s, i) => (
             <div key={i} className="flex items-center">
-              <button 
-                onClick={() => setStep(i)} 
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold transition-all duration-300 relative ${
-                  i < step 
-                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-md' 
-                    : i === step 
-                    ? 'bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-110' 
-                    : 'glass-surface text-[hsl(var(--text-muted))] border border-white/5'
-                }`}
+              <button
+                onClick={() => setStep(i)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-extrabold transition-all duration-300 relative ${i < step
+                    ? 'bg-gradient-to-r from-emerald-500 to-blue-500 text-white shadow-md'
+                    : i === step
+                      ? 'bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white shadow-lg shadow-blue-500/25 scale-110'
+                      : 'glass-surface text-[hsl(var(--text-muted))] border border-white/5'
+                  }`}
               >
                 {i < step ? <CheckCircle size={18} /> : i + 1}
                 {i === step && <div className="absolute -inset-1 rounded-full border-2 border-[hsl(var(--primary))] opacity-50 animate-ping" />}
@@ -597,17 +611,64 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
           ))}
         </div>
 
+        {/* Live Budget Tracker */}
+        <div className={`mb-6 p-4 rounded-2xl glass-surface border transition-all duration-300 ${total > budget
+            ? 'border-rose-500/30 bg-rose-500/5 shadow-[0_0_15px_rgba(244,63,94,0.07)]'
+            : 'border-emerald-500/20 bg-emerald-500/5'
+          }`}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${total > budget
+                  ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                }`}>
+                <DollarSign size={16} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-muted))]">Live Budget Tracker</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`text-xs font-black px-2 py-0.5 rounded uppercase tracking-wider ${total > budget
+                      ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    }`}>
+                    {total > budget ? 'Exceeded' : 'Safe'}
+                  </span>
+                  <span className="text-xs text-[hsl(var(--text-muted))] font-bold">
+                    Limit: ₹{budget.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-6 sm:text-right w-full sm:w-auto justify-between sm:justify-end">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-muted))]">Total Spent</p>
+                <p className={`text-base font-black ${total > budget ? 'text-rose-400' : 'text-[hsl(var(--primary))]'}`}>
+                  ₹{total.toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--text-muted))]">
+                  {total > budget ? 'Exceeded By' : 'Remaining'}
+                </p>
+                <p className={`text-base font-black ${total > budget ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  ₹{Math.abs(budget - total).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Wizard Card Container */}
         <AnimatePresence mode="wait">
-          <motion.div 
-            key={step} 
-            initial={{ opacity: 0, x: 25 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            exit={{ opacity: 0, x: -25 }} 
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 25 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -25 }}
             transition={{ duration: 0.25 }}
             className="glass-surface rounded-3xl p-6 md:p-8 shadow-2xl border border-white/5"
           >
-            
+
             {/* STEP 0: Hotel */}
             {step === 0 && (
               <div>
@@ -615,7 +676,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <Hotel size={24} className="text-[hsl(var(--primary))]" /> Hotel Customization
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Select a premium stay for your {nights} nights package.</p>
-                
+
                 {wantHotel === null ? (
                   <div className="flex gap-4">
                     <button onClick={() => setWantHotel(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Hotels</button>
@@ -624,14 +685,13 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 ) : (
                   <div className="space-y-4">
                     {hotels.map(h => (
-                      <div 
-                        key={h.id} 
-                        onClick={() => setSelectedHotel(h)} 
-                        className={`flex flex-col md:flex-row gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
-                          selectedHotel?.id === h.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] shadow-lg shadow-blue-500/5' 
+                      <div
+                        key={h.id}
+                        onClick={() => setSelectedHotel(h)}
+                        className={`flex flex-col md:flex-row gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${selectedHotel?.id === h.id
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] shadow-lg shadow-blue-500/5'
                             : 'border-transparent bg-white/3 hover:border-white/10 hover:bg-white/5'
-                        }`}
+                          }`}
                       >
                         <img src={h.img} alt={h.name} className="w-full md:w-32 h-32 rounded-xl object-cover" />
                         <div className="flex-1 flex flex-col justify-between">
@@ -640,8 +700,8 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                               <h3 className="font-extrabold text-base text-[hsl(var(--text))]">{h.name}</h3>
                               <span className="text-xs font-bold text-amber-500 flex items-center gap-0.5"><Star size={12} fill="currentColor" />{h.rating}</span>
                             </div>
-                            <div className="flex gap-0.5 mb-2">{Array.from({length: h.stars}).map((_,i)=><Star key={i} size={11} className="text-amber-400 fill-amber-400" />)}</div>
-                            <div className="flex flex-wrap gap-1">{h.amenities.map((a,i)=><span key={i} className="text-[9px] px-2 py-0.5 rounded bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-extrabold tracking-wide">{a}</span>)}</div>
+                            <div className="flex gap-0.5 mb-2">{Array.from({ length: h.stars }).map((_, i) => <Star key={i} size={11} className="text-amber-400 fill-amber-400" />)}</div>
+                            <div className="flex flex-wrap gap-1">{h.amenities.map((a, i) => <span key={i} className="text-[9px] px-2 py-0.5 rounded bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] font-extrabold tracking-wide">{a}</span>)}</div>
                           </div>
                         </div>
                         <div className="text-right flex md:flex-col justify-between items-end md:justify-center border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
@@ -649,7 +709,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                             <p className="text-2xl font-black text-[hsl(var(--primary))]">₹{h.price.toLocaleString()}</p>
                             <p className="text-xs opacity-50">/ night</p>
                           </div>
-                          <p className="text-xs font-extrabold text-blue-500 mt-1">{nights} nights = ₹{(h.price*nights).toLocaleString()}</p>
+                          <p className="text-xs font-extrabold text-blue-500 mt-1">{nights} nights = ₹{(h.price * nights).toLocaleString()}</p>
                         </div>
                       </div>
                     ))}
@@ -665,7 +725,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <UtensilsCrossed size={24} className="text-[hsl(var(--primary))]" /> Dining Plan
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Choose a meal plan for {days} days, serving {travelers} travelers.</p>
-                
+
                 {wantFood === null ? (
                   <div className="flex gap-4">
                     <button onClick={() => setWantFood(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Select Meal</button>
@@ -674,14 +734,13 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {foodOptions.map(f => (
-                      <div 
-                        key={f.id} 
-                        onClick={() => setSelectedFood(f)} 
-                        className={`p-6 rounded-2xl text-center cursor-pointer transition-all duration-300 border-2 ${
-                          selectedFood?.id === f.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] scale-[1.03]' 
+                      <div
+                        key={f.id}
+                        onClick={() => setSelectedFood(f)}
+                        className={`p-6 rounded-2xl text-center cursor-pointer transition-all duration-300 border-2 ${selectedFood?.id === f.id
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] scale-[1.03]'
                             : 'border-transparent bg-white/3 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         <span className="text-5xl block mb-4 animate-bounce" style={{ animationDuration: '3s' }}>{f.emoji}</span>
                         <p className="font-extrabold text-lg mb-1 text-[hsl(var(--text))]">{f.label}</p>
@@ -702,7 +761,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <Car size={24} className="text-[hsl(var(--primary))]" /> Transit & Transfers
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Need airport pick-up, drop-off, and point-to-point transfers?</p>
-                
+
                 {wantCab === null ? (
                   <div className="flex gap-4">
                     <button onClick={() => setWantCab(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Cabs</button>
@@ -711,14 +770,13 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 ) : (
                   <div className="space-y-3">
                     {cabOptions.map(c => (
-                      <div 
-                        key={c.id} 
-                        onClick={() => setSelectedCab(c)} 
-                        className={`p-5 rounded-2xl cursor-pointer flex justify-between items-center transition-all border-2 ${
-                          selectedCab?.id === c.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)]' 
+                      <div
+                        key={c.id}
+                        onClick={() => setSelectedCab(c)}
+                        className={`p-5 rounded-2xl cursor-pointer flex justify-between items-center transition-all border-2 ${selectedCab?.id === c.id
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)]'
                             : 'border-transparent bg-white/3 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         <div>
                           <p className="font-extrabold text-base text-[hsl(var(--text))]">{c.label}</p>
@@ -739,7 +797,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <UserCheck size={24} className="text-[hsl(var(--primary))]" /> Local Tour Guide
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Hire a certified local expert for your sightseeing tours ({days} days).</p>
-                
+
                 {wantGuide === null ? (
                   <div className="flex gap-4">
                     <button onClick={() => setWantGuide(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, Assign Guide</button>
@@ -748,14 +806,13 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 ) : (
                   <div className="space-y-3">
                     {guides.map(g => (
-                      <div 
-                        key={g.id} 
-                        onClick={() => setSelectedGuide(g)} 
-                        className={`p-5 rounded-2xl cursor-pointer transition-all border-2 ${
-                          selectedGuide?.id === g.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)]' 
+                      <div
+                        key={g.id}
+                        onClick={() => setSelectedGuide(g)}
+                        className={`p-5 rounded-2xl cursor-pointer transition-all border-2 ${selectedGuide?.id === g.id
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)]'
                             : 'border-transparent bg-white/3 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                           <div>
@@ -765,7 +822,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                           </div>
                           <div className="text-right mt-2 md:mt-0">
                             <p className="text-xl font-black text-[hsl(var(--primary))]">₹{g.price}/day</p>
-                            <p className="text-xs opacity-40">{days} days = ₹{(g.price*days).toLocaleString()}</p>
+                            <p className="text-xs opacity-40">{days} days = ₹{(g.price * days).toLocaleString()}</p>
                           </div>
                         </div>
                       </div>
@@ -782,7 +839,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   <Bike size={24} className="text-[hsl(var(--primary))]" /> Rental Vehicle
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Reserve a private vehicle for self-driving or cruising around the destination.</p>
-                
+
                 {wantVehicle === null ? (
                   <div className="flex gap-4">
                     <button onClick={() => setWantVehicle(true)} className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-lg hover:opacity-90 transition-all">Yes, View Vehicles</button>
@@ -791,18 +848,17 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {vehicles.map(v => (
-                      <div 
-                        key={v.id} 
-                        onClick={() => setSelectedVehicle(v)} 
-                        className={`p-5 rounded-2xl cursor-pointer transition-all border-2 ${
-                          selectedVehicle?.id === v.id 
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] scale-[1.02]' 
+                      <div
+                        key={v.id}
+                        onClick={() => setSelectedVehicle(v)}
+                        className={`p-5 rounded-2xl cursor-pointer transition-all border-2 ${selectedVehicle?.id === v.id
+                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] scale-[1.02]'
                             : 'border-transparent bg-white/3 hover:border-white/10'
-                        }`}
+                          }`}
                       >
                         <p className="font-extrabold text-base text-[hsl(var(--text))]">{v.type}</p>
                         <p className="text-xs opacity-50">{v.seats} Seats · {v.fuel}</p>
-                        <p className="text-lg font-black text-[hsl(var(--primary))] mt-2.5">₹{v.price} / day <span className="text-xs opacity-40 font-normal">({days}D = ₹{(v.price*days).toLocaleString()})</span></p>
+                        <p className="text-lg font-black text-[hsl(var(--primary))] mt-2.5">₹{v.price} / day <span className="text-xs opacity-40 font-normal">({days}D = ₹{(v.price * days).toLocaleString()})</span></p>
                       </div>
                     ))}
                   </div>
@@ -816,9 +872,9 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                 <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-[hsl(var(--text))]">
                   <CheckCircle size={24} className="text-emerald-500" /> Itinerary Summary
                 </h2>
-                
+
                 {aiSummary && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-blue-600/10 to-blue-600/10 border border-blue-500/20 text-sm shadow-inner"
@@ -845,7 +901,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                   {selectedCab && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🚕 {selectedCab.label} Transfer</span><span className="font-bold">₹{cabCost.toLocaleString()}</span></div>}
                   {selectedGuide && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🧑‍🏫 {selectedGuide.name} ({days}D)</span><span className="font-bold">₹{guideCost.toLocaleString()}</span></div>}
                   {selectedVehicle && <div className="flex justify-between p-3.5 rounded-xl bg-white/3 border border-white/5 text-sm"><span>🚗 {selectedVehicle.type} Rental ({days}D)</span><span className="font-bold">₹{vehicleCost.toLocaleString()}</span></div>}
-                  
+
                   {subtotal === 0 && (
                     <div className="p-4 text-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs flex items-center justify-center gap-1.5">
                       <AlertCircle size={16} /> No items selected. Backtrack and choose services.
@@ -875,16 +931,16 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
         {/* Wizard Control Buttons */}
         <div className="flex justify-between mt-6 px-2">
-          <button 
-            onClick={prev} 
-            disabled={step === 0} 
+          <button
+            onClick={prev}
+            disabled={step === 0}
             className="px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-extrabold text-sm disabled:opacity-20 disabled:pointer-events-none transition-all flex items-center gap-2 border border-white/5"
           >
             <ArrowLeft size={16} /> Back
           </button>
           {step < 5 && (
-            <button 
-              onClick={next} 
+            <button
+              onClick={next}
               className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(var(--primary))] to-blue-600 text-white font-extrabold text-sm hover:opacity-90 transition-all flex items-center gap-2 shadow-md shadow-blue-500/15"
             >
               Next <ArrowRight size={16} />

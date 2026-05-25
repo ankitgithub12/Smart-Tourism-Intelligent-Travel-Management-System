@@ -18,6 +18,7 @@ use App\Http\Controllers\AgencyDashboardController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\ListingController;
 use App\Http\Controllers\TouristAssistanceController;
+use App\Http\Controllers\NotificationController;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PUBLIC ROUTES (no auth required)
@@ -83,6 +84,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/trips/{tripId}/rate',     [TripController::class, 'rate'])->middleware('role:tourist');
     Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession'])->middleware('role:tourist');
     Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment'])->middleware('role:tourist');
+
+    // ── Notifications ─────────────────────────────────────────────────────
+    Route::get('/notifications',              [NotificationController::class, 'index']);
+    Route::post('/notifications',             [NotificationController::class, 'store']);
+    Route::patch('/notifications/{id}/read',  [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all',    [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications',           [NotificationController::class, 'clearAll']);
+
+    // ── Profile Stats ─────────────────────────────────────────────────────
+    Route::get('/user/profile-stats',         [UserController::class, 'profileStats']);
 
     // ── Transport Booking ─────────────────────────────────────────────────
     Route::post('/bookings/transport',      [TransportController::class, 'bookTransport'])->middleware('role:tourist');
