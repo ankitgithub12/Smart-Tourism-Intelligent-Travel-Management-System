@@ -14,7 +14,7 @@ class TripRepository extends BaseRepository
     public function getUserTrips($userId)
     {
         return $this->model->where('user_id', $userId)
-            ->with(['agencyPackage', 'hotel', 'cabService', 'foodPackage', 'guide', 'agencyGuide', 'rentalVehicle', 'agencyVehicle'])
+            ->with(['agencyPackage.agency', 'hotel', 'cabService', 'foodPackage', 'guide', 'agencyGuide.agency', 'rentalVehicle', 'agencyVehicle.agency'])
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -23,7 +23,7 @@ class TripRepository extends BaseRepository
     {
         return $this->model->where('id', $tripId)
             ->where('user_id', $userId)
-            ->with(['agencyPackage', 'hotel', 'cabService', 'foodPackage', 'guide', 'agencyGuide', 'rentalVehicle', 'agencyVehicle', 'payment'])
+            ->with(['agencyPackage.agency', 'hotel', 'cabService', 'foodPackage', 'guide', 'agencyGuide.agency', 'rentalVehicle', 'agencyVehicle.agency', 'payment'])
             ->first();
     }
 }

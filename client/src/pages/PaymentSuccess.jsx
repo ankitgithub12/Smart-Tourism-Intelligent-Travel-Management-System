@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Calendar, ArrowRight, Loader } from 'lucide-react';
 import { paymentAPI } from '../services/api';
@@ -11,6 +11,8 @@ const PaymentSuccess = () => {
   const tripId = searchParams.get('trip_id');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [countdown, setCountdown] = useState(5);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (sessionId && tripId) {
@@ -30,6 +32,21 @@ const PaymentSuccess = () => {
       setError('Missing payment reference details.');
     }
   }, [sessionId, tripId]);
+
+  useEffect(() => {
+    if (!loading && !error && tripId) {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate(`/trip-itinerary/${tripId}`);
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [loading, error, tripId, navigate]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -84,14 +101,18 @@ const PaymentSuccess = () => {
 
             {/* Success Message */}
             <h1 className="text-3xl font-black mb-3">Booking Confirmed!</h1>
-            <p className="text-[hsl(var(--text-muted))] mb-8">
-              Thank you! Your payment was successful, and your trip is now officially booked. You can view it and access your receipt/itinerary anytime.
+            <p className="text-[hsl(var(--text-muted))] mb-4">
+              Thank you! Your payment was successful, and your trip is now officially booked.
             </p>
+
+            <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-xs font-bold text-emerald-600 mb-8 animate-pulse">
+              Redirecting to your ticket pass in {countdown} seconds...
+            </div>
 
             {/* Buttons */}
             <div className="flex flex-col gap-3">
-              <Link to="/my-trips" className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
-                View My Trips <Calendar size={18} />
+              <Link to={`/trip-itinerary/${tripId}`} className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
+                View My Ticket <Calendar size={18} />
               </Link>
               <Link to="/" className="btn-secondary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
                 Back to Home <ArrowRight size={18} />

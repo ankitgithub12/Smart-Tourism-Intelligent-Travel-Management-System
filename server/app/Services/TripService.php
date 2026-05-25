@@ -22,25 +22,33 @@ class TripService
         try {
             DB::beginTransaction();
 
+            $status = isset($data['status']) ? $data['status'] : 'pending';
+
             $tripData = array_merge($data, [
                 'user_id' => $userId,
-                'status' => 'pending',
+                'status' => $status,
             ]);
 
             $trip = $this->tripRepository->create($tripData);
 
-            if (! empty($data['agency_guide_id'])) {
-                AgencyGuide::where('id', $data['agency_guide_id'])->update([
-                    'status' => 'Assigned',
-                    'active_tours' => DB::raw('active_tours + 1'),
-                ]);
-            }
+            if ($status === 'confirmed') {
+                if (! empty($data['agency_package_id'])) {
+                    \App\Models\AgencyPackage::where('id', $data['agency_package_id'])->increment('bookings');
+                }
 
-            if (! empty($data['agency_vehicle_id'])) {
-                AgencyVehicle::where('id', $data['agency_vehicle_id'])->update([
-                    'status' => 'Active',
-                    'current_load' => max(1, (int) ($data['travelers'] ?? 1)),
-                ]);
+                if (! empty($data['agency_guide_id'])) {
+                    AgencyGuide::where('id', $data['agency_guide_id'])->update([
+                        'status' => 'Assigned',
+                        'active_tours' => DB::raw('active_tours + 1'),
+                    ]);
+                }
+
+                if (! empty($data['agency_vehicle_id'])) {
+                    AgencyVehicle::where('id', $data['agency_vehicle_id'])->update([
+                        'status' => 'Active',
+                        'current_load' => max(1, (int) ($data['travelers'] ?? 1)),
+                    ]);
+                }
             }
 
             DB::commit();

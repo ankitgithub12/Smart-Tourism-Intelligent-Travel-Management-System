@@ -15,10 +15,16 @@ class AgencyPackage extends Model
         'status',
         'bookings',
         'image',
+        'itinerary',
     ];
 
     protected $casts = [
         'price' => 'float',
         'bookings' => 'integer',
     ];
+
+    public function agency()
+    {
+        return $this->belongsTo(User::class, 'agency_id');
+    }
 }

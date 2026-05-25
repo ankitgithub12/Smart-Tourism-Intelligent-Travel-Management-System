@@ -34,6 +34,7 @@ class Trip extends Model
         'rating',
         'rating_comment',
         'rated_at',
+        'special_requests',
     ];
 
     protected $casts = [

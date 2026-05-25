@@ -35,7 +35,7 @@ const navItems = [
 
 export function AgencyDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [data, setData] = useRealtimeSimulator('agency', 3000);
+  const [data, setData, { connected, loading, refetch }] = useRealtimeSimulator('agency', 3000);
 
   // Helper to map tab IDs to render functions
   const renderContent = () => {
@@ -73,6 +73,9 @@ export function AgencyDashboard() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       navItems={navItems}
+      connected={connected}
+      loading={loading}
+      onRefresh={refetch}
     >
       {/* Tab Switcher override container */}
       <div className="flex flex-col min-h-screen">

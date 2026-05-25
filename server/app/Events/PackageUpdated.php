@@ -4,27 +4,24 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class BookingStatusUpdated implements ShouldBroadcastNow
+class PackageUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $booking;
-    public $status;
-    public $userId;
+    public $action;
+    public $packageData;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(object $booking, string $status, int $userId)
+    public function __construct(string $action, array $packageData)
     {
-        $this->booking = $booking;
-        $this->status = $status;
-        $this->userId = $userId;
+        $this->action = $action;
+        $this->packageData = $packageData;
     }
 
     /**
@@ -35,7 +32,7 @@ class BookingStatusUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('App.Models.User.' . $this->userId),
+            new Channel('packages'),
         ];
     }
 
@@ -44,21 +41,17 @@ class BookingStatusUpdated implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'BookingStatusUpdated';
+        return 'PackageUpdated';
     }
 
     /**
      * Get the data to broadcast.
-     *
-     * @return array<string, mixed>
      */
     public function broadcastWith(): array
     {
         return [
-            'id' => $this->booking->id,
-            'status' => $this->status,
-            'place_name' => $this->booking->place_name ?? $this->booking->to_destination ?? 'Destination',
-            'message' => 'Your booking status has been updated to ' . $this->status,
+            'action' => $this->action,
+            'packageData' => $this->packageData,
         ];
     }
 }

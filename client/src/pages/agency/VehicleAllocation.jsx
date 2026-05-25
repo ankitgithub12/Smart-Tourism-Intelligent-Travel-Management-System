@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Car, Fuel, Users, Compass, AlertTriangle, Play, Settings, Trash2 } from 'lucide-react';
+import { Car, Fuel, Users, Compass, AlertTriangle, Play, Settings, Trash2, DollarSign } from 'lucide-react';
 import { agencyAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -11,7 +11,8 @@ export function VehicleAllocation({ data, setData }) {
     type: 'Cab',
     driver: '',
     fuel: 100,
-    location: 'Main Depot'
+    location: 'Main Depot',
+    price_per_day: '',
   });
 
   const handleInputChange = (e) => {
@@ -29,10 +30,11 @@ export function VehicleAllocation({ data, setData }) {
         model: formData.model,
         type: formData.type,
         driver: formData.driver,
-        location: formData.location || 'Main Depot'
+        location: formData.location || 'Main Depot',
+        price_per_day: formData.price_per_day ? parseFloat(formData.price_per_day) : 1800.00,
       });
       setData(res.data.agency);
-      setFormData({ model: '', type: 'Cab', driver: '', fuel: 100, location: 'Main Depot' });
+      setFormData({ model: '', type: 'Cab', driver: '', fuel: 100, location: 'Main Depot', price_per_day: '' });
       setShowAddForm(false);
       toast.success('Vehicle added successfully!', { id: toastId });
     } catch (err) {
@@ -40,7 +42,6 @@ export function VehicleAllocation({ data, setData }) {
       toast.error('Failed to add vehicle.', { id: toastId });
     }
   };
-
 
   const toggleStatus = async (vehicle) => {
     const nextStatus = vehicle.status === 'Active' ? 'Idle' : vehicle.status === 'Idle' ? 'Maintenance' : 'Active';
@@ -93,7 +94,7 @@ export function VehicleAllocation({ data, setData }) {
             className="glass-surface rounded-2xl p-6 shadow-md border border-[hsl(var(--primary))/0.1] space-y-4"
           >
             <h4 className="font-bold text-sm">Add New Fleet Asset</h4>
-            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
               <div>
                 <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Model Name</label>
                 <input
@@ -146,6 +147,18 @@ export function VehicleAllocation({ data, setData }) {
                 />
               </div>
 
+              <div>
+                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Price Per Day (₹)</label>
+                <input
+                  type="number"
+                  name="price_per_day"
+                  value={formData.price_per_day}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 1800"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))] outline-none"
+                />
+              </div>
+
               <div className="flex gap-2">
                 <button type="submit" className="flex-1 btn-primary !py-2 text-xs">Confirm</button>
                 <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 btn-secondary !py-2 text-xs">Cancel</button>
@@ -189,6 +202,10 @@ export function VehicleAllocation({ data, setData }) {
                 <div className="flex justify-between">
                   <span className="opacity-70">Pass. Load:</span>
                   <span className="font-bold">{v.currentLoad} onboard</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-70">Price:</span>
+                  <span className="font-bold text-[hsl(var(--primary))]">₹{Number(v.price || 1800).toLocaleString()}/day</span>
                 </div>
               </div>
             </div>

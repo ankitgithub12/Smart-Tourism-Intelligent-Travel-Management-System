@@ -57,7 +57,7 @@ class TripController extends Controller
                 'price' => (float) $package->price,
                 'image' => $package->image,
             ])->values(),
-            'hotels' => Hotel::latest()->get()->map(fn (Hotel $hotel) => [
+            'hotels' => Hotel::where('status', 'Active')->latest()->get()->map(fn (Hotel $hotel) => [
                 'id' => $hotel->id,
                 'name' => $hotel->name,
                 'stars' => (int) $hotel->stars,
@@ -77,7 +77,20 @@ class TripController extends Controller
                 'label' => $cab->label,
                 'price' => (float) $cab->price,
                 'desc' => $cab->description ?: $cab->type,
-            ])->values(),
+                'is_agency_vehicle' => false,
+            ])->concat(
+                AgencyVehicle::where('type', 'Cab')
+                    ->whereIn('status', ['Idle', 'Active'])
+                    ->get()
+                    ->map(fn (AgencyVehicle $vehicle) => [
+                        'id' => 'agency_' . $vehicle->id,
+                        'label' => $vehicle->model . ' (Agency Cab)',
+                        'price' => (float) ($vehicle->price_per_day ?: 1500.00),
+                        'desc' => 'Driver: ' . $vehicle->driver . ' · Last Location: ' . $vehicle->location,
+                        'is_agency_vehicle' => true,
+                        'vehicle_id' => $vehicle->id,
+                    ])
+            )->values(),
             'guides' => AgencyGuide::whereIn('status', ['Available', 'Assigned'])->get()->map(fn (AgencyGuide $guide) => [
                 'id' => $guide->id,
                 'name' => $guide->name,
@@ -85,7 +98,7 @@ class TripController extends Controller
                 'rating' => (float) $guide->rating,
                 'exp' => $guide->active_tours . ' active tours',
                 'langs' => $guide->contact,
-                'price' => 1200,
+                'price' => (float) ($guide->price_per_day ?: 1200.00),
                 'status' => $guide->status,
             ])->values(),
             'vehicles' => AgencyVehicle::whereIn('status', ['Idle', 'Active'])->get()->map(fn (AgencyVehicle $vehicle) => [
@@ -94,7 +107,7 @@ class TripController extends Controller
                 'model' => $vehicle->model,
                 'seats' => max(1, (int) $vehicle->current_load ?: 4),
                 'fuel' => $vehicle->fuel . '% fuel',
-                'price' => 1800,
+                'price' => (float) ($vehicle->price_per_day ?: 1800.00),
                 'status' => $vehicle->status,
             ])->values(),
         ]);
@@ -121,6 +134,8 @@ class TripController extends Controller
             'tax' => 'required|numeric',
             'discount' => 'required|numeric',
             'total_price' => 'required|numeric',
+            'status' => 'nullable|string|in:pending,confirmed,draft',
+            'special_requests' => 'nullable|string',
         ]);
 
         $this->validatePackageDuration($validated);
@@ -162,6 +177,8 @@ class TripController extends Controller
             'booking'
         );
 
+        event(new \App\Events\BookingStatusUpdated($trip, 'cancelled', $trip->user_id));
+
         $agencyId = $trip->agencyPackage?->agency_id
             ?? $trip->agencyGuide?->agency_id
             ?? $trip->agencyVehicle?->agency_id;
@@ -172,6 +189,14 @@ class TripController extends Controller
                 'alert',
                 ['trip_id' => $trip->id]
             ));
+
+            Notification::createUnique(
+                $agencyId,
+                'Booking Cancelled',
+                "Trip to {$trip->to_destination} by " . ($trip->traveler_name ?: ($request->user()->name)) . " has been cancelled.",
+                'alert',
+                'booking'
+            );
         }
 
         $this->broadcastAgencyRefresh($trip);
@@ -204,6 +229,20 @@ class TripController extends Controller
             'rating_comment' => $validated['rating_comment'] ?? null,
             'rated_at' => now(),
         ]);
+
+        $agencyId = $trip->agencyPackage?->agency_id
+            ?? $trip->agencyGuide?->agency_id
+            ?? $trip->agencyVehicle?->agency_id;
+
+        if ($agencyId) {
+            Notification::createUnique(
+                $agencyId,
+                'New Rating Received',
+                "Tourist " . ($trip->traveler_name ?: $trip->user?->name) . " rated your service with {$validated['rating']} stars.",
+                'info',
+                'update'
+            );
+        }
 
         $this->refreshRatingAggregates($trip);
         $this->broadcastAgencyRefresh($trip->fresh(['agencyPackage', 'agencyGuide', 'agencyVehicle']));

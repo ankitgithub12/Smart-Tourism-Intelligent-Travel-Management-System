@@ -7,6 +7,9 @@ use App\Models\Trip;
 use App\Models\Payment;
 use App\Services\StripeService;
 use App\Models\Notification;
+use App\Events\AgencyDataUpdated;
+use App\Http\Controllers\AgencyDashboardController;
+use App\Models\AgencyPackage;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Webhook;
@@ -77,6 +80,7 @@ class PaymentController extends Controller
             if ($payment) {
                 $payment->status = 'paid';
                 $payment->stripe_payment_id = $session->payment_intent;
+                $payment->payment_method = $session->payment_method_types[0] ?? 'card';
                 $payment->save();
 
                 $trip = Trip::with(['agencyPackage', 'agencyGuide', 'agencyVehicle', 'user'])->find($tripId);
@@ -84,7 +88,27 @@ class PaymentController extends Controller
                     $trip->status = 'confirmed';
                     $trip->save();
 
+                    if ($trip->agency_package_id) {
+                        AgencyPackage::where('id', $trip->agency_package_id)->increment('bookings');
+                    }
+
+                    if ($trip->agency_guide_id) {
+                        \App\Models\AgencyGuide::where('id', $trip->agency_guide_id)->update([
+                            'status' => 'Assigned',
+                            'active_tours' => \Illuminate\Support\Facades\DB::raw('active_tours + 1'),
+                        ]);
+                    }
+
+                    if ($trip->agency_vehicle_id) {
+                        \App\Models\AgencyVehicle::where('id', $trip->agency_vehicle_id)->update([
+                            'status' => 'Active',
+                            'current_load' => max(1, (int) ($trip->travelers ?? 1)),
+                        ]);
+                    }
+
                     $this->sendTripConfirmationNotifications($trip);
+
+                    event(new \App\Events\BookingStatusUpdated($trip, 'confirmed', $trip->user_id));
 
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
@@ -103,7 +127,16 @@ class PaymentController extends Controller
                             'info',
                             ['trip_id' => $trip->id]
                         ));
+
+                        Notification::createUnique(
+                            $agencyId,
+                            'New Booking Confirmed',
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'success',
+                            'booking'
+                        );
                     }
+                    $this->broadcastAgencyRefresh($trip);
                 }
             }
         }
@@ -148,8 +181,28 @@ class PaymentController extends Controller
                     $trip->status = 'confirmed';
                     $trip->save();
 
+                    if ($trip->agency_package_id) {
+                        AgencyPackage::where('id', $trip->agency_package_id)->increment('bookings');
+                    }
+
+                    if ($trip->agency_guide_id) {
+                        \App\Models\AgencyGuide::where('id', $trip->agency_guide_id)->update([
+                            'status' => 'Assigned',
+                            'active_tours' => \Illuminate\Support\Facades\DB::raw('active_tours + 1'),
+                        ]);
+                    }
+
+                    if ($trip->agency_vehicle_id) {
+                        \App\Models\AgencyVehicle::where('id', $trip->agency_vehicle_id)->update([
+                            'status' => 'Active',
+                            'current_load' => max(1, (int) ($trip->travelers ?? 1)),
+                        ]);
+                    }
+
                     $this->sendTripConfirmationNotifications($trip);
                     
+                    event(new \App\Events\BookingStatusUpdated($trip, 'confirmed', $trip->user_id));
+
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
                         "Your payment for trip to {$trip->to_destination} was successful!",
@@ -167,7 +220,16 @@ class PaymentController extends Controller
                             'info',
                             ['trip_id' => $trip->id]
                         ));
+
+                        Notification::createUnique(
+                            $agencyId,
+                            'New Booking Confirmed',
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'success',
+                            'booking'
+                        );
                     }
+                    $this->broadcastAgencyRefresh($trip);
                 }
 
                 return response()->json(['status' => 'success', 'message' => 'Payment confirmed successfully.']);
@@ -207,8 +269,28 @@ class PaymentController extends Controller
                     $trip->status = 'confirmed';
                     $trip->save();
 
+                    if ($trip->agency_package_id) {
+                        AgencyPackage::where('id', $trip->agency_package_id)->increment('bookings');
+                    }
+
+                    if ($trip->agency_guide_id) {
+                        \App\Models\AgencyGuide::where('id', $trip->agency_guide_id)->update([
+                            'status' => 'Assigned',
+                            'active_tours' => \Illuminate\Support\Facades\DB::raw('active_tours + 1'),
+                        ]);
+                    }
+
+                    if ($trip->agency_vehicle_id) {
+                        \App\Models\AgencyVehicle::where('id', $trip->agency_vehicle_id)->update([
+                            'status' => 'Active',
+                            'current_load' => max(1, (int) ($trip->travelers ?? 1)),
+                        ]);
+                    }
+
                     $this->sendTripConfirmationNotifications($trip, true);
                     
+                    event(new \App\Events\BookingStatusUpdated($trip, 'confirmed', $trip->user_id));
+
                     event(new \App\Events\NotificationSent(
                         $trip->user_id,
                         "Your payment for trip to {$trip->to_destination} was successful! (Dev Mock)",
@@ -226,7 +308,16 @@ class PaymentController extends Controller
                             'info',
                             ['trip_id' => $trip->id]
                         ));
+
+                        Notification::createUnique(
+                            $agencyId,
+                            'New Booking Confirmed',
+                            "New booking confirmed for package: " . ($trip->agencyPackage?->name ?? $trip->to_destination) . " by " . ($trip->traveler_name ?: ($trip->user?->name ?? 'Guest')),
+                            'success',
+                            'booking'
+                        );
                     }
+                    $this->broadcastAgencyRefresh($trip);
                 }
 
                 return response()->json(['status' => 'success', 'message' => 'Payment confirmed via Dev Mock fallback due to Stripe network timeout.']);
@@ -244,6 +335,22 @@ class PaymentController extends Controller
             "Payment for your trip to {$trip->to_destination} has been confirmed. Your trip is now booked!" . ($isMock ? " (Dev Mock)" : ""),
             'success',
             'payment'
+        );
+
+        Notification::createUnique(
+            $trip->user_id,
+            'Ticket Generated',
+            "Your ticket for the trip to {$trip->to_destination} has been generated. You can download it from your dashboard.",
+            'success',
+            'booking'
+        );
+
+        Notification::createUnique(
+            $trip->user_id,
+            'Travel Reminder',
+            "Friendly reminder: Your trip to {$trip->to_destination} starts on " . $trip->departure_date->format('d M Y') . ". Have a safe journey!",
+            'info',
+            'schedule'
         );
 
         if ($trip->agency_vehicle_id) {
@@ -264,6 +371,44 @@ class PaymentController extends Controller
                 'info',
                 'guide'
             );
+        }
+    }
+
+    public function cancelPayment(Request $request)
+    {
+        $request->validate(['trip_id' => 'required|exists:trips,id']);
+        
+        $trip = Trip::where('id', $request->trip_id)
+                    ->where('user_id', $request->user()->id)
+                    ->firstOrFail();
+                    
+        $payment = Payment::where('trip_id', $trip->id)->first();
+        if ($payment) {
+            $payment->delete();
+        }
+        $trip->delete();
+        
+        Notification::createUnique(
+            $request->user()->id,
+            'Payment Unsuccessful',
+            "The payment attempt for your trip to {$trip->to_destination} was unsuccessful or cancelled.",
+            'alert',
+            'payment'
+        );
+        
+        return response()->json(['message' => 'Payment cancellation logged and draft booking removed.']);
+    }
+
+    private function broadcastAgencyRefresh(Trip $trip): void
+    {
+        $agencyId = $trip->agencyPackage?->agency_id
+            ?? $trip->agencyGuide?->agency_id
+            ?? $trip->agencyVehicle?->agency_id;
+
+        if ($agencyId) {
+            $agencyController = app(AgencyDashboardController::class);
+            $data = $agencyController->agencyDataFor($agencyId);
+            event(new AgencyDataUpdated($agencyId, $data));
         }
     }
 }

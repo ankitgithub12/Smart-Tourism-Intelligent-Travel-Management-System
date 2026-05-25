@@ -18,7 +18,8 @@ class Hotel extends Model
         'rating',
         'reviews_count',
         'image',
-        'amenities'
+        'amenities',
+        'status'
     ];
 
     protected $casts = [

@@ -84,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/trips/{tripId}/rate',     [TripController::class, 'rate'])->middleware('role:tourist');
     Route::post('/trips/checkout',          [PaymentController::class, 'createCheckoutSession'])->middleware('role:tourist');
     Route::post('/payment/confirm',         [PaymentController::class, 'confirmPayment'])->middleware('role:tourist');
+    Route::post('/payment/cancel',          [PaymentController::class, 'cancelPayment'])->middleware('role:tourist');
 
     // ── Notifications ─────────────────────────────────────────────────────
     Route::get('/notifications',              [NotificationController::class, 'index']);
@@ -146,8 +147,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('agency')->group(function () {
         Route::get('/dashboard',                     [AgencyDashboardController::class, 'getDashboard']);
         Route::post('/packages',                     [AgencyDashboardController::class, 'createPackage']);
+        Route::put('/packages/{id}',                 [AgencyDashboardController::class, 'updatePackage']);
+        Route::patch('/packages/{id}/status',        [AgencyDashboardController::class, 'updatePackageStatus']);
         Route::delete('/packages/{id}',              [AgencyDashboardController::class, 'deletePackage']);
         Route::post('/hotels',                       [AgencyDashboardController::class, 'createHotel']);
+        Route::put('/hotels/{id}',                   [AgencyDashboardController::class, 'updateHotel']);
+        Route::patch('/hotels/{id}/status',          [AgencyDashboardController::class, 'updateHotelStatus']);
         Route::delete('/hotels/{id}',                [AgencyDashboardController::class, 'deleteHotel']);
         Route::post('/tours',                        [AgencyDashboardController::class, 'createTour']);
         Route::post('/vehicles',                     [AgencyDashboardController::class, 'createVehicle']);

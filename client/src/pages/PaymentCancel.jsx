@@ -1,9 +1,24 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { XCircle, Compass, ArrowLeft } from 'lucide-react';
+import { paymentAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const PaymentCancel = () => {
+  const [searchParams] = useSearchParams();
+  const tripId = searchParams.get('trip_id');
+
+  useEffect(() => {
+    if (tripId) {
+      paymentAPI.cancel(parseInt(tripId))
+        .then(() => {
+          toast.error('Payment checkout session was cancelled. Booking draft removed.');
+        })
+        .catch(err => console.error('Failed to notify payment cancel:', err));
+    }
+  }, [tripId]);
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <motion.div 
@@ -25,13 +40,13 @@ const PaymentCancel = () => {
         {/* Cancel Message */}
         <h1 className="text-3xl font-black mb-3">Payment Cancelled</h1>
         <p className="text-[hsl(var(--text-muted))] mb-8">
-          The payment checkout session was cancelled. Don't worry, your trip draft is safe, and you can complete the booking whenever you are ready.
+          The payment checkout session was cancelled. Don't worry, no charges were made and no bookings were created.
         </p>
 
         {/* Buttons */}
         <div className="flex flex-col gap-3">
-          <Link to="/planner" className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
-            Try Booking Again <Compass size={18} />
+          <Link to="/packages" className="btn-primary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
+            View Packages Again <Compass size={18} />
           </Link>
           <Link to="/" className="btn-secondary w-full py-3.5 flex items-center justify-center gap-2 font-semibold">
             Back to Home <ArrowLeft size={18} />

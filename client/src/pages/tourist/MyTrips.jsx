@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, DollarSign, Hotel, Car, CheckCircle, Clock, XCircle, Search } from 'lucide-react';
-import api, { tripAPI } from '../../services/api';
+import api, { tripAPI, paymentAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const MyTrips = () => {
@@ -90,6 +90,17 @@ const MyTrips = () => {
     }
   };
 
+  const handlePayNow = async (tripId) => {
+    const toastId = toast.loading('Redirecting to payment gateway...');
+    try {
+      const { data: checkoutRes } = await paymentAPI.createCheckoutSession(tripId);
+      window.location.href = checkoutRes.url;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to redirect to payment. Please try again.', { id: toastId });
+    }
+  };
+
   return (
     <div className="min-h-screen py-10 px-6">
       <div className="max-w-5xl mx-auto">
@@ -153,7 +164,7 @@ const MyTrips = () => {
                   <p className="text-2xl font-black text-[hsl(var(--primary))] mb-4">₹{trip.total_price.toLocaleString()}</p>
                   <div className="flex gap-2 justify-start md:justify-end">
                     <button onClick={() => handleViewItinerary(trip.id)} className="btn-secondary !py-2 !px-4 text-xs">View Itinerary</button>
-                    {trip.status === 'pending' && <button className="btn-primary !py-2 !px-4 text-xs">Pay Now</button>}
+                    {trip.status === 'pending' && <button onClick={() => handlePayNow(trip.id)} className="btn-primary !py-2 !px-4 text-xs">Pay Now</button>}
                     {canCancel(trip) && <button onClick={() => handleCancelTrip(trip.id)} className="!py-2 !px-4 text-xs rounded-xl font-bold bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors">Cancel</button>}
                   </div>
                   {trip.status !== 'cancelled' && (

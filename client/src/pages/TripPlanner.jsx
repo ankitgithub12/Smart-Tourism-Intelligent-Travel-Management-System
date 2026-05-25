@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Calendar, Users, DollarSign, Hotel, UtensilsCrossed, Car, UserCheck, Bike, CheckCircle, ArrowRight, ArrowLeft, Download, Save, CreditCard, Star, Sparkles, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Hotel, UtensilsCrossed, Car, UserCheck, Bike, CheckCircle, ArrowRight, ArrowLeft, Download, Save, CreditCard, Star, Sparkles, AlertCircle, Leaf, Flame, Sprout } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import api, { aiAPI, tripAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -9,37 +9,48 @@ import { parseAIJsonObject } from '../utils/parseAIResponse';
 
 const steps = ['Hotel', 'Food', 'Cab', 'Guide', 'Vehicle', 'Summary'];
 
-const fallbackHotels = [
-  { id: 1, name: 'Ocean Pearl Resort', stars: 5, price: 8500, rating: 4.9, img: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&auto=format', amenities: ['Beach View', 'Pool', 'WiFi', 'Breakfast'] },
-  { id: 2, name: 'Comfort Inn Suites', stars: 4, price: 4500, rating: 4.6, img: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&auto=format', amenities: ['WiFi', 'Parking', 'Restaurant'] },
-  { id: 3, name: 'Budget Stay Express', stars: 3, price: 2000, rating: 4.2, img: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&auto=format', amenities: ['WiFi', 'AC'] },
-];
+const foodThemes = {
+  'Vegetarian': {
+    icon: Leaf,
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+    borderColor: 'border-emerald-500',
+    selectedBg: 'bg-emerald-500/5',
+    glow: 'shadow-[0_8px_30px_rgb(16_185_129/0.15)]',
+    desc: 'Fresh and nutritious plant-based lacto-vegetarian meals.',
+    badge: '100% Lacto-Veg'
+  },
+  'Non-Vegetarian': {
+    icon: Flame,
+    color: 'text-rose-500',
+    bg: 'bg-rose-500/10',
+    border: 'border-rose-500/20',
+    borderColor: 'border-rose-500',
+    selectedBg: 'bg-rose-500/5',
+    glow: 'shadow-[0_8px_30px_rgb(244_63_94/0.15)]',
+    desc: 'Delicious traditional meat, poultry, and seafood options.',
+    badge: 'Traditional Cuisine'
+  },
+  'Vegan': {
+    icon: Sprout,
+    color: 'text-teal-500',
+    bg: 'bg-teal-500/10',
+    border: 'border-teal-500/20',
+    borderColor: 'border-teal-500',
+    selectedBg: 'bg-teal-500/5',
+    glow: 'shadow-[0_8px_30px_rgb(20_184_166/0.15)]',
+    desc: '100% dairy-free and cruelty-free animal-product-free meals.',
+    badge: 'Plant-Powered'
+  }
+};
 
-const fallbackFoodOptions = [
-  { id: 1, label: 'Vegetarian', emoji: '🥗', price: 800 },
-  { id: 2, label: 'Non-Vegetarian', emoji: '🍗', price: 1000 },
-  { id: 3, label: 'Vegan', emoji: '🌱', price: 900 },
-];
-
-const fallbackCabOptions = [
-  { id: 1, label: 'Shared Cab', price: 500, desc: 'Affordable, shared ride' },
-  { id: 2, label: 'Private Cab', price: 1500, desc: 'Comfortable sedan' },
-  { id: 3, label: 'Luxury Car', price: 3500, desc: 'Premium experience' },
-];
-
-const fallbackGuides = [
-  { id: 1, name: 'Rajesh Kumar', type: 'Local Guide', rating: 4.8, exp: '5 years', langs: 'Hindi, English', price: 1200 },
-  { id: 2, name: 'Maria Fernandes', type: 'Professional', rating: 4.9, exp: '8 years', langs: 'English, Portuguese', price: 2000 },
-  { id: 3, name: 'Akira Tanaka', type: 'Multilingual', rating: 4.7, exp: '6 years', langs: 'English, Japanese, Hindi', price: 2500 },
-];
-
-const fallbackVehicles = [
-  { id: 1, type: 'SUV', seats: 7, fuel: 'Diesel', price: 2500 },
-  { id: 2, type: 'Sedan', seats: 4, fuel: 'Petrol', price: 1800 },
-  { id: 3, type: 'Bike', seats: 2, fuel: 'Petrol', price: 600 },
-  { id: 4, type: 'Scooter', seats: 2, fuel: 'Petrol', price: 400 },
-  { id: 5, type: 'Electric Vehicle', seats: 4, fuel: 'Electric', price: 2000 },
-];
+const getFoodTheme = (label) => {
+  const normalized = String(label).toLowerCase();
+  if (normalized.includes('vegan')) return foodThemes['Vegan'];
+  if (normalized.includes('non')) return foodThemes['Non-Vegetarian'];
+  return foodThemes['Vegetarian'];
+};
 
 const TripPlanner = () => {
   const [searchParams] = useSearchParams();
@@ -57,11 +68,11 @@ const TripPlanner = () => {
   const [aiSummary, setAiSummary] = useState('');
   const [packages, setPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [hotels, setHotels] = useState(fallbackHotels);
-  const [foodOptions, setFoodOptions] = useState(fallbackFoodOptions);
-  const [cabOptions, setCabOptions] = useState(fallbackCabOptions);
-  const [guides, setGuides] = useState(fallbackGuides);
-  const [vehicles, setVehicles] = useState(fallbackVehicles);
+  const [hotels, setHotels] = useState([]);
+  const [foodOptions, setFoodOptions] = useState([]);
+  const [cabOptions, setCabOptions] = useState([]);
+  const [guides, setGuides] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -81,11 +92,11 @@ const TripPlanner = () => {
     tripAPI.options()
       .then((res) => {
         setPackages(res.data.packages || []);
-        setHotels(res.data.hotels?.length ? res.data.hotels : fallbackHotels);
-        setFoodOptions(res.data.foodOptions?.length ? res.data.foodOptions : fallbackFoodOptions);
-        setCabOptions(res.data.cabOptions?.length ? res.data.cabOptions : fallbackCabOptions);
-        setGuides(res.data.guides?.length ? res.data.guides : fallbackGuides);
-        setVehicles(res.data.vehicles?.length ? res.data.vehicles : fallbackVehicles);
+        setHotels(res.data.hotels || []);
+        setFoodOptions(res.data.foodOptions || []);
+        setCabOptions(res.data.cabOptions || []);
+        setGuides(res.data.guides || []);
+        setVehicles(res.data.vehicles || []);
 
         const packageId = searchParams.get('package_id');
         if (packageId) {
@@ -156,9 +167,9 @@ const TripPlanner = () => {
     agency_package_id: selectedPackage?.id,
     hotel_id: selectedHotel?.id,
     food_package_id: selectedFood?.id,
-    cab_service_id: selectedCab?.id,
+    cab_service_id: selectedCab?.is_agency_vehicle ? null : selectedCab?.id,
     agency_guide_id: selectedGuide?.id,
-    agency_vehicle_id: selectedVehicle?.id,
+    agency_vehicle_id: selectedVehicle?.id || (selectedCab?.is_agency_vehicle ? selectedCab.vehicle_id : null),
     subtotal,
     tax,
     discount,
@@ -184,43 +195,37 @@ const TripPlanner = () => {
     setAiLoading(true);
     const toastId = toast.loading('✨ Gemini AI is analyzing options for your itinerary...');
     try {
+      const hotelsText = hotels.map((h, i) => `- Option ${i + 1}: ${h.name} (${h.stars} stars, ID: ${h.id}, price: ₹${h.price} per night)`).join('\n');
+      const foodText = foodOptions.map((f, i) => `- Option ${i + 1}: ${f.label} (ID: ${f.id}, price: ₹${f.price} per day)`).join('\n');
+      const cabsText = cabOptions.map((c, i) => `- Option ${i + 1}: ${c.label} (ID: ${c.id}, price: ₹${c.price} per person)`).join('\n');
+      const guidesText = guides.map((g, i) => `- Option ${i + 1}: ${g.name} (${g.type}, ID: ${g.id}, price: ₹${g.price} per day)`).join('\n');
+      const vehiclesText = vehicles.map((v, i) => `- Option ${i + 1}: ${v.type} (${v.model}, ID: ${v.id}, price: ₹${v.price} per day)`).join('\n');
+
       const prompt = `I want to plan a trip from "${from}" to "${to}" from ${depDate} to ${retDate} for ${travelers} travelers with a budget of ₹${budget}.
 Please customize my trip by selecting the best options from our available services:
 Hotels:
-- Option 1: Ocean Pearl Resort (5 stars, ₹8500 per night)
-- Option 2: Comfort Inn Suites (4 stars, ₹4500 per night)
-- Option 3: Budget Stay Express (3 stars, ₹2000 per night)
+${hotelsText}
 
 Food options:
-- Option 1: Vegetarian (₹800 per person per day)
-- Option 2: Non-Vegetarian (₹1000 per person per day)
-- Option 3: Vegan (₹900 per person per day)
+${foodText}
 
 Cab options:
-- Option 1: Shared Cab (₹500 per person)
-- Option 2: Private Cab (₹1500 per person)
-- Option 3: Luxury Car (₹3500 per person)
+${cabsText}
 
 Guides:
-- Option 1: Rajesh Kumar (₹1200 per day)
-- Option 2: Maria Fernandes (₹2000 per day)
-- Option 3: Akira Tanaka (₹2500 per day)
+${guidesText}
 
 Vehicles:
-- Option 1: SUV (₹2500 per day)
-- Option 2: Sedan (₹1800 per day)
-- Option 3: Bike (₹600 per day)
-- Option 4: Scooter (₹400 per day)
-- Option 5: Electric Vehicle (₹2000 per day)
+${vehiclesText}
 
-Select exactly one option (Option 1, 2, or 3 etc) for each category (Hotel, Food, Cab, Guide, Vehicle) to keep the total cost within the budget of ₹${budget}. If the budget is very low, do not select expensive options or suggest null (false/null) for some categories.
+Select exactly one option for each category (Hotel, Food, Cab, Guide, Vehicle) to keep the total cost within the budget of ₹${budget}. If the budget is very low, do not select expensive options or suggest null (false/null) for some categories.
 Return ONLY a valid JSON object matching the following schema:
 {
-  "hotel_id": 1 | 2 | 3 | null,
-  "food_id": 1 | 2 | 3 | null,
-  "cab_id": 1 | 2 | 3 | null,
-  "guide_id": 1 | 2 | 3 | null,
-  "vehicle_id": 1 | 2 | 3 | 4 | 5 | null,
+  "hotel_id": [hotel ID number/null],
+  "food_id": [food ID number/null],
+  "cab_id": [cab ID number/null],
+  "guide_id": "[guide ID string/null]",
+  "vehicle_id": "[vehicle ID string/null]",
   "plan_summary": "detailed summary explaining this customization, cost logic, and destination advice"
 }
 Return raw JSON only, no markdown, no backticks, no code fence.`;
@@ -233,7 +238,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
       // Pre-fill
       if (parsed.hotel_id) {
         setWantHotel(true);
-        setSelectedHotel(hotels.find(h => h.id === parsed.hotel_id) || null);
+        setSelectedHotel(hotels.find(h => String(h.id) === String(parsed.hotel_id)) || null);
       } else {
         setWantHotel(false);
         setSelectedHotel(null);
@@ -241,7 +246,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       if (parsed.food_id) {
         setWantFood(true);
-        setSelectedFood(foodOptions.find(f => f.id === parsed.food_id) || null);
+        setSelectedFood(foodOptions.find(f => String(f.id) === String(parsed.food_id)) || null);
       } else {
         setWantFood(false);
         setSelectedFood(null);
@@ -249,7 +254,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       if (parsed.cab_id) {
         setWantCab(true);
-        setSelectedCab(cabOptions.find(c => c.id === parsed.cab_id) || null);
+        setSelectedCab(cabOptions.find(c => String(c.id) === String(parsed.cab_id)) || null);
       } else {
         setWantCab(false);
         setSelectedCab(null);
@@ -257,7 +262,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       if (parsed.guide_id) {
         setWantGuide(true);
-        setSelectedGuide(guides.find(g => g.id === parsed.guide_id) || null);
+        setSelectedGuide(guides.find(g => String(g.id) === String(parsed.guide_id)) || null);
       } else {
         setWantGuide(false);
         setSelectedGuide(null);
@@ -265,7 +270,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
 
       if (parsed.vehicle_id) {
         setWantVehicle(true);
-        setSelectedVehicle(vehicles.find(v => v.id === parsed.vehicle_id) || null);
+        setSelectedVehicle(vehicles.find(v => String(v.id) === String(parsed.vehicle_id)) || null);
       } else {
         setWantVehicle(false);
         setSelectedVehicle(null);
@@ -323,116 +328,223 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
       toast.loading('Generating PDF itinerary...', { id: 'pdf' });
       const doc = new jsPDF();
 
-      // Theme Colors
-      const primaryColor = [99, 102, 241];
-      const secondaryColor = [31, 41, 55];
-      const textColor = [55, 65, 81];
+      // Palette
+      const darkSlate = [15, 23, 42]; // #0f172a
+      const primaryBlue = [30, 58, 138]; // #1e3a8a
+      const lightSlate = [241, 245, 249]; // #f1f5f9
+      const borderGray = [226, 232, 240]; // #e2e8f0
+      const textDark = [51, 65, 85]; // #334155
+      const textMuted = [100, 116, 139]; // #64748b
+
+      // Page Border
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, 190, 277);
 
       // Header Band
-      doc.setFillColor(...primaryColor);
-      doc.rect(0, 0, 210, 45, 'F');
+      doc.setFillColor(...darkSlate);
+      doc.rect(10, 10, 190, 45, 'F');
 
+      // Decorative Accent Line
+      doc.setFillColor(...primaryBlue);
+      doc.rect(10, 55, 190, 3, 'F');
+
+      // Title & Header Info
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.text('SMART TOURISM ITINERARY', 15, 20);
-
+      doc.setFontSize(20);
+      doc.text('TRAVEL BOARDING PASS', 18, 26);
+      
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text('Personalized AI-Customized Travel Package Details', 15, 30);
+      doc.setFontSize(8.5);
+      doc.setTextColor(200, 200, 220);
+      doc.text('SMART TOURISM & INTELLIGENT TRAVEL SYSTEM', 18, 32);
+      doc.text(`PLAN DATED: ${new Date().toLocaleDateString('en-IN')}`, 18, 38);
+      doc.text(`PRINTED ON: ${new Date().toLocaleString('en-IN')}`, 18, 44);
 
-      // Section 1
-      doc.setTextColor(...secondaryColor);
-      doc.setFontSize(12);
+      // Top Right: Booking ID Block
+      doc.setFillColor(...primaryBlue);
+      doc.rect(140, 15, 52, 31, 'F');
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text('TRIP DESCRIPTION', 15, 60);
-      doc.setDrawColor(229, 231, 235);
-      doc.line(15, 63, 195, 63);
+      doc.setFontSize(8.5);
+      doc.text('PLAN ID', 145, 21);
+      doc.setFontSize(13);
+      doc.text('#ST-DRAFT', 145, 28);
+      doc.setFontSize(8);
+      doc.setTextColor(220, 220, 255);
+      doc.text('STATUS: PLAN DRAFT', 145, 36);
+      doc.text('PAYMENT: PENDING', 145, 42);
 
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      // Layout Divider
+      doc.setDrawColor(...borderGray);
+      doc.line(105, 58, 105, 215);
 
-      let yPos = 72;
-      const printLine = (label, val) => {
+      // Column 1: Passenger & Trip metadata (Left Side)
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('PASSENGER & TRIP DETAILS', 18, 70);
+      doc.line(18, 73, 98, 73);
+
+      let leftY = 82;
+      const writeLeftField = (label, val) => {
         doc.setFont('helvetica', 'bold');
-        doc.text(label, 15, yPos);
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 18, leftY);
+        
         doc.setFont('helvetica', 'normal');
-        doc.text(String(val), 70, yPos);
-        yPos += 8;
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 18, leftY + 5.5);
+        
+        leftY += 15;
       };
 
-      printLine('From Location:', from || 'Not Specified');
-      printLine('To Destination:', to || 'Not Specified');
-      printLine('Traveler Name:', travelerName || 'Not Specified');
-      printLine('Departure Date:', depDate || 'Not Specified');
-      printLine('Return Date:', retDate || 'Not Specified');
-      printLine('Travelers Count:', travelers);
-      printLine('Duration Package:', `${days} Days / ${nights} Nights`);
+      const passengerName = travelerName || 'Guest Traveler';
+      const formattedDep = depDate ? new Date(depDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const formattedRet = retDate ? new Date(retDate).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const durationDays = `${days} Days / ${nights} Nights`;
 
-      yPos += 6;
+      writeLeftField('Passenger Name', passengerName);
+      writeLeftField('Departure Station', from || 'Not Specified');
+      writeLeftField('Destination', to || 'Not Specified');
+      writeLeftField('Departure Date', formattedDep);
+      writeLeftField('Return Date', formattedRet);
+      writeLeftField('Travelers Count', `${travelers} Traveler(s) (${durationDays})`);
+
+      // Column 2: Reserved travel services (Right Side)
+      doc.setTextColor(...darkSlate);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...secondaryColor);
-      doc.setFontSize(12);
-      doc.text('RESERVED TRAVEL SERVICES', 15, yPos);
-      doc.line(15, yPos + 3, 195, yPos + 3);
-      yPos += 12;
+      doc.setFontSize(11);
+      doc.text('RESERVED SERVICES & STAYS', 112, 70);
+      doc.line(112, 73, 192, 73);
 
-      doc.setFontSize(10);
-      doc.setTextColor(...textColor);
+      let rightY = 82;
+      const writeRightField = (label, val, subVal = '') => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 112, rightY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 112, rightY + 5.5);
 
-      if (selectedHotel) {
-        printLine('Selected Hotel:', `${selectedHotel.name} (${selectedHotel.stars} Stars) - INR ${hotelCost.toLocaleString()}`);
-      }
-      if (selectedPackage) {
-        printLine('Selected Package:', `${selectedPackage.name} - INR ${packageCost.toLocaleString()}`);
-      }
-      if (selectedFood) {
-        printLine('Meals Selection:', `${selectedFood.label} Package - INR ${foodCost.toLocaleString()}`);
-      }
+        if (subVal) {
+          doc.setFontSize(8.5);
+          doc.setTextColor(...textMuted);
+          doc.text(String(subVal), 112, rightY + 10);
+          rightY += 19.5;
+        } else {
+          rightY += 15;
+        }
+      };
+
+      const packageName = selectedPackage?.name || 'Custom Self-Planned Trip';
+      const hotelName = selectedHotel ? `${selectedHotel.name} (${selectedHotel.stars} Stars)` : 'Self Arranged / No Hotel';
+      const hotelAddress = selectedHotel ? `Cost: INR ${hotelCost.toLocaleString()} (${nights} nights)` : '';
+
+      // Cab / transit service
+      let cabDetails = 'Self Arranged / No Cab';
+      let cabDriver = '';
       if (selectedCab) {
-        printLine('Transit Cab:', `${selectedCab.label} - INR ${cabCost.toLocaleString()}`);
+        cabDetails = selectedCab.label || 'Transit Cab';
+        cabDriver = `Cost: INR ${cabCost.toLocaleString()}`;
       }
+
+      // Guide details
+      let guideDetails = 'Not Requested';
+      let guideSpecialty = '';
       if (selectedGuide) {
-        printLine('Personal Guide:', `${selectedGuide.name} - INR ${guideCost.toLocaleString()}`);
+        guideDetails = selectedGuide.name;
+        guideSpecialty = `Cost: INR ${guideCost.toLocaleString()} (${days} days)`;
       }
+
+      // Rental Vehicle
+      let rentalDetails = 'Not Requested';
       if (selectedVehicle) {
-        printLine('Rental Vehicle:', `${selectedVehicle.type} - INR ${vehicleCost.toLocaleString()}`);
+        rentalDetails = `${selectedVehicle.type} (${selectedVehicle.model})`;
       }
 
-      yPos += 6;
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...secondaryColor);
-      doc.setFontSize(12);
-      doc.text('PRICING BREAKDOWN', 15, yPos);
-      doc.line(15, yPos + 3, 195, yPos + 3);
-      yPos += 12;
+      writeRightField('Package Plan', packageName);
+      writeRightField('Hotel Accommodation', hotelName, hotelAddress);
+      writeRightField('Transit & Transfers', cabDetails, cabDriver);
+      writeRightField('Local Tour Guide', guideDetails, guideSpecialty);
+      writeRightField('Rental Vehicle', rentalDetails);
 
+      // Payment Details & Barcode Block (Footer Section)
+      doc.setDrawColor(...borderGray);
+      doc.line(15, 215, 195, 215);
+
+      // Draw light slate background box for Payment Info
+      doc.setFillColor(...lightSlate);
+      doc.rect(15, 222, 180, 24, 'F');
+
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('SUBTOTAL', 22, 231);
+      doc.text('TAX (5% GST)', 58, 231);
+      doc.text('DISCOUNT', 98, 231);
+      doc.text('ESTIMATED TOTAL', 140, 231);
+
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      doc.setTextColor(...textColor);
-      printLine('Subtotal Sum:', `INR ${subtotal.toLocaleString()}`);
-      printLine('Tax (5% GST):', `INR ${tax.toLocaleString()}`);
-      if (discount > 0) {
-        doc.setTextColor(16, 185, 129);
-        printLine('AI Promotion Saving:', `-INR ${discount.toLocaleString()}`);
-        doc.setTextColor(...textColor);
-      }
+      doc.text(`INR ${subtotal.toLocaleString()}`, 22, 238);
+      doc.text(`INR ${tax.toLocaleString()}`, 58, 238);
+      doc.text(`INR ${discount.toLocaleString()}`, 98, 238);
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.setTextColor(...primaryColor);
-      printLine('Total Booking Cost:', `INR ${total.toLocaleString()}`);
+      doc.setTextColor(...primaryBlue);
+      doc.text(`INR ${total.toLocaleString()}`, 140, 238);
 
-      yPos += 15;
-      doc.setDrawColor(229, 231, 235);
-      doc.line(15, yPos, 195, yPos);
-      yPos += 8;
+      // Simulated Barcode
+      const drawBarcode = (x, y, h) => {
+        doc.setFillColor(0, 0, 0);
+        const pattern = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 1, 4, 1, 2, 3, 1, 2, 1, 1, 4];
+        let currX = x;
+        for (let i = 0; i < pattern.length; i++) {
+          const w = pattern[i] * 0.45;
+          if (i % 2 === 0) {
+            doc.rect(currX, y, w, h, 'F');
+          }
+          currX += w + 0.45;
+        }
+      };
 
-      doc.setFont('helvetica', 'italic');
+      drawBarcode(15, 254, 12);
+      
+      doc.setTextColor(...textMuted);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text(`*ST-DRAFT-${depDate ? String(depDate).slice(0, 10) : ''}*`, 15, 270);
+
+      // Travel Agency & Contact details in footer
+      const agencyName = selectedPackage?.agency?.name 
+        || selectedGuide?.agency?.name 
+        || selectedVehicle?.agency?.name 
+        || 'Smart Tourism Travel Authority';
+      const agencyEmail = selectedPackage?.agency?.email 
+        || selectedGuide?.agency?.email 
+        || selectedVehicle?.agency?.email 
+        || 'support@smarttourism.com';
+
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('FULFILLED BY:', 102, 258);
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      doc.setTextColor(156, 163, 175);
-      doc.text('Thank you for booking with Smart Tourism. Safe Travels!', 15, yPos);
+      doc.setTextColor(...textDark);
+      doc.text(agencyName, 102, 263);
+      doc.setTextColor(...textMuted);
+      doc.setFontSize(8);
+      doc.text(`Email: ${agencyEmail}`, 102, 268);
 
+      // Save PDF
       doc.save(`Itinerary_${to || 'Trip'}.pdf`);
       toast.success('Itinerary PDF downloaded successfully!', { id: 'pdf' });
     } catch (err) {
@@ -722,7 +834,7 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
             {step === 1 && (
               <div>
                 <h2 className="text-2xl font-black mb-2 flex items-center gap-2 text-[hsl(var(--text))]">
-                  <UtensilsCrossed size={24} className="text-[hsl(var(--primary))]" /> Dining Plan
+                  <UtensilsCrossed size={24} className="text-[hsl(var(--primary))]" /> Dining Plan Selection
                 </h2>
                 <p className="text-[hsl(var(--text-muted))] text-sm mb-6">Choose a meal plan for {days} days, serving {travelers} travelers.</p>
 
@@ -732,23 +844,56 @@ Return raw JSON only, no markdown, no backticks, no code fence.`;
                     <button onClick={() => { setWantFood(false); next(); }} className="flex-1 py-4 rounded-2xl bg-neutral-800 text-white font-extrabold text-lg hover:bg-neutral-700 transition-all">Skip Meals</button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {foodOptions.map(f => (
-                      <div
-                        key={f.id}
-                        onClick={() => setSelectedFood(f)}
-                        className={`p-6 rounded-2xl text-center cursor-pointer transition-all duration-300 border-2 ${selectedFood?.id === f.id
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.06)] scale-[1.03]'
-                            : 'border-transparent bg-white/3 hover:border-white/10'
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {foodOptions.map(f => {
+                      const theme = getFoodTheme(f.label);
+                      const Icon = theme.icon;
+                      const isSelected = selectedFood?.id === f.id;
+                      return (
+                        <motion.div
+                          key={f.id}
+                          whileHover={{ y: -6, scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setSelectedFood(f)}
+                          className={`p-6 rounded-3xl cursor-pointer transition-all duration-300 border-2 relative flex flex-col justify-between overflow-hidden shadow-md hover:shadow-xl ${
+                            isSelected
+                              ? `${theme.borderColor} ${theme.selectedBg} ${theme.glow} scale-[1.02] shadow-lg`
+                              : 'border-slate-200/50 dark:border-slate-800/50 bg-white/4 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'
                           }`}
-                      >
-                        <span className="text-5xl block mb-4 animate-bounce" style={{ animationDuration: '3s' }}>{f.emoji}</span>
-                        <p className="font-extrabold text-lg mb-1 text-[hsl(var(--text))]">{f.label}</p>
-                        <p className="text-xs opacity-50 mb-3">All Meals Included</p>
-                        <p className="text-xl font-black text-[hsl(var(--primary))]">₹{(f.price * days * travelers).toLocaleString()}</p>
-                        <p className="text-[10px] opacity-40 mt-0.5">₹{f.price}/person/day</p>
-                      </div>
-                    ))}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-4 right-4 bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-md border-2 border-white dark:border-slate-900 z-10">
+                              ✓
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex justify-between items-center mb-4">
+                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${theme.bg}`}>
+                                <Icon size={24} className={theme.color} />
+                              </div>
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${theme.bg} ${theme.color}`}>
+                                {theme.badge}
+                              </span>
+                            </div>
+                            <h3 className="font-extrabold text-base text-[hsl(var(--text))] mb-1 flex items-center gap-1.5">
+                              {f.emoji} {f.label} Plan
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                              {theme.desc}
+                            </p>
+                          </div>
+                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800/60 flex flex-col gap-1">
+                            <p className="text-2xl font-black text-[hsl(var(--primary))]">
+                              ₹{(f.price * days * travelers).toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-bold mt-0.5 flex justify-between items-center">
+                              <span>₹{f.price}/person/day</span>
+                              <span className="opacity-70">{days} Days · {travelers} Pax</span>
+                            </p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

@@ -34,6 +34,7 @@ class ListingController extends Controller
                     'rating' => $rating ? (float) $rating->average_rating : 0,
                     'reviews' => $rating ? (int) $rating->reviews_count : 0,
                     'image' => $package->image,
+                    'itinerary' => $package->itinerary,
                     'includes' => ['Hotel', 'Meals', 'Transport', 'Guide'],
                     'category' => $this->categoryFor($package->destination),
                 ];
@@ -45,6 +46,7 @@ class ListingController extends Controller
     public function hotels()
     {
         $hotels = Hotel::query()
+            ->where('status', 'Active')
             ->latest()
             ->get()
             ->map(fn (Hotel $hotel) => [

@@ -14,12 +14,7 @@ const Transport = () => {
         setTransports(response.data);
       } catch (err) {
         console.error('Error fetching transports:', err);
-        // Fallback
-        setTransports([
-          { id: 1, vehicle_type: 'Electric Bus', vehicle_number: 'RJ-14-EB-0021', route_name: 'Pink City Circuit', current_location: 'Johari Bazar', current_load: 85, status: 'active', capacity: 40 },
-          { id: 2, vehicle_type: 'Smart Van', vehicle_number: 'RJ-14-SV-8842', route_name: 'Amber Fort Shuttle', current_location: 'Amer Road', current_load: 30, status: 'active', capacity: 12 },
-          { id: 3, vehicle_type: 'Metro Link', vehicle_number: 'ML-04', route_name: 'Mansarovar - Badi Chaupar', current_location: 'Sindhi Camp', current_load: 95, status: 'delayed', capacity: 200 },
-        ]);
+        setTransports([]);
       } finally {
         setLoading(false);
       }

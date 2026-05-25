@@ -72,6 +72,8 @@ export const bookingsAPI = {
 // ── Payments ──────────────────────────────────────────
 export const paymentAPI = {
   confirm: (sessionId, tripId) => api.post('/payment/confirm', { session_id: sessionId, trip_id: tripId }),
+  cancel: (tripId) => api.post('/payment/cancel', { trip_id: tripId }),
+  createCheckoutSession: (tripId) => api.post('/trips/checkout', { trip_id: tripId }),
 };
 
 // ── Reviews ───────────────────────────────────────────
@@ -165,8 +167,12 @@ export const telemetryAPI = {
 export const agencyAPI = {
   getDashboard: ()                  => api.get('/agency/dashboard'),
   createPackage: (data)             => api.post('/agency/packages', data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
+  updatePackage: (id, data)         => api.post(`/agency/packages/${id}`, data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
+  updatePackageStatus: (id, status) => api.patch(`/agency/packages/${id}/status`, { status }),
   deletePackage: (id)               => api.delete(`/agency/packages/${id}`),
   createHotel: (data)               => api.post('/agency/hotels', data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
+  updateHotel: (id, data)           => api.post(`/agency/hotels/${id}`, data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined),
+  updateHotelStatus: (id, status)   => api.patch(`/agency/hotels/${id}/status`, { status }),
   deleteHotel: (id)                 => api.delete(`/agency/hotels/${id}`),
   createTour: (data)                => api.post('/agency/tours', data),
   createVehicle: (data)             => api.post('/agency/vehicles', data),

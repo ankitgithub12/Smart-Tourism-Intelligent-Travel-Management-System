@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Plus, Star, Phone, Check, Eye, Trash2 } from 'lucide-react';
+import { User, Plus, Star, Phone, Check, Eye, Trash2, DollarSign } from 'lucide-react';
 import { agencyAPI } from '../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -10,7 +10,8 @@ export function GuideManagement({ data, setData }) {
     name: '',
     specialty: '',
     rating: 5.0,
-    contact: ''
+    contact: '',
+    price_per_day: '',
   });
 
   const handleInputChange = (e) => {
@@ -27,10 +28,11 @@ export function GuideManagement({ data, setData }) {
       const res = await agencyAPI.createGuide({
         name: formData.name,
         specialty: formData.specialty,
-        contact: formData.contact || '+91 99999 88888'
+        contact: formData.contact || '+91 99999 88888',
+        price_per_day: formData.price_per_day ? parseFloat(formData.price_per_day) : 1200.00,
       });
       setData(res.data.agency);
-      setFormData({ name: '', specialty: '', rating: 5.0, contact: '' });
+      setFormData({ name: '', specialty: '', rating: 5.0, contact: '', price_per_day: '' });
       setShowAddForm(false);
       toast.success('Guide registered successfully!', { id: toastId });
     } catch (err) {
@@ -38,7 +40,6 @@ export function GuideManagement({ data, setData }) {
       toast.error('Failed to register guide.', { id: toastId });
     }
   };
-
 
   const toggleAvailability = async (guide) => {
     const nextStatus = guide.status === 'Available' ? 'Unavailable' : 'Available';
@@ -91,7 +92,7 @@ export function GuideManagement({ data, setData }) {
             className="glass-surface rounded-2xl p-6 shadow-md border border-[hsl(var(--primary))/0.1] space-y-4"
           >
             <h4 className="font-bold text-sm">Register Travel Guide</h4>
-            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <form onSubmit={handleFormSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
               <div>
                 <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Full Name</label>
                 <input
@@ -126,6 +127,18 @@ export function GuideManagement({ data, setData }) {
                   value={formData.contact}
                   onChange={handleInputChange}
                   placeholder="e.g. +91 98765 XXXXX"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))] outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold tracking-wider mb-1 text-slate-500">Price Per Day (₹)</label>
+                <input
+                  type="number"
+                  name="price_per_day"
+                  value={formData.price_per_day}
+                  onChange={handleInputChange}
+                  placeholder="e.g. 1200"
                   className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-[hsl(var(--primary))] outline-none"
                 />
               </div>
@@ -171,11 +184,15 @@ export function GuideManagement({ data, setData }) {
               <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-2">
                   <Star size={14} className="text-amber-500 fill-amber-500" />
-                  <span className="font-bold">{Number(g.rating || 0).toFixed(1)} / 5.0 Rating</span>
+                  <span className="font-bold">{Number(g.rating || 5.0).toFixed(1)} / 5.0 Rating</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone size={14} className="opacity-60" />
                   <span>{g.contact}</span>
+                </div>
+                <div className="flex items-center gap-2 font-bold text-[hsl(var(--primary))]">
+                  <DollarSign size={14} />
+                  <span>₹{Number(g.price || 1200).toLocaleString()} / day</span>
                 </div>
               </div>
             </div>
@@ -193,7 +210,7 @@ export function GuideManagement({ data, setData }) {
                 </button>
                 <button
                   onClick={() => handleDelete(g.id)}
-                  className="p-1 rounded-lg border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center justify-center"
+                  className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-900/40 text-rose-500 hover:bg-rose-500/10 transition-colors flex items-center justify-center"
                   title="Delete Guide"
                 >
                   <Trash2 size={13} />

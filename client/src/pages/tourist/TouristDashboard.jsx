@@ -246,75 +246,235 @@ const TouristDashboard = () => {
     try {
       toast.loading('Generating ticket receipt...', { id: 'ticket' });
       const doc = new jsPDF();
-      
-      const primaryColor = [99, 102, 241];
-      const textColor = [31, 41, 55];
 
-      doc.setFillColor(...primaryColor);
-      doc.rect(0, 0, 210, 40, 'F');
+      // Palette
+      const darkSlate = [15, 23, 42]; // #0f172a
+      const primaryBlue = [30, 58, 138]; // #1e3a8a
+      const lightSlate = [241, 245, 249]; // #f1f5f9
+      const borderGray = [226, 232, 240]; // #e2e8f0
+      const textDark = [51, 65, 85]; // #334155
+      const textMuted = [100, 116, 139]; // #64748b
 
+      // Page Border
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, 190, 277);
+
+      // Header Band
+      doc.setFillColor(...darkSlate);
+      doc.rect(10, 10, 190, 45, 'F');
+
+      // Decorative Accent Line
+      doc.setFillColor(...primaryBlue);
+      doc.rect(10, 55, 190, 3, 'F');
+
+      // Title & Header Info
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(20);
-      doc.text('OFFICIAL TRAVEL TICKET', 15, 18);
+      doc.text('TRAVEL BOARDING PASS', 18, 26);
+      
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Booking Status: ${trip.status.toUpperCase()} | Trip ID: #${trip.id}`, 15, 28);
+      doc.setFontSize(8.5);
+      doc.setTextColor(200, 200, 220);
+      doc.text('SMART TOURISM & INTELLIGENT TRAVEL SYSTEM', 18, 32);
+      const bookingDate = trip.created_at ? new Date(trip.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+      doc.text(`BOOKED ON: ${bookingDate}`, 18, 38);
+      doc.text(`PRINTED ON: ${new Date().toLocaleString('en-IN')}`, 18, 44);
 
-      doc.setTextColor(...textColor);
-      doc.setFontSize(14);
+      // Top Right: Booking ID Block
+      doc.setFillColor(...primaryBlue);
+      doc.rect(140, 15, 52, 31, 'F');
+      doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text('TRAVEL METADATA', 15, 55);
-      doc.line(15, 58, 195, 58);
+      doc.setFontSize(8.5);
+      doc.text('TICKET ID', 145, 21);
+      doc.setFontSize(13);
+      doc.text(`#ST-${trip.id}`, 145, 28);
+      doc.setFontSize(8);
+      doc.setTextColor(220, 220, 255);
+      doc.text(`STATUS: ${trip.status.toUpperCase()}`, 145, 36);
+      const isPaid = ['confirmed', 'completed'].includes(trip.status.toLowerCase());
+      doc.text(`PAYMENT: ${isPaid ? 'PAID' : 'PENDING'}`, 145, 42);
 
+      // Layout Divider
+      doc.setDrawColor(...borderGray);
+      doc.line(105, 58, 105, 215);
+
+      // Column 1: Passenger & Trip metadata (Left Side)
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      let y = 68;
-      const writeLine = (lbl, val) => {
+      doc.text('PASSENGER & TRIP DETAILS', 18, 70);
+      doc.line(18, 73, 98, 73);
+
+      let leftY = 82;
+      const writeLeftField = (label, val) => {
         doc.setFont('helvetica', 'bold');
-        doc.text(lbl, 15, y);
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 18, leftY);
+        
         doc.setFont('helvetica', 'normal');
-        doc.text(String(val), 70, y);
-        y += 8;
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 18, leftY + 5.5);
+        
+        leftY += 15;
       };
 
-      writeLine('From Station:', trip.from_location || 'Not Specified');
-      writeLine('To Destination:', trip.to_destination);
-      writeLine('Departure Date:', trip.departure_date);
-      writeLine('Return Date:', trip.return_date);
-      writeLine('Total Travelers:', trip.travelers);
+      const passengerName = trip.traveler_name || (trip.user?.name) || 'Guest Traveler';
+      const formattedDep = trip.departure_date ? new Date(trip.departure_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const formattedRet = trip.return_date ? new Date(trip.return_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const durationDays = trip.departure_date && trip.return_date ? `${Math.ceil((new Date(trip.return_date) - new Date(trip.departure_date)) / 86400000) + 1} Days` : 'N/A';
+
+      writeLeftField('Passenger Name', passengerName);
+      writeLeftField('Departure Station', trip.from_location || 'Not Specified');
+      writeLeftField('Destination', trip.to_destination);
+      writeLeftField('Departure Date', formattedDep);
+      writeLeftField('Return Date', formattedRet);
+      writeLeftField('Travelers Count', `${trip.travelers} Traveler(s) (${durationDays})`);
+
+      // Column 2: Reserved travel services (Right Side)
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('RESERVED SERVICES & STAYS', 112, 70);
+      doc.line(112, 73, 192, 73);
+
+      let rightY = 82;
+      const writeRightField = (label, val, subVal = '') => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 112, rightY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 112, rightY + 5.5);
+
+        if (subVal) {
+          doc.setFontSize(8.5);
+          doc.setTextColor(...textMuted);
+          doc.text(String(subVal), 112, rightY + 10);
+          rightY += 19.5;
+        } else {
+          rightY += 15;
+        }
+      };
+
+      const packageName = trip.agencyPackage?.name || 'Custom Self-Planned Trip';
+      const hotelName = trip.hotel?.name || 'Self Arranged / No Hotel';
+      const hotelAddress = trip.hotel?.address ? `Addr: ${trip.hotel.address}` : '';
+
+      // Cab / transit service
+      let cabDetails = 'Self Arranged / No Cab';
+      let cabDriver = '';
+      if (trip.cabService?.label || trip.cabService?.name) {
+        cabDetails = trip.cabService.label || trip.cabService.name;
+        cabDriver = trip.cabService.type || 'Standard Cab';
+      } else if (trip.agencyVehicle && trip.agencyVehicle.type === 'Cab') {
+        cabDetails = `${trip.agencyVehicle.model} (Agency Cab)`;
+        cabDriver = `Driver: ${trip.agencyVehicle.driver || 'N/A'} · Loc: ${trip.agencyVehicle.location || 'N/A'}`;
+      }
+
+      // Guide details
+      let guideDetails = 'Not Requested';
+      let guideSpecialty = '';
+      if (trip.guide?.name) {
+        guideDetails = trip.guide.name;
+        guideSpecialty = trip.guide.phone ? `Phone: ${trip.guide.phone}` : 'Certified Local Guide';
+      } else if (trip.agencyGuide?.name) {
+        guideDetails = `${trip.agencyGuide.name} (Agency Guide)`;
+        guideSpecialty = `Specialty: ${trip.agencyGuide.specialty || 'N/A'} · Phone: ${trip.agencyGuide.contact || 'N/A'}`;
+      }
+
+      // Rental Vehicle
+      let rentalDetails = 'Not Requested';
+      if (trip.rentalVehicle?.name || trip.rentalVehicle?.type) {
+        rentalDetails = trip.rentalVehicle.name || trip.rentalVehicle.type;
+      } else if (trip.agencyVehicle && trip.agencyVehicle.type !== 'Cab') {
+        rentalDetails = `${trip.agencyVehicle.model} (${trip.agencyVehicle.type})`;
+      }
+
+      writeRightField('Package Plan', packageName);
+      writeRightField('Hotel Accommodation', hotelName, hotelAddress);
+      writeRightField('Transit & Transfers', cabDetails, cabDriver);
+      writeRightField('Local Tour Guide', guideDetails, guideSpecialty);
+      writeRightField('Rental Vehicle', rentalDetails);
+
+      // Payment Details & Barcode Block (Footer Section)
+      doc.setDrawColor(...borderGray);
+      doc.line(15, 215, 195, 215);
+
+      // Draw light slate background box for Payment Info
+      doc.setFillColor(...lightSlate);
+      doc.rect(15, 222, 180, 24, 'F');
+
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('SUBTOTAL', 22, 231);
+      doc.text('TAX (5% GST)', 58, 231);
+      doc.text('DISCOUNT', 98, 231);
+      doc.text('TOTAL PAID', 140, 231);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`INR ${Number(trip.subtotal || 0).toLocaleString()}`, 22, 238);
+      doc.text(`INR ${Number(trip.tax || 0).toLocaleString()}`, 58, 238);
+      doc.text(`INR ${Number(trip.discount || 0).toLocaleString()}`, 98, 238);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryBlue);
+      doc.text(`INR ${Number(trip.total_price || 0).toLocaleString()}`, 140, 238);
+
+      // Simulated Barcode
+      const drawBarcode = (x, y, h) => {
+        doc.setFillColor(0, 0, 0);
+        const pattern = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 1, 4, 1, 2, 3, 1, 2, 1, 1, 4];
+        let currX = x;
+        for (let i = 0; i < pattern.length; i++) {
+          const w = pattern[i] * 0.45;
+          if (i % 2 === 0) {
+            doc.rect(currX, y, w, h, 'F');
+          }
+          currX += w + 0.45;
+        }
+      };
+
+      drawBarcode(15, 254, 12);
       
-      y += 6;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('ACCOMMODATION & SERVICES', 15, y);
-      doc.line(15, y + 3, 195, y + 3);
-      y += 12;
-
-      doc.setFontSize(11);
+      doc.setTextColor(...textMuted);
       doc.setFont('helvetica', 'normal');
-      writeLine('Hotel booking:', trip.hotel?.name || 'Self Arranged');
-      writeLine('Cabs & Transit:', trip.cab_service?.label || trip.cab_service_id ? 'Private Cab Service' : 'Self Arranged');
-      writeLine('Tour Guide:', trip.guide?.name || 'Not Requested');
+      doc.setFontSize(7.5);
+      doc.text(`*ST-${trip.id}-${trip.departure_date ? String(trip.departure_date).slice(0, 10) : ''}*`, 15, 270);
 
-      y += 6;
+      // Travel Agency & Contact details in footer
+      const agencyName = trip.agencyPackage?.agency?.name 
+        || trip.agencyGuide?.agency?.name 
+        || trip.agencyVehicle?.agency?.name 
+        || 'Smart Tourism Travel Authority';
+      const agencyEmail = trip.agencyPackage?.agency?.email 
+        || trip.agencyGuide?.agency?.email 
+        || trip.agencyVehicle?.agency?.email 
+        || 'support@smarttourism.com';
+
+      doc.setTextColor(...darkSlate);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('PAYMENT DETAILS', 15, y);
-      doc.line(15, y + 3, 195, y + 3);
-      y += 12;
-
-      doc.setFontSize(11);
+      doc.setFontSize(8.5);
+      doc.text('FULFILLED BY:', 102, 258);
       doc.setFont('helvetica', 'normal');
-      writeLine('Total Cost Paid:', `INR ${parseFloat(trip.total_price).toLocaleString()}`);
-      writeLine('Transaction status:', trip.status === 'confirmed' ? 'PAYMENT CAPTURED' : 'PENDING');
-
-      y += 15;
-      doc.setFont('helvetica', 'italic');
       doc.setFontSize(9);
-      doc.text('This is a computer generated digital ticket confirmation.', 15, y);
+      doc.setTextColor(...textDark);
+      doc.text(agencyName, 102, 263);
+      doc.setTextColor(...textMuted);
+      doc.setFontSize(8);
+      doc.text(`Email: ${agencyEmail}`, 102, 268);
 
-      doc.save(`Ticket_Trip_${trip.to_destination}.pdf`);
+      // Save PDF
+      doc.save(`Ticket_ST_${trip.id}_${trip.to_destination}.pdf`);
       toast.success('Ticket PDF generated successfully!', { id: 'ticket' });
     } catch (err) {
       console.error(err);

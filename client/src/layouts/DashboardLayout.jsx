@@ -8,7 +8,7 @@ import {
 import useAuth from '../hooks/useAuth';
 import { useTheme } from '../context/ThemeContext';
 import { useSelector, useDispatch } from 'react-redux';
-import { markAsRead } from '../redux/notificationsSlice';
+import { markNotificationRead } from '../redux/notificationsSlice';
 
 
 export function DashboardLayout({
@@ -269,7 +269,7 @@ export function DashboardLayout({
                         notifications.map((notif) => (
                           <div
                             key={notif.id}
-                            onClick={() => dispatch(markAsRead(notif.id))}
+                            onClick={() => !notif.read && dispatch(markNotificationRead(notif.id))}
                             className={`p-3 rounded-xl text-xs border cursor-pointer transition-colors ${
                               notif.read
                                 ? (darkMode ? 'bg-white/3 border-white/5 opacity-60' : 'bg-slate-50 border-slate-100 opacity-60')
@@ -283,7 +283,7 @@ export function DashboardLayout({
                             </p>
                             <p className="text-slate-500 mt-0.5">{notif.message}</p>
                             <p className="text-[9px] text-slate-400 mt-1">
-                              {new Date(notif.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(notif.time || notif.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         ))

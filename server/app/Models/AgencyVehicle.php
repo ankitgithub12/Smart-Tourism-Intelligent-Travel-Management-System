@@ -19,10 +19,17 @@ class AgencyVehicle extends Model
         'status',
         'fuel',
         'location',
+        'price_per_day',
     ];
 
     protected $casts = [
         'current_load' => 'integer',
         'fuel' => 'integer',
+        'price_per_day' => 'float',
     ];
+
+    public function agency()
+    {
+        return $this->belongsTo(User::class, 'agency_id');
+    }
 }

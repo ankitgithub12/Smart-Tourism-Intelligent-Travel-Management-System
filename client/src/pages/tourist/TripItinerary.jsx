@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, DollarSign, Hotel, Car, CheckCircle, Clock, XCircle, ArrowLeft, Download, Users, Phone, Mail, Compass } from 'lucide-react';
-import api, { tripAPI } from '../../services/api';
+import api, { tripAPI, paymentAPI } from '../../services/api';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 const TripItinerary = () => {
@@ -82,7 +81,7 @@ const TripItinerary = () => {
   }, [tripId]);
 
   const handleDownloadPDF = async () => {
-    if (!trip || !itineraryRef.current) {
+    if (!trip) {
       toast.error('Unable to generate PDF');
       return;
     }
@@ -91,97 +90,239 @@ const TripItinerary = () => {
     const toastId = toast.loading('Generating PDF...');
 
     try {
-      const element = itineraryRef.current;
+      const doc = new jsPDF();
+
+      // Palette
+      const darkSlate = [15, 23, 42]; // #0f172a
+      const primaryBlue = [30, 58, 138]; // #1e3a8a
+      const lightSlate = [241, 245, 249]; // #f1f5f9
+      const borderGray = [226, 232, 240]; // #e2e8f0
+      const textDark = [51, 65, 85]; // #334155
+      const textMuted = [100, 116, 139]; // #64748b
+
+      // Page Border
+      doc.setDrawColor(...borderGray);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, 190, 277);
+
+      // Header Band
+      doc.setFillColor(...darkSlate);
+      doc.rect(10, 10, 190, 45, 'F');
+
+      // Decorative Accent Line
+      doc.setFillColor(...primaryBlue);
+      doc.rect(10, 55, 190, 3, 'F');
+
+      // Title & Header Info
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.text('TRAVEL BOARDING PASS', 18, 26);
       
-      // Create a clone of the element to avoid modifying the original
-      const cloneElement = element.cloneNode(true);
-      cloneElement.style.width = '800px';
-      cloneElement.style.padding = '40px';
-      cloneElement.style.backgroundColor = '#ffffff';
-      
-      // Remove any problematic CSS variables or modern color functions
-      const allElements = cloneElement.querySelectorAll('*');
-      allElements.forEach(el => {
-        // Remove any inline styles that might contain oklch
-        if (el.style) {
-          const computedStyle = window.getComputedStyle(el);
-          const bgColor = computedStyle.backgroundColor;
-          const color = computedStyle.color;
-          
-          // Replace with solid colors
-          if (bgColor && (bgColor.includes('oklch') || bgColor === 'rgba(0, 0, 0, 0)' || !bgColor)) {
-            el.style.backgroundColor = '#ffffff';
-          }
-          if (color && (color.includes('oklch') || color === 'rgba(0, 0, 0, 0)')) {
-            el.style.color = '#000000';
-          }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(200, 200, 220);
+      doc.text('SMART TOURISM & INTELLIGENT TRAVEL SYSTEM', 18, 32);
+      const bookingDate = trip.created_at ? new Date(trip.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+      doc.text(`BOOKED ON: ${bookingDate}`, 18, 38);
+      doc.text(`PRINTED ON: ${new Date().toLocaleString('en-IN')}`, 18, 44);
+
+      // Top Right: Booking ID Block
+      doc.setFillColor(...primaryBlue);
+      doc.rect(140, 15, 52, 31, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('TICKET ID', 145, 21);
+      doc.setFontSize(13);
+      doc.text(`#ST-${trip.id}`, 145, 28);
+      doc.setFontSize(8);
+      doc.setTextColor(220, 220, 255);
+      doc.text(`STATUS: ${trip.status.toUpperCase()}`, 145, 36);
+      const isPaid = ['confirmed', 'completed'].includes(trip.status.toLowerCase());
+      doc.text(`PAYMENT: ${isPaid ? 'PAID' : 'PENDING'}`, 145, 42);
+
+      // Layout Divider
+      doc.setDrawColor(...borderGray);
+      doc.line(105, 58, 105, 215);
+
+      // Column 1: Passenger & Trip metadata (Left Side)
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('PASSENGER & TRIP DETAILS', 18, 70);
+      doc.line(18, 73, 98, 73);
+
+      let leftY = 82;
+      const writeLeftField = (label, val) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 18, leftY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 18, leftY + 5.5);
+        
+        leftY += 15;
+      };
+
+      const passengerName = trip.traveler_name || (trip.user?.name) || 'Guest Traveler';
+      const formattedDep = trip.departure_date ? new Date(trip.departure_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const formattedRet = trip.return_date ? new Date(trip.return_date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+      const durationDays = trip.departure_date && trip.return_date ? `${Math.ceil((new Date(trip.return_date) - new Date(trip.departure_date)) / 86400000) + 1} Days` : 'N/A';
+
+      writeLeftField('Passenger Name', passengerName);
+      writeLeftField('Departure Station', trip.from_location || 'Not Specified');
+      writeLeftField('Destination', trip.to_destination);
+      writeLeftField('Departure Date', formattedDep);
+      writeLeftField('Return Date', formattedRet);
+      writeLeftField('Travelers Count', `${trip.travelers} Traveler(s) (${durationDays})`);
+
+      // Column 2: Reserved travel services (Right Side)
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('RESERVED SERVICES & STAYS', 112, 70);
+      doc.line(112, 73, 192, 73);
+
+      let rightY = 82;
+      const writeRightField = (label, val, subVal = '') => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...textMuted);
+        doc.text(label.toUpperCase(), 112, rightY);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...textDark);
+        doc.text(String(val), 112, rightY + 5.5);
+
+        if (subVal) {
+          doc.setFontSize(8.5);
+          doc.setTextColor(...textMuted);
+          doc.text(String(subVal), 112, rightY + 10);
+          rightY += 19.5;
+        } else {
+          rightY += 15;
         }
-      });
-      
-      // Create a temporary container to render the clone
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.top = '-9999px';
-      tempContainer.style.left = '-9999px';
-      tempContainer.appendChild(cloneElement);
-      document.body.appendChild(tempContainer);
-      
-      // Capture the cloned element
-      const canvas = await html2canvas(cloneElement, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true,
-        allowTaint: false,
-        windowWidth: cloneElement.scrollWidth,
-        onclone: (clonedDoc, element) => {
-          // Additional cleanup in the cloned document
-          const clonedElements = clonedDoc.querySelectorAll('*');
-          clonedElements.forEach(el => {
-            const computedStyle = clonedDoc.defaultView.getComputedStyle(el);
-            if (computedStyle.backgroundColor?.includes('oklch')) {
-              el.style.backgroundColor = '#ffffff';
-            }
-            if (computedStyle.color?.includes('oklch')) {
-              el.style.color = '#000000';
-            }
-          });
-        }
-      });
-      
-      // Clean up temporary container
-      document.body.removeChild(tempContainer);
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-      
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-      
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      // Add additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      };
+
+      const packageName = trip.agencyPackage?.name || 'Custom Self-Planned Trip';
+      const hotelName = trip.hotel?.name || 'Self Arranged / No Hotel';
+      const hotelAddress = trip.hotel?.address ? `Addr: ${trip.hotel.address}` : '';
+
+      // Cab / transit service
+      let cabDetails = 'Self Arranged / No Cab';
+      let cabDriver = '';
+      if (trip.cabService?.label || trip.cabService?.name) {
+        cabDetails = trip.cabService.label || trip.cabService.name;
+        cabDriver = trip.cabService.type || 'Standard Cab';
+      } else if (trip.agencyVehicle && trip.agencyVehicle.type === 'Cab') {
+        cabDetails = `${trip.agencyVehicle.model} (Agency Cab)`;
+        cabDriver = `Driver: ${trip.agencyVehicle.driver || 'N/A'} · Loc: ${trip.agencyVehicle.location || 'N/A'}`;
       }
+
+      // Guide details
+      let guideDetails = 'Not Requested';
+      let guideSpecialty = '';
+      if (trip.guide?.name) {
+        guideDetails = trip.guide.name;
+        guideSpecialty = trip.guide.phone ? `Phone: ${trip.guide.phone}` : 'Certified Local Guide';
+      } else if (trip.agencyGuide?.name) {
+        guideDetails = `${trip.agencyGuide.name} (Agency Guide)`;
+        guideSpecialty = `Specialty: ${trip.agencyGuide.specialty || 'N/A'} · Phone: ${trip.agencyGuide.contact || 'N/A'}`;
+      }
+
+      // Rental Vehicle
+      let rentalDetails = 'Not Requested';
+      if (trip.rentalVehicle?.name || trip.rentalVehicle?.type) {
+        rentalDetails = trip.rentalVehicle.name || trip.rentalVehicle.type;
+      } else if (trip.agencyVehicle && trip.agencyVehicle.type !== 'Cab') {
+        rentalDetails = `${trip.agencyVehicle.model} (${trip.agencyVehicle.type})`;
+      }
+
+      writeRightField('Package Plan', packageName);
+      writeRightField('Hotel Accommodation', hotelName, hotelAddress);
+      writeRightField('Transit & Transfers', cabDetails, cabDriver);
+      writeRightField('Local Tour Guide', guideDetails, guideSpecialty);
+      writeRightField('Rental Vehicle', rentalDetails);
+
+      // Payment Details & Barcode Block (Footer Section)
+      doc.setDrawColor(...borderGray);
+      doc.line(15, 215, 195, 215);
+
+      // Draw light slate background box for Payment Info
+      doc.setFillColor(...lightSlate);
+      doc.rect(15, 222, 180, 24, 'F');
+
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('SUBTOTAL', 22, 231);
+      doc.text('TAX (5% GST)', 58, 231);
+      doc.text('DISCOUNT', 98, 231);
+      doc.text('TOTAL PAID', 140, 231);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`INR ${Number(trip.subtotal || 0).toLocaleString()}`, 22, 238);
+      doc.text(`INR ${Number(trip.tax || 0).toLocaleString()}`, 58, 238);
+      doc.text(`INR ${Number(trip.discount || 0).toLocaleString()}`, 98, 238);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...primaryBlue);
+      doc.text(`INR ${Number(trip.total_price || 0).toLocaleString()}`, 140, 238);
+
+      // Simulated Barcode
+      const drawBarcode = (x, y, h) => {
+        doc.setFillColor(0, 0, 0);
+        const pattern = [2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 1, 4, 1, 2, 3, 1, 2, 1, 1, 4];
+        let currX = x;
+        for (let i = 0; i < pattern.length; i++) {
+          const w = pattern[i] * 0.45;
+          if (i % 2 === 0) {
+            doc.rect(currX, y, w, h, 'F');
+          }
+          currX += w + 0.45;
+        }
+      };
+
+      drawBarcode(15, 254, 12);
       
-      // Save the PDF
-      pdf.save(`trip_itinerary_${trip.id}_${trip.from_location}_to_${trip.to_destination}.pdf`);
+      doc.setTextColor(...textMuted);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text(`*ST-${trip.id}-${trip.departure_date ? String(trip.departure_date).slice(0, 10) : ''}*`, 15, 270);
+
+      // Travel Agency & Contact details in footer
+      const agencyName = trip.agencyPackage?.agency?.name 
+        || trip.agencyGuide?.agency?.name 
+        || trip.agencyVehicle?.agency?.name 
+        || 'Smart Tourism Travel Authority';
+      const agencyEmail = trip.agencyPackage?.agency?.email 
+        || trip.agencyGuide?.agency?.email 
+        || trip.agencyVehicle?.agency?.email 
+        || 'support@smarttourism.com';
+
+      doc.setTextColor(...darkSlate);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text('FULFILLED BY:', 102, 258);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...textDark);
+      doc.text(agencyName, 102, 263);
+      doc.setTextColor(...textMuted);
+      doc.setFontSize(8);
+      doc.text(`Email: ${agencyEmail}`, 102, 268);
+
+      // Save PDF
+      doc.save(`trip_itinerary_${trip.id}_${trip.from_location}_to_${trip.to_destination}.pdf`);
       toast.success('Itinerary PDF downloaded successfully!', { id: toastId });
-    } catch (error) {
-      console.error('PDF generation error:', error);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to generate PDF. Please try again.', { id: toastId });
     } finally {
       setDownloading(false);
@@ -218,6 +359,17 @@ const TripItinerary = () => {
       toast.success('Rating updated.', { id: toastId });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Unable to submit rating.', { id: toastId });
+    }
+  };
+
+  const handlePayNow = async () => {
+    const toastId = toast.loading('Redirecting to payment gateway...');
+    try {
+      const { data: checkoutRes } = await paymentAPI.createCheckoutSession(trip.id);
+      window.location.href = checkoutRes.url;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to redirect to payment. Please try again.', { id: toastId });
     }
   };
 
@@ -472,7 +624,7 @@ const TripItinerary = () => {
         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-between">
           {trip.status === 'pending' && (
             <button 
-              onClick={() => navigate(`/planner?step=5&trip_id=${trip.id}`)} 
+              onClick={handlePayNow} 
               className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-sm active:scale-95 transition-all"
             >
               Pay Now
