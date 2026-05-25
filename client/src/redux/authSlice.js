@@ -45,7 +45,8 @@ export const forgotPassword = createAsyncThunk(
       const response = await authAPI.forgotPassword(email);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to send reset link');
+      const message = err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Failed to send reset link';
+      return rejectWithValue(message);
     }
   }
 );
@@ -57,7 +58,11 @@ export const resetPassword = createAsyncThunk(
       const response = await authAPI.resetPassword(data);
       return response.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || 'Failed to reset password');
+      const message = err.response?.data?.message || 
+                      err.response?.data?.errors?.password?.[0] || 
+                      err.response?.data?.errors?.email?.[0] || 
+                      'Failed to reset password';
+      return rejectWithValue(message);
     }
   }
 );
@@ -146,6 +151,36 @@ const authSlice = createSlice({
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
     });
+
+    // Forgot Password
+    builder
+      .addCase(forgotPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+
+    // Reset Password
+    builder
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

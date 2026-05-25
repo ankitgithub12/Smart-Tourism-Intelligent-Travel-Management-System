@@ -37,7 +37,14 @@ export const authAPI = {
   logout: () => api.post('/logout'),
   me: () => api.get('/user'),
   forgotPassword: (email) => api.post('/password/email', { email }),
-  resetPassword: (data) => api.post('/password/reset', data),
+  resetPassword: (data) =>
+    api.post('/password/reset', {
+      token: data.token,
+      email: data.email,
+      password: data.password,
+      password_confirmation: data.password_confirmation,
+    }),
+  
 };
 
 // ── Tourist Places ────────────────────────────────────

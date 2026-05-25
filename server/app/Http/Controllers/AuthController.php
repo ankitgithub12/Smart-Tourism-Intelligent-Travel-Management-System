@@ -94,7 +94,9 @@ class AuthController extends Controller
 
     public function sendResetLinkEmail(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
 
         $status = Password::sendResetLink(
             $request->only('email')
@@ -118,7 +120,10 @@ class AuthController extends Controller
             function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60))->save();
+                ]);
+                
+                $user->setRememberToken(Str::random(60));
+                $user->save();
 
                 event(new PasswordReset($user));
             }
@@ -128,7 +133,6 @@ class AuthController extends Controller
             ? response()->json(['message' => __($status)])
             : response()->json(['message' => __($status)], 400);
     }
-
     public function verifyEmail(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);

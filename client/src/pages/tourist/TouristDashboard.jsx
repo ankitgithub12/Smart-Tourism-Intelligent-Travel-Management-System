@@ -91,11 +91,6 @@ const TouristDashboard = () => {
 
   const t = translations[lang];
 
-  useEffect(() => {
-    fetchDashboardData();
-    fetchAIRecommendations();
-  }, [user]);
-
   const fetchDashboardData = async () => {
     try {
       const tripsRes = await api.get('/trips');
@@ -132,6 +127,11 @@ const TouristDashboard = () => {
       setLoadingRecs(false);
     }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+    fetchAIRecommendations();
+  }, [user]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const confirmedTrips = trips.filter(t => t.status === 'confirmed' || t.status === 'completed');
@@ -184,11 +184,38 @@ const TouristDashboard = () => {
     return () => window.clearInterval(intervalId);
   }, [assistanceDestination, fetchTravelAssistance]);
 
+  // Laravel Echo Private Channel for Real-time booking updates
+  useEffect(() => {
+    if (user?.id) {
+      let echoInstance = null;
+      const channelName = `App.Models.User.${user.id}`;
+      
+      import('../../services/echo').then(({ default: echo }) => {
+        echoInstance = echo;
+        const channel = echo.private(channelName);
+        
+        channel.listen('.BookingStatusUpdated', (data) => {
+          console.log('Real-time booking update received in dashboard:', data);
+          fetchDashboardData();
+          fetchTravelAssistance(true);
+        });
+      }).catch(err => {
+        console.error('Echo error in dashboard:', err);
+      });
+
+      return () => {
+        if (echoInstance) {
+          echoInstance.private(channelName).stopListening('.BookingStatusUpdated');
+        }
+      };
+    }
+  }, [user?.id, fetchTravelAssistance]);
+
   const stats = [
-    { label: t.stats[0], value: upcomingTripsCount, icon: Plane, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: t.stats[1], value: pastTripsCount, icon: Clock, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: t.stats[2], value: favoritesCount, icon: Heart, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-    { label: t.stats[3], value: `₹${totalSpent.toLocaleString()}`, icon: CreditCard, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: t.stats[0], value: upcomingTripsCount, icon: Plane, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: t.stats[1], value: pastTripsCount, icon: Clock, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: t.stats[2], value: favoritesCount, icon: Heart, color: 'text-rose-400', bg: 'bg-rose-500/10' },
+    { label: t.stats[3], value: `₹${totalSpent.toLocaleString()}`, icon: CreditCard, color: 'text-amber-400', bg: 'bg-amber-500/10' },
   ];
 
   const getDestinationImage = (destName) => {
@@ -296,16 +323,16 @@ const TouristDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen py-10 px-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(var(--background)/0.9)]">
+    <div className="min-h-screen py-10 px-6 bg-gradient-to-b from-[hsl(var(--bg-start))] to-[hsl(var(--bg-end))]">
       <div className="max-w-6xl mx-auto">
         
         {/* Dashboard Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight">
-              {t.welcome}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-blue-500">{user?.name || 'Traveler'}</span>!
+            <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight text-[hsl(var(--text))]">
+              {t.welcome}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-[hsl(var(--primary))] to-blue-400">{user?.name || 'Traveler'}</span>!
             </h1>
-            <p className="text-[hsl(var(--text-muted))] text-sm">{t.sub}</p>
+            <p className="text-[hsl(var(--text-muted))] text-sm font-semibold">{t.sub}</p>
           </div>
 
           <div className="flex items-center gap-3 w-full md:w-auto">
@@ -313,7 +340,7 @@ const TouristDashboard = () => {
             <select 
               value={lang} 
               onChange={(e) => setLang(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-neutral-900 border border-white/10 text-xs font-bold text-white focus:outline-none"
+              className="px-3 py-2.5 rounded-xl bg-[hsl(var(--surface))] border border-[hsl(var(--glass-border))] text-xs font-bold text-[hsl(var(--text))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             >
               <option value="en">🇺🇸 EN</option>
               <option value="hi">🇮🇳 HI</option>
@@ -323,19 +350,19 @@ const TouristDashboard = () => {
             {/* Glowing Emergency SOS button */}
             <button 
               onClick={() => setShowSOSModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-red-600 text-white font-extrabold text-xs tracking-wider animate-pulse hover:bg-red-700 transition-all flex items-center gap-1.5 shadow-lg shadow-red-500/20"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-white font-extrabold text-xs tracking-wider animate-pulse hover:opacity-90 transition-all flex items-center gap-1.5 shadow-lg shadow-red-500/20 active:scale-95"
             >
               <AlertOctagon size={14} /> {t.sos}
             </button>
 
-            <Link to="/planner" className="btn-primary !py-2.5 !px-5 flex items-center gap-2 shadow-lg shadow-blue-500/15 text-xs font-extrabold">
+            <Link to="/planner" className="btn-primary !py-2.5 !px-5 flex items-center gap-2 shadow-lg shadow-blue-500/15 text-xs font-extrabold active:scale-95">
               <Map size={16} /> {t.plan}
             </Link>
           </div>
         </div>
 
         {loadingDashboard ? (
-          <div className="flex justify-center py-20">
+          <div className="flex justify-center py-24">
             <Loader2 size={40} className="animate-spin text-[hsl(var(--primary))]" />
           </div>
         ) : (
@@ -348,13 +375,13 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, y: 15 }} 
                   animate={{ opacity: 1, y: 0 }} 
                   transition={{ delay: i * 0.05 }}
-                  className="glass-surface rounded-3xl p-6 flex items-center gap-4 border border-white/5 relative overflow-hidden card-hover"
+                  className="glass-surface rounded-3xl p-6 flex items-center gap-4 border border-[hsl(var(--glass-border))] relative overflow-hidden card-hover shadow-lg"
                 >
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.bg}`}>
                     <stat.icon size={24} className={stat.color} />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[hsl(var(--text-muted))] uppercase tracking-wider">{stat.label}</p>
+                    <p className="text-xs font-bold text-[hsl(var(--text-muted))] uppercase tracking-wider">{stat.label}</p>
                     <p className="text-2xl font-black text-[hsl(var(--text))] mt-0.5">{stat.value}</p>
                   </div>
                 </motion.div>
@@ -371,12 +398,12 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }} 
                   transition={{ delay: 0.2 }} 
-                  className="glass-surface rounded-3xl p-6 relative overflow-hidden border border-white/5"
+                  className="glass-surface rounded-3xl p-6 relative overflow-hidden border border-[hsl(var(--glass-border))] shadow-xl"
                 >
                   <div className="absolute top-0 right-0 w-36 h-36 bg-[hsl(var(--primary)/0.08)] rounded-bl-full -z-10 blur-xl" />
                   
                   <h2 className="font-extrabold text-lg mb-5 flex items-center gap-2 text-[hsl(var(--text))]">
-                    <Plane size={20} className="text-blue-500" /> {t.nextAdventure}
+                    <Plane size={20} className="text-blue-400" /> {t.nextAdventure}
                   </h2>
                   
                   {nextTrip ? (
@@ -384,7 +411,7 @@ const TouristDashboard = () => {
                       <img 
                         src={getDestinationImage(nextTrip.to_destination)} 
                         alt={nextTrip.to_destination} 
-                        className="w-full sm:w-48 h-32 object-cover rounded-2xl shadow-xl border border-white/5" 
+                        className="w-full sm:w-48 h-32 object-cover rounded-2xl shadow-xl border border-[hsl(var(--glass-border))]" 
                       />
                       <div className="flex-1 w-full">
                         <div className="flex justify-between items-start mb-2">
@@ -402,28 +429,28 @@ const TouristDashboard = () => {
                           </span>
                         </div>
                         
-                        <p className="text-xs text-[hsl(var(--text-muted))] mt-2 font-medium">
+                        <p className="text-xs text-[hsl(var(--text-muted))] mt-2 font-semibold">
                           Package details: {nextTrip.travelers} Travelers · Total price ₹{parseFloat(nextTrip.total_price).toLocaleString()}
                         </p>
 
                         <div className="flex gap-3 mt-5">
                           <button 
-                            onClick={() => navigate('/my-trips')} 
-                            className="flex-1 btn-primary !py-2.5 text-xs font-extrabold"
+                            onClick={() => navigate(`/trip-itinerary/${nextTrip.id}`)} 
+                            className="flex-1 btn-primary !py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-blue-500/10"
                           >
-                            {t.manageBooking}
+                            <Compass size={14} /> View Itinerary
                           </button>
                           {nextTrip.status === 'confirmed' ? (
                             <button 
                               onClick={() => handleDownloadTicketPDF(nextTrip)} 
-                              className="flex-1 btn-secondary !py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5"
+                              className="flex-1 btn-secondary !py-2.5 text-xs font-extrabold flex items-center justify-center gap-1.5 active:scale-95"
                             >
                               {t.downloadTicket}
                             </button>
                           ) : (
                             <button 
                               onClick={() => navigate(`/planner?step=5&trip_id=${nextTrip.id}`)} 
-                              className="flex-1 btn-secondary !py-2.5 text-xs font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
+                              className="flex-1 btn-secondary !py-2.5 text-xs font-extrabold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 active:scale-95"
                             >
                               {t.payNow}
                             </button>
@@ -442,12 +469,12 @@ const TouristDashboard = () => {
                   )}
                 </motion.div>
 
-                {/* Smart Route Optimization (Only displays if trip exists) */}
+                {/* Smart Route Optimization */}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }} 
                   transition={{ delay: 0.25 }} 
-                  className="glass-surface rounded-3xl p-6 border border-white/5 relative overflow-hidden"
+                  className="glass-surface rounded-3xl p-6 border border-[hsl(var(--glass-border))] relative overflow-hidden shadow-xl"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
@@ -458,46 +485,46 @@ const TouristDashboard = () => {
                       <button
                         onClick={() => fetchTravelAssistance(true)}
                         disabled={loadingAssistance}
-                        className="text-[10px] uppercase font-black text-blue-300 border border-blue-500/20 rounded-lg px-3 py-1.5 hover:bg-blue-500/10 disabled:opacity-50"
+                        className="text-[10px] uppercase font-black text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-lg px-3 py-1.5 hover:bg-[hsl(var(--primary)/0.1)] disabled:opacity-50 transition-colors"
                       >
                         {loadingAssistance ? 'Updating...' : 'Refresh live data'}
                       </button>
                     )}
                   </div>
                   {!nextTrip ? (
-                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5 text-sm text-neutral-400">
+                    <div className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.03)] border border-[hsl(var(--glass-border))] text-xs text-[hsl(var(--text-muted))] font-medium">
                       Plan a trip to receive live route guidance for your destination.
                     </div>
                   ) : loadingAssistance && !assistance ? (
-                    <div className="p-8 flex items-center justify-center gap-2 text-sm text-neutral-400">
-                      <Loader2 size={18} className="animate-spin text-blue-400" /> Calculating a live route...
+                    <div className="p-8 flex items-center justify-center gap-2 text-xs text-[hsl(var(--text-muted))]">
+                      <Loader2 size={18} className="animate-spin text-[hsl(var(--primary))]" /> Calculating a live route...
                     </div>
                   ) : assistanceError ? (
-                    <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-sm text-rose-300">
+                    <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-500 font-semibold">
                       {assistanceError}
                     </div>
                   ) : activeRoute ? (
-                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5">
+                    <div className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.03)] border border-[hsl(var(--glass-border))] shadow-inner">
                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
-                          <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Live Recommended Path</p>
-                          <p className="text-sm font-black text-white mt-1 flex items-center gap-1.5">
+                          <p className="text-[10px] font-bold text-[hsl(var(--text-muted))] uppercase tracking-wider">Live Recommended Path</p>
+                          <p className="text-sm font-black text-[hsl(var(--text))] mt-1 flex items-center gap-1.5">
                             <Navigation size={12} className="text-[hsl(var(--primary))]" /> {activeRoute.path}
                           </p>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase">
+                        <span className="px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase">
                           {activeRoute.distance} / {activeRoute.duration}
                         </span>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-300 font-semibold">
-                        <span className="flex items-center gap-2"><Shield size={12} /> {activeRoute.traffic.message}</span>
+                      <div className="mt-3 pt-3 border-t border-[hsl(var(--glass-border))] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[hsl(var(--primary))] font-semibold">
+                        <span className="flex items-center gap-1.5"><Shield size={12} /> {activeRoute.traffic.message}</span>
                         {assistanceUpdatedAt && (
-                          <span className="text-neutral-500">{assistance?.source?.route} | Updated {assistanceUpdatedAt}</span>
+                          <span className="text-[hsl(var(--text-muted))]">{assistance?.source?.route} | Updated {assistanceUpdatedAt}</span>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-white/3 border border-white/5 text-sm text-neutral-400">
+                    <div className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.03)] border border-[hsl(var(--glass-border))] text-xs text-[hsl(var(--text-muted))] font-medium">
                       A route could not be calculated for the stored trip locations.
                     </div>
                   )}
@@ -508,7 +535,7 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }} 
                   transition={{ delay: 0.28 }} 
-                  className="glass-surface rounded-3xl p-6 border border-white/5"
+                  className="glass-surface rounded-3xl p-6 border border-[hsl(var(--glass-border))] shadow-xl"
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
                     <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
@@ -517,13 +544,13 @@ const TouristDashboard = () => {
                     </h2>
                     
                     {/* Tab Selectors */}
-                    <div className="flex gap-1.5 bg-neutral-900 p-1 rounded-xl border border-white/5">
+                    <div className="flex gap-1.5 bg-[hsl(var(--primary)/0.05)] p-1 rounded-xl border border-[hsl(var(--glass-border))]">
                       {['hospitals', 'atms', 'restaurants'].map((tab) => (
                         <button
                           key={tab}
                           onClick={() => setActiveServiceTab(tab)}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase transition-all ${
-                            activeServiceTab === tab ? 'bg-[hsl(var(--primary))] text-white' : 'text-neutral-400 hover:text-white'
+                            activeServiceTab === tab ? 'bg-[hsl(var(--primary))] text-white' : 'text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text))]'
                           }`}
                         >
                           {tab}
@@ -533,21 +560,21 @@ const TouristDashboard = () => {
                   </div>
 
                   {!nextTrip ? (
-                    <p className="text-sm text-neutral-400">Plan a trip to find live nearby services.</p>
+                    <p className="text-xs text-[hsl(var(--text-muted))] font-medium">Plan a trip to find live nearby services.</p>
                   ) : loadingAssistance && !assistance ? (
-                    <div className="py-8 flex justify-center gap-2 text-sm text-neutral-400">
-                      <Loader2 size={18} className="animate-spin text-emerald-400" /> Finding nearby services...
+                    <div className="py-8 flex justify-center gap-2 text-xs text-[hsl(var(--text-muted))]">
+                      <Loader2 size={18} className="animate-spin text-emerald-500" /> Finding nearby services...
                     </div>
                   ) : activeServices.length ? (
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {activeServices.map((service) => (
-                          <div key={service.id || service.name} className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:border-[hsl(var(--primary)/0.2)] transition-all">
-                            <h3 className="text-sm font-bold text-white mb-1">{service.name}</h3>
-                            {service.address && <p className="text-[10px] text-neutral-500 line-clamp-2">{service.address}</p>}
-                            <div className="flex justify-between items-center text-xs text-neutral-400 mt-2 font-medium gap-2">
+                        {activeServices.slice(0, 4).map((service) => (
+                          <div key={service.id || service.name} className="p-4 rounded-2xl bg-[hsl(var(--primary)/0.03)] border border-[hsl(var(--glass-border))] hover:border-[hsl(var(--primary)/0.2)] transition-all">
+                            <h3 className="text-sm font-bold text-[hsl(var(--text))] mb-1">{service.name}</h3>
+                            {service.address && <p className="text-[10px] text-[hsl(var(--text-muted))] line-clamp-2 leading-relaxed">{service.address}</p>}
+                            <div className="flex justify-between items-center text-xs text-[hsl(var(--text-muted))] mt-2 font-semibold gap-2">
                               <span className="flex items-center gap-1"><MapPin size={12} className="text-emerald-500" /> {service.distance}</span>
-                              {service.status && <span className="text-[10px] font-bold text-blue-300 text-right">{service.status}</span>}
+                              {service.status && <span className="text-[10px] font-bold text-[hsl(var(--primary))] text-right">{service.status}</span>}
                             </div>
                             {service.phone && (
                               <a
@@ -560,12 +587,12 @@ const TouristDashboard = () => {
                           </div>
                         ))}
                       </div>
-                      <p className="text-[10px] text-neutral-500 mt-4">
+                      <p className="text-[9px] text-[hsl(var(--text-muted))] mt-4 font-semibold">
                         Live places source: {assistance?.source?.services}{assistanceUpdatedAt ? ` | Updated ${assistanceUpdatedAt}` : ''}
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-neutral-400">No nearby {activeServiceTab} were returned for this destination.</p>
+                    <p className="text-xs text-[hsl(var(--text-muted))] font-medium">No nearby {activeServiceTab} were returned for this destination.</p>
                   )}
                 </motion.div>
 
@@ -574,7 +601,7 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, y: 20 }} 
                   animate={{ opacity: 1, y: 0 }} 
                   transition={{ delay: 0.3 }} 
-                  className="glass-surface rounded-3xl p-6 border border-white/5"
+                  className="glass-surface rounded-3xl p-6 border border-[hsl(var(--glass-border))] shadow-xl"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
@@ -588,7 +615,7 @@ const TouristDashboard = () => {
                   {loadingRecs ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-2">
                       <Loader2 size={24} className="animate-spin text-[hsl(var(--primary))]" />
-                      <p className="text-[10px] text-[hsl(var(--text-muted))] font-semibold">Gemini generating personalized locations...</p>
+                      <p className="text-[10px] text-[hsl(var(--text-muted))] font-bold">Generating personalized destinations...</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -596,7 +623,7 @@ const TouristDashboard = () => {
                         <div 
                           key={i} 
                           onClick={() => navigate(`/planner?to=${rec.name}`)}
-                          className="relative h-32 rounded-2xl overflow-hidden group cursor-pointer border border-white/5"
+                          className="relative h-32 rounded-2xl overflow-hidden group cursor-pointer border border-[hsl(var(--glass-border))] shadow-md"
                         >
                           <img 
                             src={rec.image} 
@@ -624,11 +651,11 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, x: 20 }} 
                   animate={{ opacity: 1, x: 0 }} 
                   transition={{ delay: 0.4 }} 
-                  className="glass-surface rounded-3xl p-6 border border-white/5"
+                  className="glass-surface rounded-3xl p-6 border border-[hsl(var(--glass-border))] shadow-xl"
                 >
                   <div className="flex justify-between items-center mb-5">
                     <h2 className="font-extrabold text-lg flex items-center gap-2 text-[hsl(var(--text))]">
-                      <Bell size={20} className="text-amber-500" /> {t.notifications}
+                      <Bell size={20} className="text-amber-400" /> {t.notifications}
                     </h2>
                     {reduxNotifications.length > 0 && (
                       <button 
@@ -645,15 +672,15 @@ const TouristDashboard = () => {
                       reduxNotifications.map((notif, idx) => (
                         <div 
                           key={idx} 
-                          className="p-3 rounded-xl bg-white/3 border border-white/5 relative overflow-hidden"
+                          className="p-3 rounded-xl bg-[hsl(var(--primary)/0.03)] border border-[hsl(var(--glass-border))] relative overflow-hidden"
                         >
-                          <p className="text-xs font-extrabold text-[hsl(var(--text))]">{notif.title}</p>
+                          <p className="text-xs font-black text-[hsl(var(--text))]">{notif.title}</p>
                           <p className="text-[11px] text-[hsl(var(--text-muted))] mt-1 leading-relaxed">{notif.message}</p>
-                          <p className="text-[9px] mt-2 opacity-40 font-semibold">{new Date(notif.time || Date.now()).toLocaleTimeString()}</p>
+                          <p className="text-[9px] mt-2 opacity-40 font-bold">{new Date(notif.time || Date.now()).toLocaleTimeString()}</p>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-8 text-[hsl(var(--text-muted))] text-xs font-semibold">
+                      <div className="text-center py-8 text-[hsl(var(--text-muted))] text-xs font-bold">
                         <Bell size={24} className="mx-auto opacity-30 mb-2" />
                         {t.noNotifications}
                       </div>
@@ -666,7 +693,7 @@ const TouristDashboard = () => {
                   initial={{ opacity: 0, x: 20 }} 
                   animate={{ opacity: 1, x: 0 }} 
                   transition={{ delay: 0.5 }} 
-                  className="glass-surface rounded-3xl p-6 border border-white/5"
+                  className="glass-surface rounded-3xl p-6 border border-[hsl(var(--glass-border))] shadow-xl"
                 >
                   <h2 className="font-extrabold text-lg mb-4 flex items-center gap-2 text-[hsl(var(--text))]">
                     <User size={20} className="text-[hsl(var(--primary))]" /> {t.quickLinks}
@@ -674,6 +701,7 @@ const TouristDashboard = () => {
                   <div className="space-y-1">
                     <Link to="/profile" className="block p-3 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] text-xs font-bold transition-all text-[hsl(var(--text))]">My Profile</Link>
                     <Link to="/my-trips" className="block p-3 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] text-xs font-bold transition-all text-[hsl(var(--text))]">My Bookings</Link>
+                    <Link to="/saved" className="block p-3 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] text-xs font-bold transition-all text-[hsl(var(--text))]">My Wishlist</Link>
                     <Link to="/settings" className="block p-3 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] text-xs font-bold transition-all text-[hsl(var(--text))]">Settings</Link>
                     <Link to="/contact" className="block p-3 rounded-xl hover:bg-[hsl(var(--primary)/0.05)] hover:text-[hsl(var(--primary))] text-xs font-bold transition-all text-[hsl(var(--text))]">Support Center</Link>
                   </div>
@@ -704,27 +732,27 @@ const TouristDashboard = () => {
                 </div>
               </div>
 
-              <p className="text-sm text-neutral-300 leading-relaxed mb-6 font-medium">
-                Need immediate assistance? Broadcoast your live coordinates to local emergency dispatchers and police stations instantly.
+              <p className="text-sm text-neutral-300 leading-relaxed mb-6 font-semibold">
+                Need immediate assistance? Broadcast your live coordinates to local emergency dispatchers and police stations instantly.
               </p>
 
               <div className="space-y-3 mb-6">
                 <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center">
-                  <span className="text-xs font-extrabold text-neutral-400">YOUR GPS POSITION:</span>
+                  <span className="text-xs font-bold text-neutral-400">YOUR GPS POSITION:</span>
                   <span className="text-xs font-black text-emerald-400">26.9124° N, 75.7873° E</span>
                 </div>
                 
                 <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
-                  <p className="text-xs font-extrabold text-neutral-400 mb-1">EMERGENCY SERVICES HELPLINES:</p>
-                  <div className="flex justify-between text-xs font-bold">
+                  <p className="text-[10px] font-extrabold text-neutral-400 tracking-wider mb-1">EMERGENCY SERVICES HELPLINES:</p>
+                  <div className="flex justify-between text-xs font-semibold">
                     <span>Police Dispatch:</span>
                     <a href="tel:100" className="text-red-400 hover:underline">100</a>
                   </div>
-                  <div className="flex justify-between text-xs font-bold">
+                  <div className="flex justify-between text-xs font-semibold">
                     <span>Medical & Ambulance:</span>
                     <a href="tel:108" className="text-red-400 hover:underline">108</a>
                   </div>
-                  <div className="flex justify-between text-xs font-bold">
+                  <div className="flex justify-between text-xs font-semibold">
                     <span>Unified Emergency Line:</span>
                     <a href="tel:112" className="text-red-400 hover:underline">112</a>
                   </div>
@@ -734,13 +762,13 @@ const TouristDashboard = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowSOSModal(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-neutral-800 text-xs font-extrabold text-white border border-white/10 hover:bg-neutral-700 transition-all"
+                  className="flex-1 px-4 py-3 rounded-xl bg-neutral-800 text-xs font-extrabold text-white border border-white/10 hover:bg-neutral-700 transition-all active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSOSBroadcast}
-                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-extrabold text-white hover:opacity-90 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 text-xs font-extrabold text-white hover:opacity-90 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg shadow-red-500/20"
                 >
                   {sosSent ? <Check size={14} /> : null}
                   {sosSent ? 'Broadcasted' : 'Broadcast GPS Location'}
