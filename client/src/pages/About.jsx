@@ -9,12 +9,14 @@ const team = [
 ];
 
 const techStack = [
-  { name: 'React + Tailwind', desc: 'Modern, responsive frontend', icon: '⚛️' },
-  { name: 'Laravel REST API', desc: 'Secure, scalable backend', icon: '🔧' },
-  { name: 'Supabase + PostgreSQL', desc: 'Real-time database', icon: '🗄️' },
-  { name: 'Python FastAPI', desc: 'AI microservice layer', icon: '🐍' },
-  { name: 'Hugging Face', desc: 'State-of-the-art AI models', icon: '🤖' },
-  { name: 'Google Maps API', desc: 'Live mapping & routing', icon: '🗺️' },
+  { name: 'React + Vite', desc: 'Lightning-fast modern frontend', icon: '⚛️' },
+  { name: 'Tailwind CSS', desc: 'Utility-first responsive design', icon: '🎨' },
+  { name: 'Laravel', desc: 'Powerful PHP backend framework', icon: '🔧' },
+  { name: 'MySQL & PostgreSQL', desc: 'Reliable relational databases', icon: '🗄️' },
+  { name: 'Python', desc: 'AI service & recommendations', icon: '🐍' },
+  { name: 'Stripe API', desc: 'Secure payment processing', icon: '💳' },
+  { name: 'Redux', desc: 'Predictable state management', icon: '📦' },
+  { name: 'Laravel Broadcasting', desc: 'Real-time notifications', icon: '📡' },
 ];
 
 const values = [
