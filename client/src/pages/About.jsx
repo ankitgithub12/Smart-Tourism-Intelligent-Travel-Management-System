@@ -4,10 +4,8 @@ import { Brain, Users, Globe, Shield, Target, Lightbulb, Award, TrendingUp } fro
 import { Link } from 'react-router-dom';
 
 const team = [
-  { name: 'Dr. Aryan Kapoor', role: 'AI & ML Lead', avatar: 'AK', color: 'from-blue-500 to-blue-600' },
-  { name: 'Sneha Verma', role: 'Full Stack Engineer', avatar: 'SV', color: 'from-blue-500 to-blue-600' },
-  { name: 'Ravi Gupta', role: 'Smart City Analyst', avatar: 'RG', color: 'from-green-500 to-green-600' },
-  { name: 'Meera Joshi', role: 'UX/UI Designer', avatar: 'MJ', color: 'from-orange-500 to-orange-600' },
+  { name: 'Ankit Kumar', role: 'Full Stack Web Developer', avatar: 'AK', color: 'from-blue-500 to-blue-600' },
+  { name: 'Shubham Kumar', role: 'Backend Developer', avatar: 'SK', color: 'from-green-500 to-green-600' },
 ];
 
 const techStack = [
@@ -130,7 +128,7 @@ const About = () => {
             <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider mb-2">The Team</p>
             <h2 className="text-4xl font-bold text-gray-900">Meet the Builders</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             {team.map((member, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100 hover:shadow-xl transition-all">
