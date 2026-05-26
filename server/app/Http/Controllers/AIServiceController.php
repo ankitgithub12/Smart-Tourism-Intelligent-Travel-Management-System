@@ -50,8 +50,17 @@ class AIServiceController extends Controller
 
     public function crowdPredict(Request $request)
     {
-        $request->validate(['location_data' => 'required|string']);
-        $result = $this->aiService->predictCrowd($request->location_data);
+        $request->validate([
+            'location_data' => 'required|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+        
+        $result = $this->aiService->predictCrowd(
+            $request->location_data,
+            $request->latitude !== null ? (float) $request->latitude : null,
+            $request->longitude !== null ? (float) $request->longitude : null
+        );
         return response()->json($result ?: ['prediction' => null]);
     }
 

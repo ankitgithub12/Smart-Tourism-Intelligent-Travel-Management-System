@@ -213,35 +213,54 @@ Ensure coordinates are highly accurate. Return RAW JSON only, no markdown format
       const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       const locationData = `${place.name}, ${place.location}. ${place.description}`;
-      const res = await aiAPI.crowdPredict(locationData, { signal: controller.signal });
+      const res = await aiAPI.crowdPredict(
+        {
+          location_data: locationData,
+          latitude: place.latitude,
+          longitude: place.longitude
+        },
+        { signal: controller.signal }
+      );
       clearTimeout(timeoutId);
       
-      let predictionText = '';
+      let predictionData = null;
       
-      if (res.data?.prediction) {
-        if (typeof res.data.prediction === 'object') {
-          predictionText = res.data.prediction.advice || res.data.prediction.message || JSON.stringify(res.data.prediction);
-        } else {
-          predictionText = res.data.prediction;
-        }
-      } else if (res.data?.reply) {
-        predictionText = res.data.reply;
+      if (res.data?.prediction && typeof res.data.prediction === 'object') {
+        predictionData = {
+          advice: res.data.prediction.advice || res.data.prediction.message || '',
+          temperature: res.data.prediction.temperature || 'N/A',
+          weather: res.data.prediction.weather || 'N/A',
+          level: res.data.prediction.level || 'medium',
+          label: res.data.prediction.label || 'Medium',
+          confidence: res.data.prediction.confidence ?? 0
+        };
       } else {
-        // Fallback prediction
+        const text = res.data?.prediction || res.data?.reply || '';
         const crowdLevel = place.crowd_level || 50;
-        if (crowdLevel > 70) {
-          predictionText = `⚠️ This location tends to be very crowded. Consider visiting early morning or late evening for a better experience.`;
-        } else if (crowdLevel > 40) {
-          predictionText = `📊 Moderate crowd levels expected. Good time to visit, but book tickets in advance if possible.`;
-        } else {
-          predictionText = `🌟 This spot has lower crowd levels. Perfect time for a relaxed visit and great photos!`;
+        let advice = text;
+        if (!advice) {
+          if (crowdLevel > 70) {
+            advice = `⚠️ This location tends to be very crowded. Consider visiting early morning or late evening for a better experience.`;
+          } else if (crowdLevel > 40) {
+            advice = `📊 Moderate crowd levels expected. Good time to visit, but book tickets in advance if possible.`;
+          } else {
+            advice = `🌟 This spot has lower crowd levels. Perfect time for a relaxed visit and great photos!`;
+          }
         }
+        predictionData = {
+          advice: advice,
+          temperature: 'N/A',
+          weather: 'N/A',
+          level: crowdLevel >= 70 ? 'high' : crowdLevel >= 40 ? 'medium' : 'low',
+          label: crowdLevel >= 70 ? 'High' : crowdLevel >= 40 ? 'Medium' : 'Low',
+          confidence: 0
+        };
       }
       
       // Update state with new prediction
       setAiPredictions(prev => {
-        const updated = { ...prev, [place.id]: predictionText };
-        console.log('Prediction added for', place.name, predictionText);
+        const updated = { ...prev, [place.id]: predictionData };
+        console.log('Prediction added for', place.name, predictionData);
         return updated;
       });
       
@@ -251,7 +270,14 @@ Ensure coordinates are highly accurate. Return RAW JSON only, no markdown format
       console.error('Prediction error:', err);
       
       // Set fallback prediction even on error
-      const fallbackPrediction = `📌 ${place.name} is a popular destination. Best time to visit is during off-peak seasons (spring or fall) to avoid crowds.`;
+      const fallbackPrediction = {
+        advice: `📌 ${place.name} is a popular destination. Best time to visit is during off-peak seasons (spring or fall) to avoid crowds.`,
+        temperature: 'N/A',
+        weather: 'N/A',
+        level: 'medium',
+        label: 'Medium',
+        confidence: 0
+      };
       
       setAiPredictions(prev => {
         const updated = { ...prev, [place.id]: fallbackPrediction };
@@ -334,8 +360,25 @@ Ensure coordinates are highly accurate. Return RAW JSON only, no markdown format
 
       const marker = L.marker([lat, lng], { icon: customIcon }).addTo(markersGroup.current);
       
-      const hasPrediction = aiPredictions[place.id];
-      const predictionText = hasPrediction ? aiPredictions[place.id] : '';
+      const prediction = aiPredictions[place.id];
+      let predictionHtml = '';
+      if (prediction) {
+        if (typeof prediction === 'object') {
+          const tempHtml = prediction.temperature !== 'N/A' ? `<span style="background: white; padding: 2px 5px; border-radius: 4px; border: 1px solid #bfdbfe; font-weight: 600;">🌡️ ${prediction.temperature}</span>` : '';
+          const weatherHtml = prediction.weather !== 'N/A' ? `<span style="background: white; padding: 2px 5px; border-radius: 4px; border: 1px solid #bfdbfe; font-weight: 600; margin-left: 4px;">🌤️ ${prediction.weather}</span>` : '';
+          predictionHtml = `
+            <div style="margin-top: 8px; padding: 6px; background: #e0e7ff; border-radius: 8px; font-size: 10px; color: #1e3a8a; line-height: 1.3;">
+              <div style="margin-bottom: 4px; display: flex; align-items: center;">
+                ${tempHtml}
+                ${weatherHtml}
+              </div>
+              <strong>✨ AI:</strong> ${prediction.advice}
+            </div>
+          `;
+        } else {
+          predictionHtml = `<div style="margin-top: 8px; padding: 6px; background: #e0e7ff; border-radius: 8px; font-size: 10px; color: #1e3a8a;"><strong>✨ AI:</strong> ${prediction.substring(0, 100)}</div>`;
+        }
+      }
 
       const popupContent = `
         <div style="font-family: inherit; width: 220px; padding: 2px;">
@@ -348,7 +391,7 @@ Ensure coordinates are highly accurate. Return RAW JSON only, no markdown format
             </span>
             <span style="font-size: 10px; font-weight: 700; color: #f59e0b;">★ ${parseFloat(place.rating).toFixed(1)}</span>
           </div>
-          ${hasPrediction ? `<div style="margin-top: 8px; padding: 6px; background: #e0e7ff; border-radius: 6px; font-size: 10px;"><strong>✨ AI:</strong> ${predictionText.substring(0, 100)}</div>` : ''}
+          ${predictionHtml}
         </div>
       `;
 
@@ -537,14 +580,47 @@ Ensure coordinates are highly accurate. Return RAW JSON only, no markdown format
                       
                       {/* AI Prediction Display */}
                       {hasPrediction ? (
-                        <div className="mt-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800">
-                          <div className="flex items-center gap-1 mb-1">
-                            <Sparkles size={10} className="text-blue-600" />
-                            <span className="text-[9px] font-bold text-blue-700 dark:text-blue-300">AI Insight</span>
+                        <div className="mt-2.5 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-100 dark:border-blue-900/60 shadow-sm">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1">
+                              <Sparkles size={12} className="text-blue-600 dark:text-blue-400 animate-pulse" />
+                              <span className="text-[10px] font-extrabold text-blue-800 dark:text-blue-300">AI Analysis</span>
+                            </div>
+                            {typeof aiPredictions[place.id] === 'object' && aiPredictions[place.id].confidence > 0 && (
+                              <span className="text-[8px] bg-blue-200/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold">
+                                {aiPredictions[place.id].confidence}% Match
+                              </span>
+                            )}
                           </div>
-                          <p className="text-[9px] text-blue-700 dark:text-blue-300 leading-relaxed">
-                            {aiPredictions[place.id]}
-                          </p>
+                          
+                          {typeof aiPredictions[place.id] === 'object' ? (
+                            <div className="space-y-2 text-[10px] text-gray-700 dark:text-gray-300">
+                              <div className="flex flex-wrap gap-1.5">
+                                {aiPredictions[place.id].temperature !== 'N/A' && (
+                                  <span className="flex items-center gap-0.5 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/40 font-bold text-blue-600 dark:text-blue-400">
+                                    🌡️ {aiPredictions[place.id].temperature}
+                                  </span>
+                                )}
+                                {aiPredictions[place.id].weather !== 'N/A' && (
+                                  <span className="flex items-center gap-0.5 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/40 font-bold text-indigo-600 dark:text-indigo-400">
+                                    🌤️ {aiPredictions[place.id].weather}
+                                  </span>
+                                )}
+                                {aiPredictions[place.id].label && (
+                                  <span className="flex items-center gap-0.5 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/40 font-bold text-amber-600 dark:text-amber-400">
+                                    👥 {aiPredictions[place.id].label}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-blue-900 dark:text-blue-200 leading-relaxed font-medium mt-1">
+                                {aiPredictions[place.id].advice}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-blue-900 dark:text-blue-200 leading-relaxed font-medium">
+                              {aiPredictions[place.id]}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <button

@@ -12,7 +12,7 @@ import { toast } from 'react-hot-toast';
 
 const destinations = [
   { id: 1, name: 'Goa Golden Beaches', location: 'Goa, India', rating: 4.9, crowdLevel: 'Medium', type: 'Coastal', image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&auto=format&fit=crop', tags: ['Sunsets', 'Water Sports'] },
-  { id: 2, name: 'Jaipur Heritage Palace', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', type: 'Heritage', image: 'https://images.unsplash.com/photo-1600100397608-f010f418c5e4?w=800&auto=format&fit=crop', tags: ['Culture', 'Bazaars'] },
+  { id: 2, name: 'Jaipur Heritage Palace', location: 'Rajasthan, India', rating: 4.8, crowdLevel: 'High', type: 'Heritage', image: 'https://lh3.googleusercontent.com/p/AF1QipMwSWXgcy2xLf8HLDnqsaTBXDHCKJmDJBU7vRLq=w252-h167-k-no', tags: ['Culture', 'Bazaars'] },
   { id: 3, name: 'Kerala Backwaters', location: 'Kerala, India', rating: 4.9, crowdLevel: 'Low', type: 'Nature', image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&auto=format&fit=crop', tags: ['Houseboats', 'Ayurveda'] },
   { id: 4, name: 'Manali Snowy Valley', location: 'Himachal Pradesh', rating: 4.7, crowdLevel: 'Low', type: 'Adventure', image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&auto=format&fit=crop', tags: ['Trekking', 'Skiing'] },
 ];

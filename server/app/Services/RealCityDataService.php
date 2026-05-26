@@ -78,7 +78,7 @@ class RealCityDataService
         })->all();
     }
 
-    private function weather(float $lat, float $lon): ?array
+    public function weather(float $lat, float $lon): ?array
     {
         $key = config('services.openweather.key');
         if (blank($key)) {

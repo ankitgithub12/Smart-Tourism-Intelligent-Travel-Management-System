@@ -103,13 +103,33 @@ Return EXACTLY a JSON array of objects with keys 'category', 'confidence' (numbe
     /**
      * Predict crowd level for a location.
      */
-    public function predictCrowd(string $locationData): array
+    public function predictCrowd(string $locationData, ?float $latitude = null, ?float $longitude = null): array
     {
-        $cacheKey = 'ai_crowd_or_' . md5($locationData);
+        $cacheKey = 'ai_crowd_or_v3_' . md5($locationData . '_' . $latitude . '_' . $longitude);
 
-        return Cache::remember($cacheKey, 180, function () use ($locationData) {
-            $prompt = "Estimate the current crowd level for '{$locationData}'. 
-Return EXACTLY a JSON object with keys: 'level' (one of: low, medium, high, critical), 'label' (capitalized level), 'confidence' (number 0-100), and 'advice' (short sentence). Do not include markdown code blocks, just raw JSON.";
+        return Cache::remember($cacheKey, 180, function () use ($locationData, $latitude, $longitude) {
+            $weatherInfo = '';
+            $realWeather = null;
+
+            if ($latitude !== null && $longitude !== null) {
+                try {
+                    $realCityDataService = new RealCityDataService();
+                    $realWeather = $realCityDataService->weather((float) $latitude, (float) $longitude);
+                } catch (\Exception $e) {
+                    Log::error("Error fetching weather in predictCrowd: " . $e->getMessage());
+                }
+            }
+
+            if ($realWeather && isset($realWeather['temperature'])) {
+                $temp = round($realWeather['temperature']) . '°C';
+                $condition = $realWeather['condition'] ?? 'Clear';
+                $weatherInfo = "The current real-time local weather is {$condition} with a temperature of {$temp}.";
+            }
+
+            $prompt = "Estimate the current crowd level and local temperature/weather condition for '{$locationData}'. 
+{$weatherInfo}
+If real-time weather is provided above, please use those values for the 'temperature' and 'weather' keys in your JSON response. Otherwise, estimate them based on typical season/time.
+Return EXACTLY a JSON object with keys: 'level' (one of: low, medium, high, critical), 'label' (capitalized level), 'confidence' (number 0-100), 'advice' (short sentence), 'temperature' (estimated temperature string, e.g., '28°C' or '15°C'), and 'weather' (estimated weather condition, e.g., 'Sunny', 'Rainy', 'Cloudy'). Do not include markdown code blocks, just raw JSON.";
 
             $reply = $this->callAI([['role' => 'user', 'content' => $prompt]]);
 
@@ -120,11 +140,26 @@ Return EXACTLY a JSON object with keys: 'level' (one of: low, medium, high, crit
                 
                 $decoded = json_decode($content, true);
                 if (is_array($decoded) && isset($decoded['level'])) {
+                    // Force the actual real-time weather parameters into the response if successfully fetched
+                    if ($realWeather && isset($realWeather['temperature'])) {
+                        $decoded['temperature'] = round($realWeather['temperature']) . '°C';
+                        $decoded['weather'] = $realWeather['condition'] ?? $decoded['weather'];
+                    }
                     return ['prediction' => $decoded];
                 }
             }
 
-            return ['prediction' => ['level' => 'medium', 'label' => 'Medium', 'confidence' => 0, 'advice' => 'Moderate crowd expected.']];
+            $fallbackTemp = $realWeather && isset($realWeather['temperature']) ? round($realWeather['temperature']) . '°C' : 'N/A';
+            $fallbackWeather = $realWeather && isset($realWeather['condition']) ? $realWeather['condition'] : 'N/A';
+
+            return ['prediction' => [
+                'level' => 'medium', 
+                'label' => 'Medium', 
+                'confidence' => 0, 
+                'advice' => 'Moderate crowd expected.',
+                'temperature' => $fallbackTemp,
+                'weather' => $fallbackWeather
+            ]];
         });
     }
 

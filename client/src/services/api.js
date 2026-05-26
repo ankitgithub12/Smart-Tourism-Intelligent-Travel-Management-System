@@ -132,7 +132,12 @@ export const aiAPI = {
   chat: (message) => api.post('/ai/chat', { message }),
   chatWithHistory: (messages) => api.post('/ai/chat', { messages }),
   recommend: (preferences) => api.post('/ai/recommend', { preferences }),
-  crowdPredict: (location_data) => api.post('/ai/crowd-predict', { location_data }),
+  crowdPredict: (location_data, latitude, longitude, config) => {
+    if (typeof location_data === 'object') {
+      return api.post('/ai/crowd-predict', location_data, config);
+    }
+    return api.post('/ai/crowd-predict', { location_data, latitude, longitude }, config);
+  },
   sentiment: (text) => api.post('/ai/sentiment', { text }),
 };
 
