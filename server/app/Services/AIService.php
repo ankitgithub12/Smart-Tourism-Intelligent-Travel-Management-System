@@ -66,6 +66,20 @@ Current known context:
             return ['reply' => trim($reply), 'context' => $context];
         }
 
+        if ($isJsonRequest) {
+            return [
+                'reply' => json_encode([
+                    'hotel_id' => null,
+                    'food_id' => null,
+                    'cab_id' => null,
+                    'guide_id' => null,
+                    'vehicle_id' => null,
+                    'plan_summary' => "AI customization is temporarily unavailable. Please proceed manually."
+                ]),
+                'context' => $context
+            ];
+        }
+
         return [
             'reply' => "Hello! I'm here to help you plan an amazing trip. Where would you like to go?",
             'context' => $context
@@ -229,7 +243,7 @@ Return EXACTLY a JSON object with keys: 'label' (POSITIVE, NEGATIVE, or NEUTRAL)
      */
     protected function callGeminiDirect(array $messages, string $systemPrompt = '', int $maxTokens = 2500): ?string
     {
-        $models = ['gemini-2.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro-latest'];
+        $models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
 
         foreach ($models as $model) {
             try {
