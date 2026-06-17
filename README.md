@@ -19,6 +19,105 @@ This project is a modern tourism management system that combines:
 - Responsive design with Tailwind CSS
 - AI-powered chat assistant
 
+## 🏛️ System Architecture
+
+The Smart Tourism system is structured as a modern distributed three-tier architecture with dedicated presentation, business logic, intelligence, and integration layers.
+
+### Architectural Diagram
+
+```mermaid
+graph TD
+    %% Define Styles
+    classDef frontend fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff;
+    classDef backend fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff;
+    classDef ai fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff;
+    classDef db fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef ext fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff;
+    classDef userNode fill:#4b5563,stroke:#374151,stroke-width:2px,color:#fff;
+    
+    %% User Interacting
+    User((Tourist / Agency / Admin)):::userNode
+    
+    %% Frontend Subgraph
+    subgraph Frontend ["Frontend Presentation Layer (React + Vite SPA)"]
+        UI["React Web Pages & UI Components<br/>(Tailwind CSS, Theme Switcher)"]
+        Redux["Redux & Context API<br/>(Auth State & Cart Management)"]
+        AxiosClient["Axios HTTP Client<br/>(REST API Requests)"]
+        WSClient["Reverb WebSocket Client<br/>(Real-Time Notifications)"]
+        UI <--> Redux
+        UI --> AxiosClient
+        UI <--> WSClient
+    end
+    
+    %% Backend Subgraph
+    subgraph BackendAPI ["Core Backend API Layer (Laravel 11)"]
+        Routes["API Router & Sanctum Auth<br/>(Route Guards & Middleware)"]
+        Controllers["Controllers & Repositories<br/>(HTTP Business Logic)"]
+        AIService["AI Context Service<br/>(TourismContextAnalyzer)"]
+        Broadcaster["Laravel Reverb Server<br/>(WebSocket Broadcasts)"]
+        
+        Routes --> Controllers
+        Controllers --> AIService
+        Controllers --> Broadcaster
+    end
+    
+    %% AI Subgraph
+    subgraph AIServices ["Intelligent AI Layer"]
+        GeminiAPI["Google Gemini LLM / OpenRouter<br/>(Context-Aware Conversations)"]
+        PythonService["Python FastAPI Service (Port 8001)<br/>(Hugging Face Classification & Sentiment)"]
+    end
+    
+    %% Data Store Subgraph
+    subgraph Storage ["Storage & Persistence Layer"]
+        MySQL[(MySQL Database<br/>- Users & Profiles<br/>- Places & Reviews<br/>- Bookings & Trips)]
+        Cloudinary["Cloudinary CDN<br/>(Images & Avatars)"]
+    end
+    
+    %% External Gateways
+    subgraph External ["External Service Integration"]
+        StripeGateway["Stripe Payment Gateway<br/>(Checkout & Webhooks)"]
+        OpenWeather["OpenWeather API<br/>(Real-Time Climate Status)"]
+        GoogleMaps["Google Maps API<br/>(Interactive Locations & Pins)"]
+    end
+    
+    %% Connections
+    User <--> UI
+    
+    %% Frontend to Backend
+    AxiosClient <-->|REST API / HTTPS| Routes
+    WSClient <-->|WebSockets| Broadcaster
+    
+    %% Backend to AI & External
+    AIService <-->|HTTPS API / JSON| GeminiAPI
+    Controllers <-->|HTTP POST / JSON| PythonService
+    Controllers <-->|Stripe SDK| StripeGateway
+    Controllers <-->|Database Queries| MySQL
+    
+    %% Frontend to External/Media
+    UI <-->|Embed / Direct API| GoogleMaps
+    UI <-->|Direct Asset URLs| Cloudinary
+    UI <-->|Fetch Weather| OpenWeather
+    
+    %% External to Backend Webhook
+    StripeGateway -->|Webhook Events| Routes
+    
+    %% Apply Styles
+    class UI,Redux,AxiosClient,WSClient frontend;
+    class Routes,Controllers,AIService,Broadcaster backend;
+    class GeminiAPI,PythonService ai;
+    class MySQL,Cloudinary db;
+    class StripeGateway,OpenWeather,GoogleMaps ext;
+```
+
+### Component Details
+1. **Frontend Presentation Layer (React + Vite)**: Communicates with Laravel backend endpoints. Real-time updates and push alerts are powered by Laravel Reverb WebSockets.
+2. **Core Backend Layer (Laravel 11)**: Central rest API provider executing controllers, repositories, event listeners, and Stripe SDK payment processes. It manages database migrations and serves Sanctum-based API tokens.
+3. **AI Services Layer (Google Gemini / OpenRouter / Python FastAPI)**:
+   - Direct APIs interact with Google Gemini or OpenRouter endpoints to power the conversational guide, utilizing database message threads and context extraction.
+   - An independent FastAPI service (port `8001`) calls Hugging Face models for classification (e.g., zero-shot crowd assessment), review sentiment, and recommendations.
+4. **External Services Gateways**: Seamlessly integrates with Stripe checkout, OpenWeather API for localized destination climate status, and Google Maps API for interactive routes and geocoordinates.
+5. **Persistence Layer**: An ACID-compliant MySQL database storing relational tables for users, places, itineraries, and bookings.
+
 ## 📁 Project Structure
 
 ```
